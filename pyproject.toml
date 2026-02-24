@@ -1,0 +1,15 @@
+[project]
+name = "pulse"
+version = "0.1.0"
+authors = [
+    { name = "Angel Merino", email = "acedeno00@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+pulse = "pulse:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
