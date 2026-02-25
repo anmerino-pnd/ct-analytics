@@ -1,0 +1,116 @@
+---
+title: "Comprensión del negocio"
+format: 
+    html:
+         page-layout: article
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+::: {style="text-align: justify"}
+
+CT Internacional es una empresa mexicana líder en la distribución de soluciones de Tecnologías de la Información. Con más de 25 años en el mercado y un canal de distribución integrado por más de 31 mil clientes, CT maneja un volumen masivo de transacciones diarias que involucran miles de productos y más de 202 marcas.
+
+Teniendo este crecimiento constante del negocio y la enorme cantidad de datos transaccionales que se generan, existe una oportunidad crítica para evolucionar la forma en que se diseñan las estrategias comerciales y de marketing.
+
+**Problema de negocio a resolver:**
+
+Actualmente, las estrategias de marketing y promoción se realizan, en gran medida, en respuesta a las solicitudes y presupuestos de los proveedores. Esto provoca que las campañas puedan resultar poco efectivas, ya que no siempre están alineadas con los hábitos de compra reales, la estacionalidad, o las necesidades específicas de los segmentos de clientes de CT.
+
+**Impacto:**
+
+Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores. En lugar de solo ejecutar promociones dictadas externamente, CT podrá proponer estrategias respaldadas por datos ("Data-Driven"), aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente (CLTV).
+
+:::
+
+::: {style="text-align: justify"}
+## 0.1. Objetivos de la línea de investigación
+
+Esta iniciativa se enfoca en analizar los patrones de compra de los clientes para identificar segmentos de comportamiento y oportunidades de promoción específicas por marca y cliente.
+
+**Actualmente:**
+
+Los equipos no tienen una visibilidad inmediata y relacional sobre qué productos representan la mayor dependencia para qué clientes, ni alertas automáticas de clientes de alto valor que han dejado de interactuar con ciertas líneas de negocio.
+
+**Objetivo principal:**
+
+Desarrollar un modelo de análisis de comportamiento de clientes que provea información estratégica y visual a los equipos comerciales, permitiendo diseñar promociones efectivas alineadas a los intereses del consumidor y respaldar la toma de decisiones al negociar con proveedores.
+
+**Objetivos específicos:**
+
+* **Monitoreo de salud del cliente:** Identificar y clasificar a los clientes según su nivel de riesgo de abandono (Churn) calculando los días inactivos desde su última compra.
+* **Análisis de dependencia de producto:** Detectar qué productos o categorías representan el mayor porcentaje de compras de un cliente en particular para habilitar estrategias de Venta Cruzada (Cross-selling).
+* **Identificación de inventario estancado:** Rastrear productos y marcas que no presentan movimiento en la base de clientes durante periodos definidos, para priorizar su promoción.
+
+**Criterios de éxito:**
+
+1. **Accionabilidad:** 
+    * El dashboard entregado debe permitir al equipo de ventas identificar en menos de 3 clics a los clientes en riesgo de abandono.
+
+2. **Alineación:**
+
+    * Validación cualitativa por parte del equipo de marketing de que los insights generados (ej. "El producto X solo lo compra el segmento Y") son útiles para negociar fondos de marketing con proveedores.
+
+:::
+
+::: {style="text-align: justify"}
+## 0.2. Evaluación de la situación actual
+
+Los recursos que se tienen actualmente para este proyecto son:
+
+* **Datos:** Histórico de ventas (tickets, IDs de SKU, precios, fechas), base de datos de clientes vinculable a los tickets, e información de inventarios y proveedores.
+* **Herramientas:** [Python](#terminologia) para limpieza e ingeniería de datos, Pandas, herramientas de visualización (Power BI) y repositorios de código.
+* **Equipo humano:** Especialistas en el sistema de distribución de la empresa, y científicos/analistas de datos encargados del desarrollo.
+
+### 0.2.1. Requisitos, supuestos y restricciones
+
+**Requisitos:**
+
+* Acceso a los registros de los productos de la empresa y equipo de compúto con características específicas para el desarrollo del proyecto.
+* Comunicación constante con los expertos de la empresa para constante evaluación y retroalimentación.
+* Credenciales para el uso y acceso de herramientas de la empresa.
+
+**Supuestos:**
+
+* Acceso a los registros históricos transaccionales (idealmente 2 años para evaluar estacionalidad).
+* Aterrizar las métricas de negocio con los líderes comerciales antes de construir modelos predictivos complejos.
+
+**Restricciones:**
+
+* Curva de aprendizaje y adopción técnica por parte de los equipos no analíticos.
+* Calidad inicial de los datos (presencia de nulos, inconsistencias en IDs de productos o clientes).
+
+::: 
+
+::: {style="text-align: justify"}
+## 0.3. Terminología {#terminologia}
+
+Algunas de las terminologías clave para este proyecto son:
+
+- **Análisis RFM (recency, frequency, monetary):** Método para segmentar clientes basado en hace cuánto compraron (Recencia), qué tan seguido compran (Frecuencia) y cuánto gastan (Monetario).
+- **Churn rate (Tasa de abandono):** Métrica que calcula el porcentaje de clientes que dejan de comprar o interactuar con la empresa en un periodo de tiempo.
+- **Cross-selling (venta cruzada):** Estrategia de vender productos complementarios a los que el cliente ya consume o tiene intención de comprar.
+- **Ticket promedio:** Cantidad promedio de dinero que gasta un cliente por cada transacción.
+- **EDA (Exploratory Data Analysis):** Proceso inicial de investigación de los datos para descubrir patrones, detectar anomalías y comprobar hipótesis mediante estadísticas y visualizaciones.
+- **Dashboard:** Herramienta de visualización de datos que muestra métricas clave y KPIs en una sola pantalla de forma interactiva.
+- **Power BI:** Servicio de análisis empresarial de Microsoft que proporciona visualizaciones interactivas y capacidades de inteligencia empresarial.
+
+::: 
+
+::: {style="text-align: justify"}
+## 0.4. Beneficios
+
+* **Innovación en la oferta de productos:** Introducir un nuevo enfoque en la recomendación de productos, brindando una experiencia más personalizada y efectiva tanto para la empresa como para los clientes.
+* **Optimización de la estrategia del mercado:** La implementación del sistema abre oportunidades para nuevas estrategias de negocio, mejorando la eficiencia y el alcance en la comercialización de productos.
+* **Accesibilidad y comprensión de la información:** La escalabilidad del sistema facilita que los usuarios accedan a información clave de la empresa de manera clara y comprensible, reduciendo la complejidad derivada de tecnicismos y procesos internos.
+
+::: 
+
+::: {style="text-align: justify"}
+## 0.5. Costos
+
+* **Tiempo:** El proyecto tiene un plazo estimado de 3 meses para desarrollar una versión funcional y tangible que sirva como punto de partida para futuras mejoras e implementación en el flujo de trabajo.
+* **Financieros:** Se consideran costos asociados a suscripciones de herramientas de pago necesarias para el desarrollo e implementación del sistema.
+
+::: 

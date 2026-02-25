@@ -1,0 +1,40 @@
+---
+title: "Análisis de comportamiento de clientes y oportunidades de promoción"
+format: 
+    html:
+         page-layout: article
+toc: false
+author: 
+  - name: "Angel Merino Cedeño"
+    email: "acedeno00@gmail.com"     # Aparece un icono de correo
+    url: "https://www.linkedin.com/in/anmerino-pnd"          # Aparece icono de web si quieres
+    affiliations:
+        - name : "[📄 CV](https://unisonmx-my.sharepoint.com/:w:/g/personal/a218204710_unison_mx/EYLVn5p-js9Hh7hr8HmUKOgBZq5L1wHwtZzyjEZG_SeUGA?e=Q7U9pP)"
+  - name: "Gerardo Leyva Conde"
+  - name: "Roberto Navarro Bartolini"
+  - name: "Abraham Rojo Salazar"
+  - name: "Oscar Esquer Vazquez"
+date: last-modified
+date-format: long
+lang: es
+---
+
+::: {style="text-align: justify"}
+## Introducción
+
+Este proyecto se enfoca en el desarrollo de un sistema de análisis e inteligencia de negocios basado en los patrones de compra de los clientes de CT Internacional. A través del procesamiento de datos transaccionales históricos, buscamos transformar un enfoque de marketing reactivo (basado en solicitudes de proveedores) en una estrategia proactiva, personalizada y basada en el comportamiento real del consumidor.
+
+El proyecto se divide en las siguientes fases iniciales:
+
+1. **Comprensión del negocio:** Definir el problema central de la desalineación entre las campañas de proveedores y los intereses reales de los clientes de CT Internacional.
+
+2. **Extracción y omprensión de los datos:** Recolección de un histórico de transacciones (ventas, fechas, ID de clientes, categorías de productos, marcas) y validación de la integridad de la información.
+
+3. **Ingeniería de características:** Creación de nuevas métricas de valor a partir de los datos crudos, tales como: días desde la última compra (Recency), frecuencia de compra, ticket promedio y dependencia de categoría.
+
+4. **Análisis exploratorio y visualización (EDA & Dashboards):** Construcción de herramientas visuales (mockups y dashboards) que expongan de manera clara problemas como la fuga de clientes, el inventario estancado y las oportunidades de venta cruzada.
+
+5. **Segmentación avanzada (fase 2)** Aplicación de modelos de aprendizaje no supervisado (como K-Means o análisis RFM) para agrupar clientes según su comportamiento y rentabilidad.
+
+A través de estas fases, buscamos proporcionar a los equipos de ventas y marketing herramientas accionables que mejoren la retención de clientes, aumenten la eficacia de las promociones y fortalezcan las negociaciones con los proveedores basados en datos duros.
+:::
