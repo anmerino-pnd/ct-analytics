@@ -1,14 +1,13 @@
 project:
   type: website
-  output-dir: ../docs
   render: # Renderizar todos los archivos .qmd
     - 0_home.qmd
     - 1_comprension.qmd
-    - 2_comprension_datos.qmd
-    - 3_preparacion.qmd
-    - 4_modelado.qmd
-    - 5_despliegue.qmd
-    - 6_documentacion.qmd
+    # - 2_comprension_datos.qmd
+    # - 3_preparacion.qmd
+    # - 4_modelado.qmd
+    # - 5_despliegue.qmd
+    # - 6_documentacion.qmd
 
 
 website:
@@ -20,16 +19,16 @@ website:
         text: Home
       - href: 1_comprension.qmd
         text: Comprensión del negocio
-      - href: 2_comprension_datos.qmd
-        text: Comprensión de los datos
-      - href: 3_preparacion.qmd
-        text: Preparación
-      - href: 4_modelado.qmd
-        text: Modelado y Evaluación
-      - href: 5_despliegue.qmd
-        text: Despliegue
-      - href: 6_documentacion.qmd
-        text: Documentación
+      # - href: 2_comprension_datos.qmd
+      #   text: Comprensión de los datos
+      # - href: 3_preparacion.qmd
+      #   text: Preparación
+      # - href: 4_modelado.qmd
+      #   text: Modelado y Evaluación
+      # - href: 5_despliegue.qmd
+      #   text: Despliegue
+      # - href: 6_documentacion.qmd
+      #   text: Documentación
       
   back-to-top-navigation: true
       

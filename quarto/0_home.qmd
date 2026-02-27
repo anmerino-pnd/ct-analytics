@@ -22,17 +22,17 @@ lang: es
 ::: {style="text-align: justify"}
 ## Introducción
 
-Este proyecto se enfoca en el desarrollo de un sistema de análisis e inteligencia de negocios basado en los patrones de compra de los clientes de CT Internacional. A través del procesamiento de datos transaccionales históricos, buscamos transformar un enfoque de marketing reactivo (basado en solicitudes de proveedores) en una estrategia proactiva, personalizada y basada en el comportamiento real del consumidor.
+Este proyecto se enfoca en el desarrollo de un sistema de análisis e inteligencia de negocios basado en los patrones de búsqueda y compras de los clientes de CT Internacional. A través del procesamiento de datos transaccionales históricos, buscamos transformar un enfoque de marketing en una estrategia proactiva, personalizada y basada en el comportamiento real del consumidor.
 
 El proyecto se divide en las siguientes fases iniciales:
 
 1. **Comprensión del negocio:** Definir el problema central de la desalineación entre las campañas de proveedores y los intereses reales de los clientes de CT Internacional.
 
-2. **Extracción y omprensión de los datos:** Recolección de un histórico de transacciones (ventas, fechas, ID de clientes, categorías de productos, marcas) y validación de la integridad de la información.
+2. **Extracción y comprensión de los datos:** Recolección de un histórico de transacciones (ventas, fechas, ID de clientes, categorías de productos, marcas, búsquedas) y validación de la integridad de la información.
 
-3. **Ingeniería de características:** Creación de nuevas métricas de valor a partir de los datos crudos, tales como: días desde la última compra (Recency), frecuencia de compra, ticket promedio y dependencia de categoría.
+3. **Ingeniería de características:** Creación de nuevas métricas de valor a partir de los datos crudos, tales como: días desde la última compra (Recency), frecuencia de compra o de búsqueda, ticket promedio y dependencia de categoría.
 
-4. **Análisis exploratorio y visualización (EDA & Dashboards):** Construcción de herramientas visuales (mockups y dashboards) que expongan de manera clara problemas como la fuga de clientes, el inventario estancado y las oportunidades de venta cruzada.
+4. **Análisis exploratorio y visualización (EDA & Dashboards):** Construcción de herramientas visuales (mockups y dashboards) que expongan de manera clara problemas como la fuga de clientes, el inventario estancado, oportunidades de venta cruzada, presencia de productos por categoría, más vendidos y no tan vendidos.
 
 5. **Segmentación avanzada (fase 2)** Aplicación de modelos de aprendizaje no supervisado (como K-Means o análisis RFM) para agrupar clientes según su comportamiento y rentabilidad.
 

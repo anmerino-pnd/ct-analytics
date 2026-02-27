@@ -12,15 +12,15 @@ toc-depth: 3
 
 CT Internacional es una empresa mexicana líder en la distribución de soluciones de Tecnologías de la Información. Con más de 25 años en el mercado y un canal de distribución integrado por más de 31 mil clientes, CT maneja un volumen masivo de transacciones diarias que involucran miles de productos y más de 202 marcas.
 
-Teniendo este crecimiento constante del negocio y la enorme cantidad de datos transaccionales que se generan, existe una oportunidad crítica para evolucionar la forma en que se diseñan las estrategias comerciales y de marketing.
+Teniendo este crecimiento constante del negocio y la enorme cantidad de datos transaccionales que se generan, existe una oportunidad para evolucionar la forma en que se diseñan las estrategias comerciales y de marketing.
 
 **Problema de negocio a resolver:**
 
-Actualmente, las estrategias de marketing y promoción se realizan, en gran medida, en respuesta a las solicitudes y presupuestos de los proveedores. Esto provoca que las campañas puedan resultar poco efectivas, ya que no siempre están alineadas con los hábitos de compra reales, la estacionalidad, o las necesidades específicas de los segmentos de clientes de CT.
+Actualmente, las estrategias de marketing y promoción se realizan, en gran medida, en respuesta a las solicitudes y presupuestos de los proveedores. Con este proyecto buscamos alinear las estrategias con los hábitos de compra reales, la estacionalidad, o las necesidades específicas de los segmentos de clientes de CT.
 
 **Impacto:**
 
-Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores. En lugar de solo ejecutar promociones dictadas externamente, CT podrá proponer estrategias respaldadas por datos ("Data-Driven"), aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente (CLTV).
+Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores y con sus clientes. En lugar de solo ejecutar promociones dictadas externamente, CT podrá proponer estrategias respaldadas por datos, aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente (CLTV).
 
 :::
 
@@ -39,17 +39,18 @@ Desarrollar un modelo de análisis de comportamiento de clientes que provea info
 
 **Objetivos específicos:**
 
-* **Monitoreo de salud del cliente:** Identificar y clasificar a los clientes según su nivel de riesgo de abandono (Churn) calculando los días inactivos desde su última compra.
-* **Análisis de dependencia de producto:** Detectar qué productos o categorías representan el mayor porcentaje de compras de un cliente en particular para habilitar estrategias de Venta Cruzada (Cross-selling).
+* **Monitoreo de salud del cliente:** Identificar y clasificar a los clientes según su nivel de riesgo de abandono calculando los días inactivos desde su última compra.
+* **Análisis de dependencia de producto:** Detectar qué productos o categorías representan el mayor porcentaje de compras de un cliente en particular para habilitar estrategias de venta cruzada.
 * **Identificación de inventario estancado:** Rastrear productos y marcas que no presentan movimiento en la base de clientes durante periodos definidos, para priorizar su promoción.
 
 **Criterios de éxito:**
 
 1. **Accionabilidad:** 
-    * El dashboard entregado debe permitir al equipo de ventas identificar en menos de 3 clics a los clientes en riesgo de abandono.
+   
+    * El dashboard entregado debe permitir al equipo de ventas identificar a los clientes en riesgo de abandono, fácil de comprender y sencillo de manipular.
 
 2. **Alineación:**
-
+   
     * Validación cualitativa por parte del equipo de marketing de que los insights generados (ej. "El producto X solo lo compra el segmento Y") son útiles para negociar fondos de marketing con proveedores.
 
 :::
@@ -88,6 +89,7 @@ Los recursos que se tienen actualmente para este proyecto son:
 
 Algunas de las terminologías clave para este proyecto son:
 
+- **Python:** Lenguaje de programación de alto nivel, ampliamente utilizado en el desarrollo de software, análisis de datos, inteligencia artificial y automatización.  
 - **Análisis RFM (recency, frequency, monetary):** Método para segmentar clientes basado en hace cuánto compraron (Recencia), qué tan seguido compran (Frecuencia) y cuánto gastan (Monetario).
 - **Churn rate (Tasa de abandono):** Métrica que calcula el porcentaje de clientes que dejan de comprar o interactuar con la empresa en un periodo de tiempo.
 - **Cross-selling (venta cruzada):** Estrategia de vender productos complementarios a los que el cliente ya consume o tiene intención de comprar.
@@ -99,18 +101,35 @@ Algunas de las terminologías clave para este proyecto son:
 ::: 
 
 ::: {style="text-align: justify"}
-## 0.4. Beneficios
+## 0.4. Beneficios esperados
 
-* **Innovación en la oferta de productos:** Introducir un nuevo enfoque en la recomendación de productos, brindando una experiencia más personalizada y efectiva tanto para la empresa como para los clientes.
-* **Optimización de la estrategia del mercado:** La implementación del sistema abre oportunidades para nuevas estrategias de negocio, mejorando la eficiencia y el alcance en la comercialización de productos.
-* **Accesibilidad y comprensión de la información:** La escalabilidad del sistema facilita que los usuarios accedan a información clave de la empresa de manera clara y comprensible, reduciendo la complejidad derivada de tecnicismos y procesos internos.
+La implementación de este proyecto de inteligencia de clientes traerá transformaciones profundas en distintas áreas de CT Internacional:
+
+* **Toma de decisiones basada en datos:** 
+
+    Representa la transición definitiva de estrategias de marketing reactivas e instintivas a metodologías proactivas. Permite al equipo comercial diseñar campañas altamente dirigidas y personalizadas en lugar de realizar esfuerzos genéricos, mejorando la tasa de conversión.
+
+* **Retención proactiva y blindaje de clientes clave:** 
+  
+  Proporciona la capacidad sistemática de identificar cuentas de alto valor (VIPs) que muestran patrones tempranos de abandono o enfriamiento. Esto permite a los ejecutivos de cuenta ejecutar acciones de recuperación inmediatas, como llamadas estratégicas o descuentos, mucho antes de que el cliente migre su negocio a la competencia.
+
+* **Maximización del valor del cliente mediante Cross-selling Inteligente:** 
+  
+  Al identificar dependencias de compra (clientes que monocategoría), visualizar oportunidades claras para ofrecer productos complementarios. Esto no solo incrementa el ticket promedio y el volumen de facturación global, sino que entrelaza más al cliente con el ecosistema de CT, haciéndolo menos propenso a cambiar de distribuidor.
+
+
+* **Empoderamiento estratégico en la negociación con fabricantes:**
+
+    Este es quizás el beneficio indirecto más valioso. Al proveer a CT Internacional con argumentos sólidos respaldados por datos reales de consumo del mercado (ej. Market Basket Analysis), la empresa puede sentarse a la mesa con marcas como HP, Dell o Microsoft y demostrar por qué deberían invertir fondos cooperativos en nichos de clientes específicos que CT tiene perfectamente mapeados, pasando de una relación transaccional a una consultiva.
 
 ::: 
 
 ::: {style="text-align: justify"}
 ## 0.5. Costos
 
-* **Tiempo:** El proyecto tiene un plazo estimado de 3 meses para desarrollar una versión funcional y tangible que sirva como punto de partida para futuras mejoras e implementación en el flujo de trabajo.
-* **Financieros:** Se consideran costos asociados a suscripciones de herramientas de pago necesarias para el desarrollo e implementación del sistema.
+El desarrollo y mantenimiento de esta solución analítica implica ciertas inversiones que deben ser contempladas frente a los retornos esperados:
+
+* **Tiempo de desarrollo:** Se estima un promedio de entre 4 a 5 semaans para el desarrollo, limpieza de datos y publicación de un primer dashboard analítico que plantee las bases y objetivos de un producto final. Posteriormente, se requerirá de una inversión continua de tiempo en ciclos iterativos para refinar visualizaciones, integrar retroalimentación de los usuarios y agregar métricas predictivas más complejas según la adopción de la herramienta.
+* **Financieros:** Se consideran costos asociados a suscripciones de herramientas de pago necesarias para el desarrollo e implementación del sistema, en este caso el uso de un servicio pro de PowerBI.
 
 ::: 
