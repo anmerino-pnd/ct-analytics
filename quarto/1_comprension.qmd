@@ -20,7 +20,7 @@ Actualmente, las estrategias de marketing y promoción se realizan, en gran medi
 
 **Impacto:**
 
-Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores y con sus clientes. En lugar de solo ejecutar promociones dictadas externamente, CT podrá proponer estrategias respaldadas por datos, aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente (CLTV).
+Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores y con sus clientes. Buscamos proponer estrategias respaldadas por datos, aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente.
 
 :::
 
@@ -28,10 +28,6 @@ Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus
 ## 0.1. Objetivos de la línea de investigación
 
 Esta iniciativa se enfoca en analizar los patrones de compra de los clientes para identificar segmentos de comportamiento y oportunidades de promoción específicas por marca y cliente.
-
-**Actualmente:**
-
-Los equipos no tienen una visibilidad inmediata y relacional sobre qué productos representan la mayor dependencia para qué clientes, ni alertas automáticas de clientes de alto valor que han dejado de interactuar con ciertas líneas de negocio.
 
 **Objetivo principal:**
 
