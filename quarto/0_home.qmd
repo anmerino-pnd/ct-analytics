@@ -13,7 +13,6 @@ author:
   - name: "Gerardo Leyva Conde"
   - name: "Roberto Navarro Bartolini"
   - name: "Abraham Rojo Salazar"
-  - name: "Oscar Esquer Vazquez"
 date: last-modified
 date-format: long
 lang: es

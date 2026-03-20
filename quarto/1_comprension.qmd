@@ -10,9 +10,7 @@ toc-depth: 3
 
 ::: {style="text-align: justify"}
 
-CT Internacional es una empresa mexicana líder en la distribución de soluciones de Tecnologías de la Información. Con más de 25 años en el mercado y un canal de distribución integrado por más de 31 mil clientes, CT maneja un volumen masivo de transacciones diarias que involucran miles de productos y más de 202 marcas.
-
-Teniendo este crecimiento constante del negocio y la enorme cantidad de datos transaccionales que se generan, existe una oportunidad para evolucionar la forma en que se diseñan las estrategias comerciales y de marketing.
+CT Internacional es una empresa mexicana líder en la distribución de soluciones de Tecnologías de la Información. Con más de 25 años en el mercado y un canal de distribución integrado por más de 31 mil clientes, CT maneja un volumen masivo de transacciones diarias que involucran miles de productos y más de 202 marcas. Teniendo este crecimiento constante del negocio y la enorme cantidad de datos transaccionales que se generan, existe una oportunidad para evolucionar la forma en que se diseñan las estrategias comerciales y de marketing.
 
 **Problema de negocio a resolver:**
 
@@ -21,7 +19,6 @@ Actualmente, las estrategias de marketing y promoción se realizan, en gran medi
 **Impacto:**
 
 Abordar este problema permitirá a CT Internacional cambiar la dinámica con sus proveedores y con sus clientes. Buscamos proponer estrategias respaldadas por datos, aumentando el retorno de inversión (ROI) de las campañas, reduciendo el inventario estancado y maximizando el valor del tiempo de vida del cliente.
-
 :::
 
 ::: {style="text-align: justify"}
@@ -41,14 +38,8 @@ Desarrollar un modelo de análisis de comportamiento de clientes que provea info
 
 **Criterios de éxito:**
 
-1. **Accionabilidad:** 
-   
-    * El dashboard entregado debe permitir al equipo de ventas identificar a los clientes en riesgo de abandono, fácil de comprender y sencillo de manipular.
-
-2. **Alineación:**
-   
-    * Validación cualitativa por parte del equipo de marketing de que los insights generados (ej. "El producto X solo lo compra el segmento Y") son útiles para negociar fondos de marketing con proveedores.
-
+1. **Accionabilidad:** El dashboard entregado debe permitir al equipo de ventas identificar a los clientes en riesgo de abandono, fácil de comprender y sencillo de manipular.
+2. **Alineación:** Validación cualitativa por parte del equipo de marketing de que los insights generados (ej. "El producto X solo lo compra el segmento Y") son útiles para negociar fondos de marketing con proveedores.
 :::
 
 ::: {style="text-align: justify"}
@@ -77,55 +68,89 @@ Los recursos que se tienen actualmente para este proyecto son:
 
 * Curva de aprendizaje y adopción técnica por parte de los equipos no analíticos.
 * Calidad inicial de los datos (presencia de nulos, inconsistencias en IDs de productos o clientes).
-
 ::: 
 
 ::: {style="text-align: justify"}
-## 0.3. Terminología {#terminologia}
+## 0.3. Enfoque Analítico y Formulación de Preguntas de Negocio
+
+El nivel de complejidad técnica y las herramientas a utilizar dependerán estrictamente de cómo se formule la pregunta de negocio a resolver. Para este proyecto, el enfoque se divide en cuatro niveles de madurez analítica:
+
+1. **Análisis Descriptivo (¿Qué pasó?):** Si la necesidad es responder *¿Quiénes son los clientes más rentables históricamente?*, la solución requiere consultas directas a la base de datos (SQL) e indicadores operativos básicos.
+2. **Análisis Estadístico (¿Es real esta tendencia?):** Para responder *¿Existe una diferencia estadísticamente significativa entre el comportamiento de los clientes VIP y los promedio?*, se aplicarán pruebas de hipótesis para confirmar que los patrones no son producto del azar.
+3. **Minería de Datos (¿Qué caracteriza a estos clientes?):** Si buscamos descubrir *¿Cuáles son los hábitos ocultos de compra?*, el proyecto transita hacia la ciencia de datos mediante algoritmos de agrupamiento (K-Means) y reglas de asociación para perfilar los clústeres.
+4. **Análisis Predictivo (¿Qué pasará?):** Ante preguntas como *¿Será rentable un nuevo cliente?* o *¿Cuál es la probabilidad de que un usuario nos abandone este mes?*, se implementarán modelos de Machine Learning (Clasificación o Regresión) entrenados con datos históricos.
+:::
+
+::: {style="text-align: justify"}
+## 0.4. Terminología {#terminologia}
 
 Algunas de las terminologías clave para este proyecto son:
 
-- **Python:** Lenguaje de programación de alto nivel, ampliamente utilizado en el desarrollo de software, análisis de datos, inteligencia artificial y automatización.  
-- **Análisis RFM (recency, frequency, monetary):** Método para segmentar clientes basado en hace cuánto compraron (Recencia), qué tan seguido compran (Frecuencia) y cuánto gastan (Monetario).
+- **Python:** Lenguaje de programación de alto nivel, ampliamente utilizado en el desarrollo de software, análisis de datos, inteligencia artificial y automatización.
+- **Análisis RFM (Recency, Frequency, Monetary):** Método para segmentar clientes basado en hace cuánto compraron (Recencia), qué tan seguido compran (Frecuencia) y cuánto gastan (Monetario). Permite la clasificación de usuarios en clústers accionables; leales, en riesgo de abandono, nuevos compradores.
+- **Market Basket Analysis:** Técnica que asume que el cliente que compra el producto A tiene una alta probabilidad de adquirir el producto B.
+- **Estacionalidad:** Mapeo de picos de búsqueda estacionales contra compras del producto en las mismas fechas para anticipar demanda y optimizar inventarios.
 - **Churn rate (Tasa de abandono):** Métrica que calcula el porcentaje de clientes que dejan de comprar o interactuar con la empresa en un periodo de tiempo.
 - **Cross-selling (venta cruzada):** Estrategia de vender productos complementarios a los que el cliente ya consume o tiene intención de comprar.
 - **Ticket promedio:** Cantidad promedio de dinero que gasta un cliente por cada transacción.
 - **EDA (Exploratory Data Analysis):** Proceso inicial de investigación de los datos para descubrir patrones, detectar anomalías y comprobar hipótesis mediante estadísticas y visualizaciones.
 - **Dashboard:** Herramienta de visualización de datos que muestra métricas clave y KPIs en una sola pantalla de forma interactiva.
 - **Power BI:** Servicio de análisis empresarial de Microsoft que proporciona visualizaciones interactivas y capacidades de inteligencia empresarial.
-
 ::: 
 
 ::: {style="text-align: justify"}
-## 0.4. Beneficios esperados
+## 0.5. Arquitectura y Flujo de Datos
+
+El flujo del sistema propuesto se divide en tres capas principales:
+1. **Extracción:** Recolección desde las Bases de Datos transaccionales y Logs de búsqueda.
+2. **Transformación:** Proceso ETL que involucra la extracción, limpieza de datos nulos, transformación y creación de variables (como RFM y Market basket) a través de la ingeniería de datos.
+3. **Carga y Consumo:** Almacenamiento en un Data lake (Datos históricos estructurados y listos para consumo) y su visualización final mediante un Dashboard interactivo en PowerBI con filtros dinámicos, segmentación y exportación de reportes.
+:::
+
+::: {style="text-align: justify"}
+## 0.6. Análisis FODA
+
+* **Fortalezas:** Sistema basado en datos que se consume a través de un dashboard dinámico; capacidad de segmentación y perfilación de clientes para promociones especiales y específicas; el cual operará como un sistema interno donde solo personal autorizado podrá ver los datos sensibles y sus resultantes.
+* **Oportunidades:** Combinar estrategias tradicionales con técnicas avanzadas; ofrecer una visualización dinámica de los datos de comportamientos, perfiles de usuarios y usuarios con tendencia de fidelidad; y generar un reporte mensual de preferencias para perfilar promociones de los meses siguientes.
+* **Debilidades:** Existe una dependencia crítica de la calidad y limpieza de los datos históricos y una curva de aprendizaje técnica para que el equipo de marketing adopte y entienda el dashboard en PowerBI.
+* **Amenazas:** Posibles incrementos de costo por del proveedor del dashboard (PowerBI).
+:::
+
+::: {style="text-align: justify"}
+## 0.7. Análisis de Riesgos
+
+| Riesgo | Probabilidad | Impacto | Evaluación | Estrategia de Mitigación |
+| :--- | :--- | :--- | :--- | :--- |
+| **Incremento de costos por parte de PowerBI** | Media  | Alto  | Media  | Evaluar el uso que se aprovecha con el Free Tier y sumar costos extras para posteriormente compararlo con otros sistemas de dashboards similares o ir midiendo un cambio a un sistema local. |
+| **Insatisfacción por parte de los usuarios con la herramienta**  | Baja  | Alto  | Media  | Sesiones con el equipo encargado de las áreas que queremos ayudar, y obtener su retroalimentación. Mostrarles la información y perspectiva que pueden obtener a raíz de esto. |
+| **Calidad y consistencia de los datos históricos insuficientes** | Media | Alto | Alto | Implementar validaciones rigurosas y limpieza exhaustiva en el proceso ETL. Realizar un Análisis Exploratorio de Datos (EDA) inicial para definir un baseline de viabilidad antes de construir el dashboard completo. |
+:::
+
+::: {style="text-align: justify"}
+## 0.8. Próximos pasos
+
+* **Validación:** Estudiar sobre las técnicas propuestas y aterrizarlas a la lógica de negocio-marketing de la empresa.
+* **Ingeniería:** Desarrollo y automatización del pipeline ETL hacia el Data Lake.
+* **Exploración:** EDA para validar la existencia de patrones de compra y segmentación.
+* **Prototipado:** Construcción de la versión inicial del dashboard en la capa gratuita de PowerBI para validar métricas.
+:::
+
+::: {style="text-align: justify"}
+## 0.9. Beneficios esperados
 
 La implementación de este proyecto de inteligencia de clientes traerá transformaciones profundas en distintas áreas de CT Internacional:
 
-* **Toma de decisiones basada en datos:** 
-
-    Representa la transición definitiva de estrategias de marketing reactivas e instintivas a metodologías proactivas. Permite al equipo comercial diseñar campañas altamente dirigidas y personalizadas en lugar de realizar esfuerzos genéricos, mejorando la tasa de conversión.
-
-* **Retención proactiva y blindaje de clientes clave:** 
-  
-  Proporciona la capacidad sistemática de identificar cuentas de alto valor (VIPs) que muestran patrones tempranos de abandono o enfriamiento. Esto permite a los ejecutivos de cuenta ejecutar acciones de recuperación inmediatas, como llamadas estratégicas o descuentos, mucho antes de que el cliente migre su negocio a la competencia.
-
-* **Maximización del valor del cliente mediante Cross-selling Inteligente:** 
-  
-  Al identificar dependencias de compra (clientes que monocategoría), visualizar oportunidades claras para ofrecer productos complementarios. Esto no solo incrementa el ticket promedio y el volumen de facturación global, sino que entrelaza más al cliente con el ecosistema de CT, haciéndolo menos propenso a cambiar de distribuidor.
-
-
-* **Empoderamiento estratégico en la negociación con fabricantes:**
-
-    Este es quizás el beneficio indirecto más valioso. Al proveer a CT Internacional con argumentos sólidos respaldados por datos reales de consumo del mercado (ej. Market Basket Analysis), la empresa puede sentarse a la mesa con marcas como HP, Dell o Microsoft y demostrar por qué deberían invertir fondos cooperativos en nichos de clientes específicos que CT tiene perfectamente mapeados, pasando de una relación transaccional a una consultiva.
-
+* **Toma de decisiones basada en datos:** Representa la transición definitiva de estrategias de marketing reactivas e instintivas a metodologías proactivas. Permite al equipo comercial diseñar campañas altamente dirigidas y personalizadas en lugar de realizar esfuerzos genéricos, mejorando la tasa de conversión.
+* **Retención proactiva y blindaje de clientes clave:** Proporciona la capacidad sistemática de identificar cuentas de alto valor (VIPs) que muestran patrones tempranos de abandono o enfriamiento. Esto permite a los ejecutivos de cuenta ejecutar acciones de recuperación inmediatas, como llamadas estratégicas o descuentos, mucho antes de que el cliente migre su negocio a la competencia.
+* **Maximización del valor del cliente mediante Cross-selling Inteligente:** Al identificar dependencias de compra (clientes que monocategoría), visualizar oportunidades claras para ofrecer productos complementarios. Esto no solo incrementa el ticket promedio y el volumen de facturación global, sino que entrelaza más al cliente con el ecosistema de CT, haciéndolo menos propenso a cambiar de distribuidor.
+* **Empoderamiento estratégico en la negociación con fabricantes:** Este es quizás el beneficio indirecto más valioso. Al proveer a CT Internacional con argumentos sólidos respaldados por datos reales de consumo del mercado (ej. Market Basket Analysis), la empresa puede sentarse a la mesa con marcas como HP, Dell o Microsoft y demostrar por qué deberían invertir fondos cooperativos en nichos de clientes específicos que CT tiene perfectamente mapeados, pasando de una relación transaccional a una consultiva.
 ::: 
 
 ::: {style="text-align: justify"}
-## 0.5. Costos
+## 0.10. Costos
 
 El desarrollo y mantenimiento de esta solución analítica implica ciertas inversiones que deben ser contempladas frente a los retornos esperados:
 
 * **Tiempo de desarrollo:** Se estima un promedio de entre 4 a 5 semaans para el desarrollo, limpieza de datos y publicación de un primer dashboard analítico que plantee las bases y objetivos de un producto final. Posteriormente, se requerirá de una inversión continua de tiempo en ciclos iterativos para refinar visualizaciones, integrar retroalimentación de los usuarios y agregar métricas predictivas más complejas según la adopción de la herramienta.
 * **Financieros:** Se consideran costos asociados a suscripciones de herramientas de pago necesarias para el desarrollo e implementación del sistema, en este caso el uso de un servicio pro de PowerBI.
-
-::: 
+:::
