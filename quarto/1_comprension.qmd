@@ -79,6 +79,19 @@ El nivel de complejidad técnica y las herramientas a utilizar dependerán estri
 2. **Análisis Estadístico (¿Es real esta tendencia?):** Para responder *¿Existe una diferencia estadísticamente significativa entre el comportamiento de los clientes VIP y los promedio?*, se aplicarán pruebas de hipótesis para confirmar que los patrones no son producto del azar.
 3. **Minería de Datos (¿Qué caracteriza a estos clientes?):** Si buscamos descubrir *¿Cuáles son los hábitos ocultos de compra?*, el proyecto transita hacia la ciencia de datos mediante algoritmos de agrupamiento (K-Means) y reglas de asociación para perfilar los clústeres.
 4. **Análisis Predictivo (¿Qué pasará?):** Ante preguntas como *¿Será rentable un nuevo cliente?* o *¿Cuál es la probabilidad de que un usuario nos abandone este mes?*, se implementarán modelos de Machine Learning (Clasificación o Regresión) entrenados con datos históricos.
+
+## 0.3.1. Fundamentos de Modelado Predictivo
+
+Para abordar la fase de predicción y clasificación de clientes, el proyecto se apoyará en técnicas de modelado paramétrico (o ajuste de funciones). A diferencia de los modelos basados en inducción de reglas (como los árboles de decisión), este enfoque utiliza una estructura de ecuación matemática donde el algoritmo debe "ajustar" los parámetros (pesos) encontrando la mejor relación posible con los datos históricos. 
+
+Dependiendo de nuestra métrica de éxito o "función objetivo", aplicaremos diferentes modelos de la familia lineal para responder a las preguntas de negocio:
+
+*   **Regresión Logística (Scoring de Clientes):** Utilizada para predecir probabilidades. Nos permitirá calcular la propensión de conversión de un cliente ante una promoción específica o su riesgo de abandono continuo.
+*   **Regresión Lineal Tradicional:** Utilizada para predecir variables numéricas continuas, resultará clave para proyectar el ticket promedio esperado o el *Customer Lifetime Value* (CLV).
+
+**El riesgo del Sobreajuste (Overfitting):**
+Al optimizar matemáticamente el ajuste del modelo a los datos transaccionales de CT, nos enfrentaremos al problema fundamental de la minería de datos: el riesgo de encontrar "patrones" o estructuras que en realidad son ruido o casualidad estadística Para garantizar que los hallazgos sean accionables y aplicables a datos futuros, será obligatorio establecer estrategias para reconocer y mitigar el sobreajuste durante la fase de evaluación.
+
 :::
 
 ::: {style="text-align: justify"}
@@ -96,6 +109,9 @@ Algunas de las terminologías clave para este proyecto son:
 - **EDA (Exploratory Data Analysis):** Proceso inicial de investigación de los datos para descubrir patrones, detectar anomalías y comprobar hipótesis mediante estadísticas y visualizaciones.
 - **Dashboard:** Herramienta de visualización de datos que muestra métricas clave y KPIs en una sola pantalla de forma interactiva.
 - **Power BI:** Servicio de análisis empresarial de Microsoft que proporciona visualizaciones interactivas y capacidades de inteligencia empresarial.
+- **Modelado Paramétrico (o Ajuste de Funciones):** Técnica de modelado predictivo donde el modelo se define como una ecuación matemática parcialmente especificada. El algoritmo se encarga de "ajustar" los parámetros numéricos (pesos) de esta ecuación para encontrar la relación que mejor represente a los datos históricos.
+- **Función Objetivo:** Criterio matemático utilizado por los algoritmos para evaluar qué tan bien se ajusta un modelo a los datos. Define qué significa exactamente obtener "el mejor ajuste" para un problema de negocio específico.
+- **Sobreajuste (Overfitting):** Tendencia de un modelo de minería de datos a memorizar el "ruido" o las variaciones aleatorias de un conjunto de datos en lugar de aprender el patrón subyacente real. Un modelo sobreajustado funciona excelente con los datos históricos, pero falla al intentar predecir el comportamiento de datos nuevos o futuros.
 ::: 
 
 ::: {style="text-align: justify"}
