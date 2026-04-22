@@ -5,7 +5,9 @@ authors = [
     { name = "Angel Merino", email = "acedeno00@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pymongo>=4.17.0",
+]
 
 [project.scripts]
 pulse = "pulse:main"
