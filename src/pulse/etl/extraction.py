@@ -76,6 +76,50 @@ def extract_pedidos(
     print(f"Documentos extraídos: {len(documentos):,}")
     return documentos
 
+def extract_pedidos_vendidos(
+    fecha_inicio: str = "2024-01-01",
+    fecha_fin: str = "2024-12-31",
+    batch_size: int = 5000,
+) -> list[dict]:
+    """
+    Extrae pedidos CTonline que representan ventas concretadas.
+    Excluye: Cancelado, Rechazado, Pendiente, Preautorizado, Autorizado, Confirmado.
+    """
+    collection = get_collection()
+
+    inicio = datetime.fromisoformat(f"{fecha_inicio}T00:00:00+00:00")
+    fin = datetime.fromisoformat(f"{fecha_fin}T23:59:59+00:00")
+
+    query = {
+        "pedido.tipo": "CTonline",
+        "pedido.fecha": {"$gte": inicio, "$lte": fin},
+        # Excluir pedidos que NO se concretaron o están en proceso
+        "$nor": [
+            {"estatus.Cancelado": {"$exists": True}},
+            {"estatus.Rechazado": {"$exists": True}},
+        ],
+        # Al menos debe estar facturado (mínimo para considerar venta)
+        "estatus.Facturado": {"$exists": True},
+    }
+
+    projection = {
+        "_id": 1,
+        "pedido.fecha": 1,
+        "pedido.encabezado.cliente": 1,
+        "pedido.encabezado.nombre": 1,
+        "pedido.encabezado.plazo": 1,
+        "pedido.encabezado.tipoPago": 1,
+        "pedido.detalle.producto": 1,
+    }
+
+    total = collection.count_documents(query)
+    print(f"Pedidos CTonline vendidos encontrados: {total:,}")
+
+    cursor = collection.find(query, projection).batch_size(batch_size)
+    documentos = list(cursor)
+
+    print(f"Documentos extraídos: {len(documentos):,}")
+    return documentos
 
 def quick_sample(n: int = 5) -> list[dict]:
     """Muestra rápida para inspeccionar estructura."""
