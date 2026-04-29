@@ -41,11 +41,12 @@ def build_orders_df(documentos: list[dict]) -> pd.DataFrame:
 def build_items_df(documentos: list[dict]) -> pd.DataFrame:
     """
     Construye DataFrame a nivel producto (una fila por producto por pedido).
-    Este es el insumo principal para Market Basket Analysis.
+    Incluye datos de promoción cuando existen.
 
     Columnas:
         order_id, cliente_id, fecha, clave,
-        cantidad, precio, precio_final, moneda
+        cantidad, precio, precio_final, moneda,
+        promocion_id, promocion_tipo
     """
     rows = []
     for doc in documentos:
@@ -67,6 +68,9 @@ def build_items_df(documentos: list[dict]) -> pd.DataFrame:
                 "precio": prod.get("precio"),
                 "precio_final": prod.get("precioFinal"),
                 "moneda": prod.get("moneda"),
+                # --- NUEVO: campos de promoción ---
+                "promocion_id": prod.get("promocion_id"),
+                "promocion_tipo": prod.get("promocion_tipo"),
             })
 
     df = pd.DataFrame(rows)
@@ -74,6 +78,8 @@ def build_items_df(documentos: list[dict]) -> pd.DataFrame:
     df["cantidad"] = pd.to_numeric(df["cantidad"], errors="coerce")
     df["precio"] = pd.to_numeric(df["precio"], errors="coerce")
     df["precio_final"] = pd.to_numeric(df["precio_final"], errors="coerce")
+    df["promocion_id"] = pd.to_numeric(df["promocion_id"], errors="coerce").astype("Int64")
+    df["promocion_tipo"] = pd.to_numeric(df["promocion_tipo"], errors="coerce").astype("Int64")
     return df
 
 
