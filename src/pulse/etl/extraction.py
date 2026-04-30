@@ -83,7 +83,7 @@ def extract_pedidos_vendidos(
 ) -> list[dict]:
     """
     Extrae pedidos CTonline que representan ventas concretadas.
-    Excluye: Cancelado, Rechazado, Pendiente, Preautorizado, Autorizado, Confirmado.
+    Excluye: Cancelado, Rechazado.
     """
     collection = get_collection()
 
