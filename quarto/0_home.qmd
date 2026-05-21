@@ -1,5 +1,5 @@
 ---
-title: "Análisis de comportamiento de clientes y oportunidades de promoción"
+title: "Customer Analytics: Análisis RFM, Segmentación y MBA"
 format: 
     html:
          page-layout: article
@@ -18,22 +18,22 @@ date-format: long
 lang: es
 ---
 
-::: {style="text-align: justify"}
 ## Introducción
 
-Este proyecto se enfoca en el desarrollo de un sistema de análisis e inteligencia de negocios basado en los patrones de búsqueda y compras de los clientes de CT Internacional. A través del procesamiento de datos transaccionales históricos, buscamos transformar un enfoque de marketing en una estrategia proactiva, personalizada y basada en el comportamiento real del consumidor.
+Bienvenido a la documentación del proyecto de **Customer Analytics**. Este sitio consolida los análisis y descubrimientos realizados sobre el comportamiento y las transacciones de nuestros clientes.
 
-El proyecto se divide en las siguientes fases iniciales:
+Nuestros objetivos principales con esta investigación son:
+- Entender mejor a nuestra base de clientes.
+- Descubrir patrones de compra.
+- Proponer estrategias basadas en datos (Data-Driven).
 
-1. **Comprensión del negocio:** Definir el problema central de la desalineación entre las campañas de proveedores y los intereses reales de los clientes de CT Internacional.
+## Contenido del Proyecto
 
-2. **Extracción y comprensión de los datos:** Recolección de un histórico de transacciones (ventas, fechas, ID de clientes, categorías de productos, marcas, búsquedas) y validación de la integridad de la información.
+A través de la navegación superior podrás explorar cada etapa del análisis:
 
-3. **Ingeniería de características:** Creación de nuevas métricas de valor a partir de los datos crudos, tales como: días desde la última compra (Recency), frecuencia de compra o de búsqueda, ticket promedio y dependencia de categoría.
-
-4. **Análisis exploratorio y visualización (EDA & Dashboards):** Construcción de herramientas visuales (mockups y dashboards) que expongan de manera clara problemas como la fuga de clientes, el inventario estancado, oportunidades de venta cruzada, presencia de productos por categoría, más vendidos y no tan vendidos.
-
-5. **Segmentación avanzada (fase 2)** Aplicación de modelos de aprendizaje no supervisado (como K-Means o análisis RFM) para agrupar clientes según su comportamiento y rentabilidad.
-
-A través de estas fases, buscamos proporcionar a los equipos de ventas y marketing herramientas accionables que mejoren la retención de clientes, aumenten la eficacia de las promociones y fortalezcan las negociaciones con los proveedores basados en datos duros.
-:::
+1. **Comprensión del Negocio**: Definir los objetivos centrales y el impacto esperado.
+2. **Exploración de Datos**: Resumen de los hallazgos en la fase EDA (usando datos mock para proteger la privacidad).
+3. **Análisis RFM**: Metodología para evaluar la Recencia, Frecuencia y Valor Monetario.
+4. **Segmentación**: Agrupación de clientes usando modelos de Machine Learning (Clustering).
+5. **Market Basket Analysis (MBA)**: Análisis de canasta para descubrir reglas de asociación entre productos.
+6. **Visión y Futuro**: Próximos pasos hacia la construcción de un Dashboard Dinámico y modelos predictivos.

@@ -6,3 +6,5 @@ notebooks/
 docs/
 datos/
 QWEN.md
+CLAUDE.md
+.claude/

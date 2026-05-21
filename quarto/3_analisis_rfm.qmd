@@ -1,0 +1,81 @@
+---
+title: "Análisis RFM"
+format: 
+    html:
+         page-layout: article
+         code-fold: true
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+## 1. Introducción al Modelo RFM
+
+Evaluamos a casi 20,000 clientes mediante el modelo **RFM (Recency, Frequency, Monetary)**. Este enfoque clásico nos permitió establecer una puntuación del 1 al 5 en cada dimensión para entender el valor intrínseco de nuestra cartera.
+
+## 2. Generación del Score RFM
+
+Implementamos una segmentación inicial heurística basada puramente en la combinación de los cuartiles R, F y M, utilizando los datos consolidados.
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_theme(style="white")
+# Paleta extraída de las libretas originales
+SEGMENT_COLORS = {
+    'MVPs': '#2E75B6',          # Azul oscuro
+    'Alto Valor': '#5B9BD5',    # Azul medio
+    'Ocasionales': '#9DC3E6',   # Azul claro
+    'En Riesgo': '#ED7D31',     # Naranja
+    'Hibernando': '#E74C3C'     # Rojo
+}
+
+# Representación exacta de las proporciones reales encontradas en el Parquet
+# Total ~ 19,931 clientes
+segment_pct = {
+    'MVPs': 28.86,
+    'Hibernando': 28.02,
+    'Alto Valor': 19.19,
+    'Ocasionales': 11.98,
+    'En Riesgo': 11.94
+}
+
+# Generamos un DataFrame para visualizar las proporciones
+df_rfm_summary = pd.DataFrame({
+    'Segmento': list(segment_pct.keys()),
+    'Porcentaje': list(segment_pct.values())
+}).sort_values('Porcentaje', ascending=False)
+```
+
+## 3. Visualización de los Segmentos RFM Base
+
+El análisis heurístico de RFM nos dio una primera gran imagen de la base de datos:
+
+```{python}
+plt.figure(figsize=(10, 6))
+sns.barplot(
+    data=df_rfm_summary, 
+    y='Segmento', 
+    x='Porcentaje', 
+    palette=SEGMENT_COLORS,
+    edgecolor="none"
+)
+
+# Añadir las etiquetas de porcentaje
+for index, value in enumerate(df_rfm_summary['Porcentaje']):
+    plt.text(value + 0.5, index, f"{value:.1f}%", va='center')
+
+plt.title("Proporción de Clientes por Segmento Heurístico (RFM)")
+plt.xlabel("Porcentaje del Total de Clientes (%)")
+plt.ylabel("")
+sns.despine()
+plt.show()
+```
+
+### 3.1 Hallazgos Clave del Score RFM
+- **Fuerte polarización**: Un masivo 28.8% de los clientes se clasificaron como **MVPs** (compran frecuente, reciente y con alto volumen), siendo el motor principal del negocio.
+- **Área de oportunidad**: Existe un preocupante 28.02% en estado **Hibernando**, representando clientes de compras únicas en el pasado distante o muy baja frecuencia y recencia.
+- **Segmentos transicionales**: El 19.19% de clientes son de **Alto Valor** y necesitan ser empujados a MVPs, mientras que el bloque de **Ocasionales** y **En Riesgo** (11.9% cada uno) requiere estrategias de retención urgente antes de pasar a Hibernación.

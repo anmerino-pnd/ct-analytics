@@ -1,35 +1,34 @@
 project:
   type: website
   output-dir: ../docs
-  render: # Renderizar todos los archivos .qmd
+  render:
     - 0_home.qmd
     - 1_comprension.qmd
-    # - 2_comprension_datos.qmd
-    # - 3_preparacion.qmd
-    # - 4_modelado.qmd
-    # - 5_despliegue.qmd
-    # - 6_documentacion.qmd
-
+    - 2_exploracion_datos.qmd
+    - 3_analisis_rfm.qmd
+    - 4_segmentacion_clientes.qmd
+    - 5_market_basket.qmd
+    - 6_vision_y_futuro.qmd
 
 website:
-  favicon: ./images/favicon.png
+  favicon: ./images/favicon.png # Descomentar si hay favicon
   navbar:
-    logo: ./images/ctlogo.png
+    logo: ./images/ctlogo.png # Descomentar si hay logo
     left:
       - href: 0_home.qmd
-        text: Home
+        text: Inicio
       - href: 1_comprension.qmd
-        text: Comprensión del negocio
-      # - href: 2_comprension_datos.qmd
-      #   text: Comprensión de los datos
-      # - href: 3_preparacion.qmd
-      #   text: Preparación
-      # - href: 4_modelado.qmd
-      #   text: Modelado y Evaluación
-      # - href: 5_despliegue.qmd
-      #   text: Despliegue
-      # - href: 6_documentacion.qmd
-      #   text: Documentación
+        text: Comprensión del Negocio
+      - href: 2_exploracion_datos.qmd
+        text: Exploración de Datos
+      - href: 3_analisis_rfm.qmd
+        text: Análisis RFM
+      - href: 4_segmentacion_clientes.qmd
+        text: Segmentación
+      - href: 5_market_basket.qmd
+        text: Market Basket
+      - href: 6_vision_y_futuro.qmd
+        text: Visión y Futuro
       
   back-to-top-navigation: true
       
@@ -38,9 +37,13 @@ format:
     theme:
       light: cosmo
       dark: darkly
-    css: styles.css
+    css: styles.css # Descomentar si añadimos CSS personalizado
     toc: true
     execute:
-      echo: false
+      echo: true # True para mostrar el código de los notebooks
 
+diagram:
+  mermaid:
+    theme: neutral
+    
 lang: es

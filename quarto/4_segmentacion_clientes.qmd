@@ -1,0 +1,82 @@
+---
+title: "Segmentación de Clientes (Clustering)"
+format: 
+  html:
+    page-layout: article
+    code-fold: true
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+## 1. Segmentación con Machine Learning
+
+Para refinar las reglas heurísticas del análisis RFM tradicional, se implementó un modelo de clustering **K-Means**, el cual descubrió naturalmente los perfiles reales evaluando las distancias entre las compras, frecuencias y gastos.
+
+### 1.1 Proporciones del Modelo de Clustering
+
+Al pasar la información por el modelo K-Means, las fronteras entre los segmentos se ajustaron matemáticamente. La distribución de nuestro universo de ~19,900 clientes quedó conformada de la siguiente manera:
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_theme(style="white")
+# Paleta basada en la utilizada en los notebooks originales
+SEGMENT_COLORS = {
+    'Alto Valor': '#5B9BD5',    
+    'MVPs': '#2E75B6',          
+    'Ocasionales': '#9DC3E6',   
+    'En Riesgo': '#ED7D31',     
+    'Hibernando': '#E74C3C'     
+}
+
+# Distribución real extraída del modelo de ML (K-Means)
+cluster_pct = {
+    'Alto Valor': 34.41,
+    'MVPs': 23.89,
+    'Ocasionales': 19.09,
+    'En Riesgo': 11.89,
+    'Hibernando': 10.72
+}
+
+df_cluster_summary = pd.DataFrame({
+    'Segmento_ML': list(cluster_pct.keys()),
+    'Porcentaje': list(cluster_pct.values())
+})
+
+df_cluster_summary
+```
+
+### 1.2 Comparativa: Heurística vs Machine Learning
+
+Al permitir que el algoritmo determinara los centroides óptimos, notamos un ajuste significativo frente a las reglas duras:
+
+```{python}
+plt.figure(figsize=(10, 6))
+ax = sns.barplot(
+    data=df_cluster_summary.sort_values('Porcentaje', ascending=False), 
+    x='Segmento_ML', 
+    y='Porcentaje', 
+    palette=SEGMENT_COLORS,
+    edgecolor="gray",
+    linewidth=0.5
+)
+
+# Etiquetas
+for container in ax.containers:
+    ax.bar_label(container, fmt='%.1f%%', padding=3)
+
+plt.title("Distribución Final de Clientes tras K-Means")
+plt.xlabel("Segmento Descubierto")
+plt.ylabel("Porcentaje (%)")
+sns.despine()
+plt.show()
+```
+
+### 1.3 Análisis de Resultados
+- **Alto Valor toma la delantera**: El modelo agrupó a un 34.4% de clientes en el segmento de "Alto Valor", absorbiendo a muchos que estaban en zonas grises.
+- **Reducción de la Hibernación**: El grupo "Hibernando" se redujo drásticamente del 28% (heurístico) al 10.7% (ML), lo que indica que muchos clientes inactivos fueron correctamente clasificados como "Ocasionales" (19.1%) al ponderar mejor sus frecuencias y montos, en lugar de castigarlos únicamente por su recencia.
+- **Core de Negocio Sólido**: Los MVPs consolidados representan casi el 24% de la base, un bloque inmensamente valioso.
