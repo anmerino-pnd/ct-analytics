@@ -12,9 +12,11 @@ def find_project_root(start_path: Path, marker_file: str = "pyproject.toml") -> 
 BASE_DIR = find_project_root(Path(__file__))
 DATA = BASE_DIR / "datos"
 PROCESSED = DATA / "processed"
+MODELS = DATA / "models"
 
 for path in [
     DATA,
-    PROCESSED
+    PROCESSED,
+    MODELS
 ]:
     path.mkdir(parents=True, exist_ok=True)
