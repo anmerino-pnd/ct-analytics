@@ -8,7 +8,10 @@ project:
     - 3_analisis_rfm.qmd
     - 4_segmentacion_clientes.qmd
     - 5_market_basket.qmd
-    - 6_vision_y_futuro.qmd
+    - 6_estacionalidad_segmentos.qmd
+    - 7_persistencia_mlops.qmd
+    - 8_dashboard_pulse.qmd
+    - 9_vision_y_futuro.qmd
 
 website:
   favicon: ./images/favicon.png # Descomentar si hay favicon
@@ -27,7 +30,13 @@ website:
         text: Segmentación
       - href: 5_market_basket.qmd
         text: Market Basket
-      - href: 6_vision_y_futuro.qmd
+      - href: 6_estacionalidad_segmentos.qmd
+        text: Estacionalidad
+      - href: 7_persistencia_mlops.qmd
+        text: MLOps
+      - href: 8_dashboard_pulse.qmd
+        text: Dashboard
+      - href: 9_vision_y_futuro.qmd
         text: Visión y Futuro
       
   back-to-top-navigation: true

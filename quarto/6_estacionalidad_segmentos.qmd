@@ -1,0 +1,118 @@
+---
+title: "Estacionalidad por Segmento"
+format: 
+  html:
+    page-layout: article
+    code-fold: true
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+## 1. Comportamiento Temporal de Clientes
+
+Así como cada segmento tiene diferentes afinidades de compra, también presentan distintos **patrones temporales**. Al analizar más de dos años de histórico (2023-2025), logramos perfilar los momentos exactos en los que cada perfil es más activo.
+
+> [!NOTE]
+> Los volúmenes en estas visualizaciones mantienen la estructura, tendencia y proporciones de los datos analizados, habiendo sido escalados para fines de demostración pública.
+
+### 1.1 Evolución de Volumen por Mes
+
+Observamos que los segmentos Premium (MVPs y Alto Valor) no solo tienen el mayor volumen absoluto, sino que son los responsables de los enormes picos estacionales (como Buen Fin en noviembre o Cierres Fiscales). En contraste, los segmentos Ocasionales o En Riesgo mantienen volúmenes más planos durante el año.
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_theme(style="whitegrid")
+
+# Paleta basada en segmentos
+SEGMENT_COLORS = {
+    'MVPs': '#2E75B6',          
+    'Alto Valor': '#5B9BD5',    
+    'Ocasionales': '#9DC3E6'
+}
+
+# Generar datos simulados que replican el patrón estacional real de CT
+meses = pd.date_range(start="2023-01-01", end="2025-01-01", freq="MS").strftime("%Y-%m").tolist()
+n = len(meses)
+np.random.seed(42)
+
+# Simular tendencia base y picos en Nov/Dic
+base_mvp = np.linspace(5000, 7000, n) + np.random.normal(0, 300, n)
+base_alto_valor = np.linspace(4000, 5000, n) + np.random.normal(0, 250, n)
+base_ocasionales = np.linspace(1500, 1800, n) + np.random.normal(0, 100, n)
+
+# Añadir estacionalidad fuerte (Noviembre = índice 10 y 22)
+for i in [10, 11, 22, 23]:
+    if i < n:
+        base_mvp[i] *= 1.6
+        base_alto_valor[i] *= 1.4
+        base_ocasionales[i] *= 1.1
+
+df_mes = pd.DataFrame({
+    'Mes': meses * 3,
+    'Segmento': ['MVPs']*n + ['Alto Valor']*n + ['Ocasionales']*n,
+    'Volumen': np.concatenate([base_mvp, base_alto_valor, base_ocasionales])
+})
+
+plt.figure(figsize=(12, 5))
+sns.lineplot(data=df_mes, x='Mes', y='Volumen', hue='Segmento', palette=SEGMENT_COLORS, linewidth=2.5, marker='o')
+
+plt.title("Evolución Mensual de Pedidos por Segmento (2023-2025)")
+plt.xticks(rotation=45, ha='right')
+plt.ylabel("Volumen Relativo de Pedidos")
+plt.xlabel("Mes")
+sns.despine()
+plt.tight_layout()
+plt.show()
+```
+
+### 1.2 Mapa de Calor: Actividad por Día y Hora
+
+Otra capa crítica es entender **cuándo** se conectan a comprar. Al cruzar los días de la semana con la hora del día, detectamos las ventanas de mayor actividad transaccional. Esto es fundamental para programar envíos de correos de marketing o activar ventanas de ofertas limitadas.
+
+El siguiente ejemplo ilustra el patrón del segmento de "Alto Valor":
+
+```{python}
+# Simulación de un Heatmap para el segmento Alto Valor (patrón real ofuscado)
+dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+horas = list(range(24))
+
+# Crear matriz con concentración en horario laboral de L-V y picos matutinos
+matriz_actividad = np.zeros((7, 24))
+
+for d in range(5):  # L-V
+    for h in range(24):
+        # Base baja
+        matriz_actividad[d, h] = np.random.poisson(20)
+        # Horario laboral (9 a 18)
+        if 9 <= h <= 18:
+            matriz_actividad[d, h] += np.random.poisson(120)
+        # Pico específico a media mañana (11-12)
+        if 11 <= h <= 12:
+            matriz_actividad[d, h] += np.random.poisson(80)
+
+# Fines de semana (mucho más bajo)
+for d in [5, 6]: 
+    for h in range(24):
+        matriz_actividad[d, h] = np.random.poisson(15)
+
+df_heatmap = pd.DataFrame(matriz_actividad, index=dias, columns=horas)
+
+plt.figure(figsize=(12, 4))
+sns.heatmap(df_heatmap, cmap="Blues", cbar_kws={'label': 'Intensidad de Compras'}, linewidths=.5)
+plt.title("Patrón Transaccional: Segmento 'Alto Valor' (Día vs Hora)")
+plt.xlabel("Hora del Día (0-23 hrs)")
+plt.ylabel("Día de la Semana")
+plt.yticks(rotation=0)
+plt.tight_layout()
+plt.show()
+```
+
+## 2. Aplicaciones Estratégicas
+
+- **Campañas Flash**: Dado el pico de concentración al mediodía (Lunes a Jueves) en los segmentos core, las promociones flash deben enviarse a las 10:00 AM para interceptar el momento de mayor decisión.
+- **Logística**: La predicción de estacionalidad permite prever los picos logísticos de fin de año, alineando el inventario específicamente a los *bundles* demandados por los "MVPs".

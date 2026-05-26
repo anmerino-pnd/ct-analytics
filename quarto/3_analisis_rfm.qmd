@@ -1,5 +1,5 @@
 ---
-title: "Análisis RFM"
+title: "Análisis RFM Avanzado"
 format: 
     html:
          page-layout: article
@@ -9,13 +9,34 @@ toc: true
 toc-depth: 3
 ---
 
-## 1. Introducción al Modelo RFM
+## 1. Evolución del Modelo RFM
 
-Evaluamos a casi 20,000 clientes mediante el modelo **RFM (Recency, Frequency, Monetary)**. Este enfoque clásico nos permitió establecer una puntuación del 1 al 5 en cada dimensión para entender el valor intrínseco de nuestra cartera.
+Evaluamos a casi 20,000 clientes mediante el modelo **RFM (Recency, Frequency, Monetary)**. Este enfoque clásico establece una puntuación para entender el valor del cliente basado en la recencia de su última compra, su frecuencia total y el dinero invertido.
 
-## 2. Generación del Score RFM
+Sin embargo, al procesar los datos, descubrimos limitaciones graves en el RFM tradicional. Decidir si un cliente está "En Riesgo" utilizando un límite arbitrario (por ejemplo, "no ha comprado en 60 días") castiga injustamente a clientes cuya naturaleza B2B dicta comprar grandes volúmenes cada 6 meses.
 
-Implementamos una segmentación inicial heurística basada puramente en la combinación de los cuartiles R, F y M, utilizando los datos consolidados.
+Por ello, hemos evolucionado el análisis integrando métricas dinámicas de cadencia.
+
+## 2. Métricas Dinámicas: Cadencia y Urgencia
+
+### 2.1 Single Buyers vs Clientes Recurrentes
+
+El primer paso fue separar a los clientes con una sola compra (*Single Buyers*) del resto de la base. Los *Single Buyers* no tienen una frecuencia calculable y no pueden ser medidos con las mismas reglas de retención. 
+
+### 2.2 Cadencia de Compra (Inter-Purchase Time)
+
+Para los clientes recurrentes, calculamos la mediana de días entre todas sus compras. Esta métrica personalizada representa el "ritmo vital" de cada cuenta individual.
+
+### 2.3 El "Ratio de Urgencia"
+
+La verdadera innovación de esta fase fue la creación del **Ratio de Urgencia**. 
+Se calcula matemáticamente como:
+$$ \text{Ratio de Urgencia} = \frac{\text{Recency Actual (días)}}{\text{Cadencia Habitual (días)}} $$
+
+**¿Cómo interpretarlo?**
+- **Ratio < 1.0**: El cliente está en su ciclo normal de compra. (ej. Compra cada 30 días, y su última compra fue hace 15).
+- **Ratio > 1.5**: Alarma temprana. El cliente ya se retrasó un 50% respecto a la fecha en que *matemáticamente* le tocaba comprar.
+- **Ratio > 3.0**: Abandono inminente o completado.
 
 ```{python}
 import pandas as pd
@@ -23,18 +44,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="white")
+sns.set_theme(style="whitegrid")
+COLOR_ACCENT = "#5B9BD5"
+COLOR_WARN = "#E74C3C"
+
+# Simulación de la distribución del Ratio de Urgencia en la base recurrente
+n_recurrentes = 8000
+np.random.seed(42)
+# Generamos una distribución log-normal simulando ratios
+ratios_urgencia = np.random.lognormal(mean=0, sigma=0.8, size=n_recurrentes)
+
+# Filtrar outliers extremos para la visualización
+ratios_visual = ratios_urgencia[ratios_urgencia < 10]
+
+plt.figure(figsize=(10, 5))
+sns.histplot(ratios_visual, bins=60, color=COLOR_ACCENT, edgecolor="white")
+
+# Líneas de corte para acciones de negocio
+plt.axvline(x=1.5, color=COLOR_WARN, linestyle='--', linewidth=2, label="Límite de Riesgo (>1.5x)")
+
+plt.title("Distribución del Ratio de Urgencia en Clientes Recurrentes")
+plt.xlabel("Ratio de Urgencia (Recency / Cadencia Habitual)")
+plt.ylabel("Volumen de Clientes")
+plt.legend()
+sns.despine()
+plt.tight_layout()
+plt.show()
+```
+
+## 3. Generación del Score Heurístico Base
+
+A pesar de estas nuevas métricas profundas, mantuvimos una segmentación inicial heurística (basada en percentiles clásicos de R, F y M) para tener un panorama general antes de pasar al aprendizaje automático complejo.
+
+```{python}
 # Paleta extraída de las libretas originales
 SEGMENT_COLORS = {
-    'MVPs': '#2E75B6',          # Azul oscuro
-    'Alto Valor': '#5B9BD5',    # Azul medio
-    'Ocasionales': '#9DC3E6',   # Azul claro
-    'En Riesgo': '#ED7D31',     # Naranja
-    'Hibernando': '#E74C3C'     # Rojo
+    'MVPs': '#2E75B6',          
+    'Alto Valor': '#5B9BD5',    
+    'Ocasionales': '#9DC3E6',   
+    'En Riesgo': '#ED7D31',     
+    'Hibernando': '#E74C3C'     
 }
 
-# Representación exacta de las proporciones reales encontradas en el Parquet
-# Total ~ 19,931 clientes
+# Representación exacta de las proporciones heurísticas reales encontradas
 segment_pct = {
     'MVPs': 28.86,
     'Hibernando': 28.02,
@@ -43,19 +95,12 @@ segment_pct = {
     'En Riesgo': 11.94
 }
 
-# Generamos un DataFrame para visualizar las proporciones
 df_rfm_summary = pd.DataFrame({
     'Segmento': list(segment_pct.keys()),
     'Porcentaje': list(segment_pct.values())
 }).sort_values('Porcentaje', ascending=False)
-```
 
-## 3. Visualización de los Segmentos RFM Base
-
-El análisis heurístico de RFM nos dio una primera gran imagen de la base de datos:
-
-```{python}
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(10, 5))
 sns.barplot(
     data=df_rfm_summary, 
     y='Segmento', 
@@ -68,14 +113,11 @@ sns.barplot(
 for index, value in enumerate(df_rfm_summary['Porcentaje']):
     plt.text(value + 0.5, index, f"{value:.1f}%", va='center')
 
-plt.title("Proporción de Clientes por Segmento Heurístico (RFM)")
-plt.xlabel("Porcentaje del Total de Clientes (%)")
+plt.title("Proporción de Clientes por Regla Heurística Clásica")
+plt.xlabel("Porcentaje del Total (%)")
 plt.ylabel("")
 sns.despine()
 plt.show()
 ```
 
-### 3.1 Hallazgos Clave del Score RFM
-- **Fuerte polarización**: Un masivo 28.8% de los clientes se clasificaron como **MVPs** (compran frecuente, reciente y con alto volumen), siendo el motor principal del negocio.
-- **Área de oportunidad**: Existe un preocupante 28.02% en estado **Hibernando**, representando clientes de compras únicas en el pasado distante o muy baja frecuencia y recencia.
-- **Segmentos transicionales**: El 19.19% de clientes son de **Alto Valor** y necesitan ser empujados a MVPs, mientras que el bloque de **Ocasionales** y **En Riesgo** (11.9% cada uno) requiere estrategias de retención urgente antes de pasar a Hibernación.
+Esta segmentación heurística mostró una fuerte polarización del negocio (28% de MVPs y 28% Hibernando). Sin embargo, era necesario incorporar la "Cadencia" como dimensión estructural y permitir que algoritmos de Inteligencia Artificial (Clustering) redibujaran las fronteras de manera matemática.

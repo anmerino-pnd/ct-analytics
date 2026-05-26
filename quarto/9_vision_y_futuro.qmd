@@ -1,0 +1,33 @@
+---
+title: "Visión y Futuro"
+format: 
+  html:
+    page-layout: article
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+## 1. Resumen de Implementación
+
+Con el despliegue del **Dashboard Pulse** y el envoltorio MLOps del **Segmentador de Clientes**, hemos completado la primera iteración completa de Inteligencia de Clientes (Customer Intelligence) para CT Internacional.
+
+Hemos transitado con éxito por:
+1. **Descriptivo**: Análisis EDA y limpiezas estructurales.
+2. **Diagnóstico**: Modelado RFM base.
+3. **Predictivo / Minería**: Clustering K-Means y MBA hiper-focalizado por segmento.
+4. **Prescriptivo**: Puesta en producción de un Dashboard (Pulse) que prescribe campañas y ofertas específicas basadas en Lifts y estacionalidad.
+
+## 2. Hoja de Ruta (Siguientes Fases)
+
+La arquitectura actual sienta las bases para casos de uso aún más ambiciosos. El Roadmap a futuro incluye:
+
+### 2.1 Pronóstico de Demanda a Nivel Segmento
+- Utilizar series de tiempo (como Prophet o modelos autorregresivos) sobre la estacionalidad descubierta (Phase 6) para predecir el inventario exacto requerido para satisfacer a los *MVPs* en los cierres de mes.
+
+### 2.2 Customer Lifetime Value (CLV) Predictivo
+- Implementar modelos paramétricos o de Machine Learning que estimen cuántos ingresos generará un cliente "Alto Valor" en los próximos 12 meses.
+- Esto permitirá asignar presupuestos de retención precisos (CAC vs CLV).
+
+### 2.3 Sistema de Recomendación Integrado al E-commerce
+- Transformar el Market Basket Analysis, actualmente consumido por marketing en Pulse, en una API de baja latencia que ofrezca recomendaciones "en tiempo real" dentro del portal de compras web B2B de la empresa.

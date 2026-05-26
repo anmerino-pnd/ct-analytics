@@ -1,0 +1,36 @@
+---
+title: "Persistencia de Modelos (MLOps)"
+format: 
+  html:
+    page-layout: article
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+## 1. Ingeniería de Modelos
+
+Para garantizar que nuestros descubrimientos analíticos en la fase de investigación puedan ser aplicados en el futuro sin re-entrenar los modelos desde cero, hemos implementado una estrategia de **MLOps** (Machine Learning Operations).
+
+Se construyó una clase wrapper (`SegmentadorClientes`) que encapsula no solo el modelo de clustering (K-Means), sino todo el *pipeline* de transformaciones de datos asociado.
+
+### 1.1 El Pipeline de Transformación
+
+La asignación de segmentos no es tan simple como aplicar K-Means directamente. El flujo interno del wrapper, que ahora está congelado en la versión `v1`, incluye:
+
+1. **Transformación Logarítmica (`log1p`)**: Suaviza las distribuciones de los montos económicos altamente sesgados (la "cola larga" de ingresos).
+2. **Estandarización (`StandardScaler`)**: Lleva las métricas (días, pesos, frecuencia) a una escala comparable (Media=0, Desviación Estándar=1) para que el algoritmo calcule distancias equitativas.
+3. **Clustering (`KMeans`)**: El algoritmo base que detecta la cercanía de los clientes a los centroides precalculados.
+
+## 2. Puesta en Producción
+
+### 2.1 Archivos Artefactos Congelados
+Al entrenar el modelo, el wrapper guarda la instancia serializada (`.pkl`) y un archivo JSON con los metadatos (`metadata.json`). De esta forma, el dashboard web o cualquier API futura solo necesita cargar este paquete y llamar a `predict()`, pasando la información bruta del cliente y devolviendo el segmento sin tener que volver a lidiar con el escalado.
+
+### 2.2 Control de Drift (Snapshot)
+Los hábitos de compra cambian con el tiempo (fenómeno conocido como *Concept Drift* o *Data Drift*). Para proteger la exactitud de nuestra clasificación en el tiempo:
+
+- **Se guarda un Snapshot**: Conservamos un archivo (`modelo_snapshot_v1.parquet`) con las asignaciones originales de los 20,000 clientes con los que se entrenó el modelo.
+- **Validación Automática**: Antes de realizar segmentaciones futuras (por ejemplo, en 2026), el modelo ejecuta un test contra este snapshot. Si detecta que la matriz de confusión diverge significativamente de los centroides originales, dispara una alerta de Drift, indicando que el modelo `v1` ha caducado y requiere que entrenemos la versión `v2`.
+
+Este rigor técnico asegura que las estrategias de Marketing dictadas hoy seguirán siendo matemáticamente sólidas el próximo año.
