@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Heatmap bundles · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Heatmap de bundles × mes</h1>
+  <p class="subtitle">Cuándo se venden los top bundles de cada segmento durante el año.</p>
+</header>
+
+<section class="filters">
+  <div class="filter-group">
+    <label for="f-segmento-hm">Segmento</label>
+    <select id="f-segmento-hm">
+      {% for s in segment_order %}<option value="{{ s }}" {% if s == 'MVPs' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Heatmap: top 10 bundles del segmento × meses</h2>
+  <div id="heatmap-bundles" class="chart"></div>
+</section>
+
+<section class="chart-card">
+  <h2>Mes pico por bundle</h2>
+  <table class="data-table" id="tabla-mes-pico">
+    <thead>
+      <tr>
+        <th>Bundle</th>
+        <th>Mes pico</th>
+        <th>Pedidos en el pico</th>
+        <th>% del año</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> ¿Cuándo se venden los bundles principales del segmento? ¿Hay temporadas dominantes?</p>
+    <p><strong>Cómo leer esto:</strong> Cada fila del heatmap es un bundle (los 10 más fuertes por revenue del segmento). Las columnas son meses (año-mes). La intensidad de color indica volumen de pedidos. La tabla resume el mes pico de cada bundle y cuánta concentración tiene ahí.</p>
+    <p><strong>Acciones sugeridas:</strong> Adelantar inventario o campañas a las semanas antes del mes pico. Si un bundle concentra mucho en un mes (&gt;25% del año), es candidato a campaña estacional dirigida.</p>
+    <p><strong>Notas técnicas:</strong> Top 10 elegidos por revenue total acumulado del bundle dentro del segmento. La columna "% del año" es (pedidos en mes pico) / (pedidos anuales totales del bundle).</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+    const fmtPct = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
+
+    function renderAll(data) {
+      PulseCharts.renderHeatmapBundles('heatmap-bundles', data.serie, data.segmento);
+      const tbody = document.querySelector('#tabla-mes-pico tbody');
+      tbody.innerHTML = '';
+      data.mes_pico.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.regla}</td>
+          <td>${r.mes_pico}</td>
+          <td>${fmtNum(r.pedidos)}</td>
+          <td>${fmtPct(r.pct_concentracion)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function reload() {
+      const segmento = document.getElementById('f-segmento-hm').value;
+      const url = `/api/heatmap-bundles?segmento=${encodeURIComponent(segmento)}&top_n=10`;
+      const data = await PulseFilters.fetchJSON(url);
+      renderAll(data);
+    }
+
+    renderAll(JSON.parse(document.getElementById('initial-data').textContent));
+    document.getElementById('f-segmento-hm').addEventListener('change', reload);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,278 @@
+/* Pulse Dashboard — styles base */
+
+:root {
+  --bg:          #ffffff;
+  --bg-soft:     #f7f7f7;
+  --border:      #e3e3e3;
+  --text:        #1d1d1f;
+  --text-soft:   #6b6b70;
+  --accent:      #0B3C5D;
+  --danger:      #D82822;
+  --shadow:      0 1px 2px rgba(0,0,0,0.04);
+  --radius:      6px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── Navbar ──────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.navbar .brand {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-link {
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  color: var(--text-soft);
+  font-weight: 500;
+  font-size: 13px;
+}
+.nav-link:hover { background: var(--bg-soft); text-decoration: none; color: var(--text); }
+.nav-link.active { color: var(--text); background: var(--bg-soft); }
+
+/* ─── Layout ──────────────────────────────────────────────── */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.page-header { margin-bottom: 24px; }
+.page-header h1 {
+  font-size: 24px;
+  margin: 0 0 4px 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.page-header .subtitle {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+
+/* ─── KPI cards ───────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kpi-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+}
+.kpi-value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Chart cards ─────────────────────────────────────────── */
+.chart-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  background: var(--bg);
+  margin-bottom: 24px;
+}
+.chart-card h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text);
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-row .chart-card { margin-bottom: 0; }
+.chart { min-height: 340px; width: 100%; }
+
+/* ─── Tablas ──────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  font-weight: 600;
+  color: var(--text-soft);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.data-table tbody tr:nth-child(even) { background: var(--bg-soft); }
+.data-table tbody tr:hover { background: #eef3f7; }
+
+.seg-chip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ─── Explainer ───────────────────────────────────────────── */
+details.explainer {
+  margin-top: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 12px 16px;
+}
+details.explainer > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent);
+  user-select: none;
+}
+details.explainer > summary:hover { text-decoration: underline; }
+details.explainer .explainer-content {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+details.explainer .explainer-content p { margin: 0 0 8px 0; }
+
+/* ─── Error banner ────────────────────────────────────────── */
+.error-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 18px;
+  background: var(--danger);
+  color: white;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(216, 40, 34, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 1000;
+}
+.hidden { display: none !important; }
+
+/* ─── Controles (filtros) ─────────────────────────────────── */
+.filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+}
+.filter-group select,
+.filter-group input[type="text"] {
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  font-family: inherit;
+  min-width: 200px;
+}
+
+.toggle-group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.toggle-group button {
+  border: none;
+  background: white;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-soft);
+}
+.toggle-group button.active {
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+}
+
+/* ─── Loading placeholder ─────────────────────────────────── */
+.chart.loading::after {
+  content: 'Cargando...';
+  display: block;
+  text-align: center;
+  padding: 80px 0;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+/* ─── Heatmap grid (estacionalidad multi-segmento) ────────── */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.heatmap-grid .chart-card { margin-bottom: 0; }
+
+/* ─── Badge segmento (cliente view) ───────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}

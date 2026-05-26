@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Estacionalidad · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Estacionalidad por segmento</h1>
+  <p class="subtitle">Cuándo compra cada segmento — heatmap hora × día, serie mensual y patrón típico de año.</p>
+</header>
+
+<section class="filters">
+  <div class="filter-group">
+    <label>Segmentos (multi-selección)</label>
+    <div class="toggle-group" id="f-segmentos" role="tablist">
+      {% for s in segment_order %}
+        <button type="button" data-segmento="{{ s }}" class="active">{{ s }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Heatmap hora × día (% del segmento)</h2>
+  <div id="heatmaps-grid" class="heatmap-grid"></div>
+</section>
+
+<section class="chart-card">
+  <h2>Evolución mensual de pedidos</h2>
+  <div id="line-mensual" class="chart"></div>
+</section>
+
+<section class="chart-card">
+  <h2>Estacionalidad típica (promedio por mes calendario)</h2>
+  <div id="bar-mes-cal" class="chart"></div>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> ¿Cuándo compra cada segmento? ¿Cuándo lanzo campañas?</p>
+    <p><strong>Cómo leer esto:</strong> El heatmap muestra <em>qué porcentaje</em> de pedidos de cada segmento ocurren en cada hora-día (normalizado para poder comparar segmentos de tamaños distintos). La línea mensual es el volumen real; el bar chart del año típico promedia los años disponibles por mes calendario, útil para detectar picos cíclicos.</p>
+    <p><strong>Acciones sugeridas:</strong> Programar campañas de email/push en los horarios y días pico de cada segmento. Aprovechar los picos estacionales típicos (p.ej., back-to-school, fin de año) para acciones específicas en MVPs y Alto Valor.</p>
+    <p><strong>Notas técnicas:</strong> Heatmap normalizado a % del segmento, no volumen absoluto. La serie mensual usa pedidos brutos.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const initial = JSON.parse(document.getElementById('initial-data').textContent);
+    const state = { seleccion: new Set(initial.seleccion_inicial) };
+
+    function renderHeatmaps(rows, seleccion) {
+      const grid = document.getElementById('heatmaps-grid');
+      grid.innerHTML = '';
+      const orden = window.SEGMENT_ORDER || [];
+      orden.filter(s => seleccion.has(s)).forEach(seg => {
+        const sub = rows.filter(r => r.segmento === seg);
+        if (!sub.length) return;
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+        const elId = 'hm-' + seg.replace(/\W+/g, '_');
+        card.innerHTML = `<div id="${elId}" class="chart" style="min-height:280px"></div>`;
+        grid.appendChild(card);
+        PulseCharts.renderHeatmapHoraDia(elId, sub, seg);
+      });
+    }
+
+    function renderAll(data) {
+      renderHeatmaps(data.hora_dia, state.seleccion);
+      PulseCharts.renderLineMensual('line-mensual', data.mensual);
+      PulseCharts.renderBarMesCalendario('bar-mes-cal', data.tipica);
+    }
+
+    async function reload() {
+      const segs = [...state.seleccion];
+      if (!segs.length) {
+        // sin selección: limpiar
+        document.getElementById('heatmaps-grid').innerHTML = '';
+        Plotly.purge('line-mensual');
+        Plotly.purge('bar-mes-cal');
+        return;
+      }
+      const url = '/api/estacionalidad?segmentos=' + encodeURIComponent(segs.join(','));
+      const data = await PulseFilters.fetchJSON(url);
+      renderAll(data);
+    }
+
+    // Primera pintura con datos embebidos
+    renderAll(initial);
+
+    // Multi-toggle de segmentos
+    document.querySelectorAll('#f-segmentos button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const seg = btn.dataset.segmento;
+        if (state.seleccion.has(seg)) {
+          state.seleccion.delete(seg);
+          btn.classList.remove('active');
+        } else {
+          state.seleccion.add(seg);
+          btn.classList.add('active');
+        }
+        reload();
+      });
+    });
+  })();
+</script>
+{% endblock %}

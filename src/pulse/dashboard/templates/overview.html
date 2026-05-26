@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Overview · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Overview de segmentos</h1>
+  <p class="subtitle">Visión general de la base de clientes y dónde se concentra el valor.</p>
+</header>
+
+<section class="kpi-grid" id="kpi-grid">
+  <div class="kpi-card">
+    <span class="kpi-label">Clientes totales</span>
+    <span class="kpi-value" id="kpi-n-clientes">—</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Revenue total</span>
+    <span class="kpi-value" id="kpi-revenue">—</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Ticket promedio</span>
+    <span class="kpi-value" id="kpi-ticket">—</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">Single-buyers</span>
+    <span class="kpi-value" id="kpi-single">—</span>
+  </div>
+</section>
+
+<section class="chart-row">
+  <div class="chart-card">
+    <h2>Distribución de clientes</h2>
+    <div id="donut-distribucion" class="chart"></div>
+  </div>
+  <div class="chart-card">
+    <h2>Revenue por segmento</h2>
+    <div id="bar-revenue" class="chart"></div>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Resumen por segmento</h2>
+  <table class="data-table" id="tabla-resumen">
+    <thead>
+      <tr>
+        <th>Segmento</th>
+        <th>N° clientes</th>
+        <th>% del total</th>
+        <th>Recency mediana (días)</th>
+        <th>Frequency mediana</th>
+        <th>Monetary mediana</th>
+        <th>Cadencia mediana (días)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> ¿Cómo se ve nuestra base de clientes? ¿Quién genera el valor?</p>
+    <p><strong>Cómo leer esto:</strong> Los 5 segmentos representan patrones de compra distintos. <em>MVPs</em> y <em>Alto Valor</em> concentran la mayor parte del revenue aunque son minoría en clientes. <em>Hibernando</em> son clientes que probablemente no volverán sin una intervención fuerte.</p>
+    <p><strong>Acciones sugeridas:</strong> Concentrar esfuerzos de retención en MVPs y Alto Valor. Hibernando es candidato a campañas de reactivación específicas, pero el costo de recuperación es alto frente a su monetary mediana.</p>
+    <p><strong>Notas técnicas:</strong> Segmentación K-Means k=5 sobre features RFM + cadencia, log-transformada y escalada. Datos 2023-2025.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById('initial-data').textContent);
+
+    // KPI cards
+    const fmtMoneda = (v) => '$' + Math.round(v).toLocaleString('es-MX');
+    const fmtPct    = (v) => (v * 100).toFixed(1) + '%';
+    document.getElementById('kpi-n-clientes').textContent = data.kpis.n_clientes.toLocaleString('es-MX');
+    document.getElementById('kpi-revenue').textContent    = fmtMoneda(data.kpis.revenue_total);
+    document.getElementById('kpi-ticket').textContent     = fmtMoneda(data.kpis.ticket_promedio);
+    document.getElementById('kpi-single').textContent     = fmtPct(data.kpis.pct_single_buyers);
+
+    // Donut — ordenado por SEGMENT_ORDER
+    PulseCharts.renderDonut('donut-distribucion', data.distribucion);
+    PulseCharts.renderBarRevenue('bar-revenue', data.revenue);
+
+    // Tabla resumen
+    const tbody = document.querySelector('#tabla-resumen tbody');
+    const orden = window.SEGMENT_ORDER;
+    const sorted = data.resumen.slice().sort(
+      (a, b) => orden.indexOf(a.segmento) - orden.indexOf(b.segmento)
+    );
+    sorted.forEach(row => {
+      const tr = document.createElement('tr');
+      const color = window.SEGMENT_COLORS[row.segmento] || '#888';
+      tr.innerHTML = `
+        <td><span class="seg-chip" style="background:${color}"></span>${row.segmento}</td>
+        <td>${row.n_clientes.toLocaleString('es-MX')}</td>
+        <td>${fmtPct(row.pct)}</td>
+        <td>${row.recency_med.toFixed(0)}</td>
+        <td>${row.frequency_med.toFixed(0)}</td>
+        <td>${fmtMoneda(row.monetary_med)}</td>
+        <td>${row.cadencia_med != null ? row.cadencia_med.toFixed(0) : '—'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  })();
+</script>
+{% endblock %}

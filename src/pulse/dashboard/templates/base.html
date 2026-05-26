@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Pulse · Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://cdn.plot.ly/plotly-3.0.0.min.js" charset="utf-8"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a class="brand" href="/dashboard/overview">Pulse</a>
+    <div class="nav-links">
+      {% set links = [
+        ('overview',        'Overview'),
+        ('bundles',         'Bundles'),
+        ('estacionalidad',  'Estacionalidad'),
+        ('comparador',      'Comparador'),
+        ('heatmap-bundles', 'Heatmap bundles'),
+        ('alertas',         'Alertas'),
+        ('cliente',         'Cliente'),
+      ] %}
+      {% for slug, label in links %}
+        <a href="/dashboard/{{ slug }}"
+           class="nav-link {% if vista_activa == slug %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="error-banner" class="error-banner hidden" role="alert">
+    No se pudo cargar los datos. Reintenta.
+  </div>
+
+  <script>
+    window.SEGMENT_COLORS = {{ segment_colors | tojson }};
+    window.SEGMENT_ORDER  = {{ segment_order | tojson }};
+  </script>
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/filters.js"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

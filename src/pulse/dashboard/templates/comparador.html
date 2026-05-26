@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Comparador · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Comparador entre segmentos</h1>
+  <p class="subtitle">Compara dos segmentos lado a lado: métricas, top bundles, perfil RFM y distribución de gasto.</p>
+</header>
+
+<section class="filters">
+  <div class="filter-group">
+    <label for="f-seg-a">Segmento A</label>
+    <select id="f-seg-a">
+      {% for s in segment_order %}<option value="{{ s }}" {% if s == 'MVPs' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label for="f-seg-b">Segmento B</label>
+    <select id="f-seg-b">
+      {% for s in segment_order %}<option value="{{ s }}" {% if s == 'Hibernando' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Métricas lado a lado</h2>
+  <table class="data-table" id="tabla-comparador">
+    <thead>
+      <tr>
+        <th>Métrica</th>
+        <th id="th-seg-a">Segmento A</th>
+        <th id="th-seg-b">Segmento B</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="chart-row">
+  <div class="chart-card">
+    <h2>Perfil RFM (normalizado contra todos los segmentos)</h2>
+    <div id="radar" class="chart"></div>
+  </div>
+  <div class="chart-card">
+    <h2>Distribución de monetary (escala log)</h2>
+    <div id="box-monetary" class="chart"></div>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Top 3 bundles por segmento</h2>
+  <div class="chart-row">
+    <div>
+      <h3 id="title-bundles-a" style="margin-top:0;font-size:14px"></h3>
+      <table class="data-table" id="bundles-a">
+        <thead><tr><th>Antecedents</th><th>Consequents</th><th>Confidence</th><th>Revenue</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div>
+      <h3 id="title-bundles-b" style="margin-top:0;font-size:14px"></h3>
+      <table class="data-table" id="bundles-b">
+        <thead><tr><th>Antecedents</th><th>Consequents</th><th>Confidence</th><th>Revenue</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> ¿Cómo se diferencian estos dos segmentos? ¿Qué los hace únicos?</p>
+    <p><strong>Cómo leer esto:</strong> La tabla compara métricas crudas (mediana, media, total). El radar normaliza al rango 0-1 contra <em>todos los segmentos</em>, no solo los dos comparados — así un radar grande significa "destaca en esa dimensión vs el resto de la base". La cadencia está invertida (más alto = compra más seguido).</p>
+    <p><strong>Acciones sugeridas:</strong> Si segmento A tiene radar grande en monetary y frequency, es el target prioritario para fidelización. Diferencias grandes en bundles top sugieren cross-sells distintos por segmento.</p>
+    <p><strong>Notas técnicas:</strong> Monetary en escala log por el sesgo (ratio max/min ≈ 10⁵). Single-buyers se reportan como % del segmento.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+    const fmtPct    = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
+    const fmtNum    = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+
+    function renderTabla(a, b) {
+      const tbody = document.querySelector('#tabla-comparador tbody');
+      tbody.innerHTML = '';
+      const filas = [
+        ['N° clientes',          fmtNum(a.n_clientes),         fmtNum(b.n_clientes)],
+        ['% del total',          fmtPct(a.pct_total),          fmtPct(b.pct_total)],
+        ['Recency mediana',      fmtNum(a.recency_med),        fmtNum(b.recency_med)],
+        ['Recency media',        fmtNum(a.recency_avg, 1),     fmtNum(b.recency_avg, 1)],
+        ['Frequency mediana',    fmtNum(a.frequency_med),      fmtNum(b.frequency_med)],
+        ['Frequency media',      fmtNum(a.frequency_avg, 1),   fmtNum(b.frequency_avg, 1)],
+        ['Monetary mediana',     fmtMoneda(a.monetary_med),    fmtMoneda(b.monetary_med)],
+        ['Monetary media',       fmtMoneda(a.monetary_avg),    fmtMoneda(b.monetary_avg)],
+        ['Monetary total',       fmtMoneda(a.monetary_total),  fmtMoneda(b.monetary_total)],
+        ['Cadencia mediana (d)', fmtNum(a.cadencia_med, 1),    fmtNum(b.cadencia_med, 1)],
+        ['% single-buyers',      fmtPct(a.pct_single_buyers),  fmtPct(b.pct_single_buyers)],
+      ];
+      filas.forEach(([label, va, vb]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${label}</td><td>${va}</td><td>${vb}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function normalizar(metricas, ranges) {
+      // recency: invertimos (más bajo = mejor → más alto en radar)
+      const norm = (v, mn, mx) => mx === mn ? 0 : (v - mn) / (mx - mn);
+      const invNorm = (v, mn, mx) => 1 - norm(v, mn, mx);
+      return [
+        invNorm(metricas.recency_med,    ranges.recency_min,   ranges.recency_max),    // recency
+        norm(metricas.frequency_med,     ranges.frequency_min, ranges.frequency_max),  // frequency
+        norm(metricas.monetary_med,      ranges.monetary_min,  ranges.monetary_max),   // monetary
+        invNorm(metricas.cadencia_med,   ranges.cadencia_min,  ranges.cadencia_max),   // cadencia (inversa)
+      ];
+    }
+
+    function renderTopBundles(elId, titleEl, segmento, bundles) {
+      titleEl.textContent = `${segmento}`;
+      const tbody = document.querySelector(`#${elId} tbody`);
+      tbody.innerHTML = '';
+      if (!bundles.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-soft)">Sin bundles accionables</td></tr>';
+        return;
+      }
+      bundles.forEach(b => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${b.antecedents}</td>
+          <td>${b.consequents}</td>
+          <td>${fmtPct(b.confidence)}</td>
+          <td>${fmtMoneda(b.revenue_total)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAll(data) {
+      const segA = data.seg_a, segB = data.seg_b;
+      document.getElementById('th-seg-a').textContent = segA;
+      document.getElementById('th-seg-b').textContent = segB;
+
+      if (!data.metricas_a || !data.metricas_b) {
+        PulseFilters.showError('Segmento no encontrado');
+        return;
+      }
+      renderTabla(data.metricas_a, data.metricas_b);
+
+      const ejes = ['Recency (inv)', 'Frequency', 'Monetary', 'Cadencia (inv)'];
+      const sA = normalizar(data.metricas_a, data.ranges);
+      const sB = normalizar(data.metricas_b, data.ranges);
+      // Cerrar el polígono
+      PulseCharts.renderRadar('radar', [...ejes, ejes[0]], [...sA, sA[0]], [...sB, sB[0]], segA, segB);
+
+      PulseCharts.renderBoxMonetary('box-monetary',
+        data.monetary_a, segA,
+        data.monetary_b, segB);
+
+      renderTopBundles('bundles-a', document.getElementById('title-bundles-a'), segA, data.bundles_a);
+      renderTopBundles('bundles-b', document.getElementById('title-bundles-b'), segB, data.bundles_b);
+    }
+
+    async function reload() {
+      const a = document.getElementById('f-seg-a').value;
+      const b = document.getElementById('f-seg-b').value;
+      const url = `/api/comparador?seg_a=${encodeURIComponent(a)}&seg_b=${encodeURIComponent(b)}`;
+      const data = await PulseFilters.fetchJSON(url);
+      renderAll(data);
+    }
+
+    // Primera pintura
+    renderAll(JSON.parse(document.getElementById('initial-data').textContent));
+
+    document.getElementById('f-seg-a').addEventListener('change', reload);
+    document.getElementById('f-seg-b').addEventListener('change', reload);
+  })();
+</script>
+{% endblock %}

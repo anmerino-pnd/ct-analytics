@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Bundles · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Bundles accionables</h1>
+  <p class="subtitle">Reglas de asociación que se traducen en recomendaciones por segmento.</p>
+</header>
+
+<section class="filters">
+  <div class="filter-group">
+    <label for="f-segmento">Segmento</label>
+    <select id="f-segmento">
+      <option value="Todos">Todos</option>
+      {% for s in segment_order %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Vista</label>
+    <div class="toggle-group" id="f-modo" role="tablist">
+      <button data-modo="accionables" class="active" type="button">Accionables (1→1, 1→2)</button>
+      <button data-modo="completa" type="button">Completa (todas)</button>
+    </div>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h2>Top 15 reglas</h2>
+  <div id="bar-bundles" class="chart"></div>
+</section>
+
+<section class="chart-card">
+  <h2>Detalle de reglas</h2>
+  <table class="data-table" id="tabla-bundles">
+    <thead>
+      <tr>
+        <th>Antecedents</th>
+        <th>Consequents</th>
+        <th>Confidence</th>
+        <th>Lift</th>
+        <th>Support count</th>
+        <th>Ticket medio</th>
+        <th>Revenue total</th>
+        <th>Segmento</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> ¿Qué productos puedo agrupar y recomendar a cada segmento?</p>
+    <p><strong>Cómo leer esto:</strong> Cada regla dice "quien compró <em>antecedents</em> también suele comprar <em>consequents</em>". <em>Confidence</em> es la probabilidad de que pase la asociación; <em>lift</em> indica cuánto más probable es que sin la asociación (lift &gt; 1 = relación real, &gt; 3 = fuerte). El bar chart está ordenado por revenue del segmento en modo accionables.</p>
+    <p><strong>Acciones sugeridas:</strong> Usar los bundles con alto revenue de <em>MVPs</em> y <em>Alto Valor</em> como cross-sell directo. En segmentos bajos, los bundles ayudan a aumentar el ticket promedio en campañas dirigidas.</p>
+    <p><strong>Notas técnicas:</strong> Vista <em>Accionables</em> limita a reglas 1→1 y 1→2 (más fáciles de operativizar). Vista <em>Completa</em> incluye todas las reglas del segmento (mejor para exploración técnica). En modo completa, las columnas de ticket / revenue no están disponibles — ordenamos por support count.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const initial = JSON.parse(document.getElementById('initial-data').textContent);
+    const state = { segmento: 'Todos', modo: 'accionables' };
+    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+    const fmtPct = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
+    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+
+    function render(reglas) {
+      PulseCharts.renderBarBundles('bar-bundles', reglas);
+      const tbody = document.querySelector('#tabla-bundles tbody');
+      tbody.innerHTML = '';
+      reglas.forEach(r => {
+        const color = window.SEGMENT_COLORS[r.segmento] || '#888';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.antecedents}</td>
+          <td>${r.consequents}</td>
+          <td>${fmtPct(r.confidence)}</td>
+          <td>${fmtNum(r.lift, 2)}</td>
+          <td>${fmtNum(r.support_count)}</td>
+          <td>${fmtMoneda(r.ticket_medio)}</td>
+          <td>${fmtMoneda(r.revenue_total)}</td>
+          <td><span class="seg-chip" style="background:${color}"></span>${r.segmento}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function reload() {
+      PulseFilters.setLoading('bar-bundles', true);
+      const url = `/api/bundles?segmento=${encodeURIComponent(state.segmento)}&modo=${state.modo}&limit=15`;
+      try {
+        const reglas = await PulseFilters.fetchJSON(url);
+        render(reglas);
+      } finally {
+        PulseFilters.setLoading('bar-bundles', false);
+      }
+    }
+
+    // Primera pintura con datos embebidos
+    render(initial.reglas);
+
+    // Filtro segmento
+    document.getElementById('f-segmento').addEventListener('change', (e) => {
+      state.segmento = e.target.value;
+      reload();
+    });
+
+    // Toggle modo
+    document.querySelectorAll('#f-modo button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#f-modo button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.modo = btn.dataset.modo;
+        reload();
+      });
+    });
+  })();
+</script>
+{% endblock %}

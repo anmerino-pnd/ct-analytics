@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Cliente · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Drill-down por cliente</h1>
+  <p class="subtitle">Busca un cliente y revisa su perfil completo, historial de compras y posición vs su segmento.</p>
+</header>
+
+<section class="filters">
+  <div class="filter-group" style="flex:1; max-width:420px">
+    <label for="f-cliente">Cliente ID</label>
+    <input type="text" id="f-cliente" autocomplete="off" placeholder="Empieza a escribir un ID..." list="cliente-list">
+    <datalist id="cliente-list"></datalist>
+  </div>
+</section>
+
+<div id="cliente-vacio" class="chart-card" style="text-align:center; color:var(--text-soft); padding:40px">
+  Escribe un cliente_id arriba para ver su perfil.
+</div>
+
+<div id="cliente-no-encontrado" class="chart-card hidden" style="text-align:center; color:var(--danger); padding:40px">
+  Cliente no encontrado.
+</div>
+
+<div id="cliente-contenido" class="hidden">
+
+  <section class="chart-card" id="cliente-header">
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
+      <h2 id="hdr-id" style="margin:0; font-size:20px"></h2>
+      <span id="hdr-segmento" class="badge"></span>
+      <span id="hdr-single" class="badge" style="background:var(--text-soft); display:none">Single-buyer</span>
+    </div>
+  </section>
+
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-label">Recency (días)</span>
+      <span class="kpi-value" id="kpi-c-recency">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Frequency (pedidos)</span>
+      <span class="kpi-value" id="kpi-c-frequency">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Monetary</span>
+      <span class="kpi-value" id="kpi-c-monetary">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Cadencia mediana</span>
+      <span class="kpi-value" id="kpi-c-cadencia">—</span>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Historial de pedidos</h2>
+    <div id="line-pedidos" class="chart"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Últimos 50 pedidos</h2>
+    <table class="data-table" id="tabla-pedidos">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Fecha</th>
+          <th>Pago total</th>
+          <th>N° productos</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="chart-card">
+    <h2>Posición vs su segmento (recency × monetary, log)</h2>
+    <div id="scatter-posicion" class="chart"></div>
+  </section>
+
+</div>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Pregunta de negocio:</strong> Cuéntame todo lo que sabes sobre este cliente.</p>
+    <p><strong>Cómo leer esto:</strong> El header muestra el segmento asignado y si es single-buyer. Las KPI cards son las métricas RFM básicas. El historial es una serie temporal con el monto de cada pedido. El scatter al final ubica al cliente (punto coloreado) dentro de los demás clientes de su segmento (puntos grises) usando recency y monetary.</p>
+    <p><strong>Acciones sugeridas:</strong> Si el cliente está por encima del centro de su segmento en monetary, vale la pena un trato VIP. Si su recency creció demasiado, es candidato a campaña de reactivación.</p>
+    <p><strong>Notas técnicas:</strong> El monetary se grafica en log para acomodar el sesgo (3 órdenes de magnitud típicos). Los últimos 50 pedidos se traen ordenados por fecha descendente.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const initial = JSON.parse(document.getElementById('initial-data').textContent);
+    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+
+    const input    = document.getElementById('f-cliente');
+    const datalist = document.getElementById('cliente-list');
+    const elVacio  = document.getElementById('cliente-vacio');
+    const elNoEnc  = document.getElementById('cliente-no-encontrado');
+    const elCont   = document.getElementById('cliente-contenido');
+
+    function setVista(modo) {
+      elVacio.classList.toggle('hidden', modo !== 'vacio');
+      elNoEnc.classList.toggle('hidden', modo !== 'noenc');
+      elCont.classList.toggle('hidden', modo !== 'ok');
+    }
+
+    function renderCliente(data) {
+      const p = data.perfil;
+      const color = window.SEGMENT_COLORS[p.segmento] || '#888';
+      document.getElementById('hdr-id').textContent = p.cliente_id;
+      const segEl = document.getElementById('hdr-segmento');
+      segEl.textContent = p.segmento;
+      segEl.style.background = color;
+      document.getElementById('hdr-single').style.display = p.es_single_buyer ? 'inline-block' : 'none';
+
+      document.getElementById('kpi-c-recency').textContent   = fmtNum(p.recency);
+      document.getElementById('kpi-c-frequency').textContent = fmtNum(p.frequency);
+      document.getElementById('kpi-c-monetary').textContent  = fmtMoneda(p.monetary);
+      document.getElementById('kpi-c-cadencia').textContent  = fmtNum(p.dias_entre_compras, 1);
+
+      PulseCharts.renderClientePedidos('line-pedidos', data.pedidos);
+
+      const tbody = document.querySelector('#tabla-pedidos tbody');
+      tbody.innerHTML = '';
+      data.pedidos.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${o.order_id}</code></td>
+          <td>${o.fecha}</td>
+          <td>${fmtMoneda(o.pago_total)}</td>
+          <td>${fmtNum(o.num_productos)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      PulseCharts.renderScatterCliente('scatter-posicion', data.posicion, p.segmento);
+      setVista('ok');
+    }
+
+    async function cargarCliente(cid) {
+      if (!cid) return;
+      try {
+        const data = await PulseFilters.fetchJSON(
+          '/api/cliente/' + encodeURIComponent(cid),
+          { silent: true }
+        );
+        renderCliente(data);
+      } catch (err) {
+        if (err.status === 404) {
+          setVista('noenc');
+        } else {
+          PulseFilters.showError('No se pudo cargar el cliente. Reintenta.');
+        }
+      }
+    }
+
+    // Autocomplete (datalist con resultados del backend, debounced)
+    const buscar = PulseFilters.debounce(async (texto) => {
+      if (!texto || texto.length < 2) {
+        datalist.innerHTML = '';
+        return;
+      }
+      try {
+        const matches = await PulseFilters.fetchJSON(
+          '/api/cliente/buscar?q=' + encodeURIComponent(texto) + '&limit=20',
+          { silent: true }
+        );
+        datalist.innerHTML = matches
+          .map(m => `<option value="${m.cliente_id}"></option>`)
+          .join('');
+      } catch (_) { /* silencioso */ }
+    }, 200);
+
+    input.addEventListener('input', (e) => buscar(e.target.value.trim()));
+    input.addEventListener('change', (e) => cargarCliente(e.target.value.trim()));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        cargarCliente(e.target.value.trim());
+      }
+    });
+
+    // Autocarga si llegó con ?id= en la URL (desde la vista de alertas)
+    if (initial.cliente_id) {
+      input.value = initial.cliente_id;
+      cargarCliente(initial.cliente_id);
+    }
+  })();
+</script>
+{% endblock %}
