@@ -44,9 +44,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="whitegrid")
-COLOR_ACCENT = "#5B9BD5"
-COLOR_WARN = "#E74C3C"
+sns.set_theme(style="white")
+COLOR_ACCENT = "#000d81"
+COLOR_WARN = "#810000"
 
 # Simulación de la distribución del Ratio de Urgencia en la base recurrente
 n_recurrentes = 8000
@@ -79,12 +79,12 @@ A pesar de estas nuevas métricas profundas, mantuvimos una segmentación inicia
 ```{python}
 # Paleta extraída de las libretas originales
 SEGMENT_COLORS = {
-    'MVPs': '#2E75B6',          
-    'Alto Valor': '#5B9BD5',    
-    'Ocasionales': '#9DC3E6',   
-    'En Riesgo': '#ED7D31',     
-    'Hibernando': '#E74C3C'     
-}
+    "MVPs": "#0B3C5D",         # Azul profundo elegante
+    "Alto Valor": "#328CC1",   # Azul medio
+    "Ocasionales": "#6CA6C1",  # Azul grisáceo suave
+    "En Riesgo": "#D82822",    # Naranja rojizo (alerta sin ser agresivo)
+    "Hibernando": "#9AA0A6"    # Gris neutro
+} 
 
 # Representación exacta de las proporciones heurísticas reales encontradas
 segment_pct = {

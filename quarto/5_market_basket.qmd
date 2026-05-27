@@ -25,16 +25,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="white")
 
 # Paleta basada en nuestros segmentos
 SEGMENT_COLORS = {
-    'MVPs': '#2E75B6',          
-    'Alto Valor': '#5B9BD5',    
-    'Ocasionales': '#9DC3E6',   
-    'En Riesgo': '#ED7D31',     
-    'Hibernando': '#E74C3C'     
-}
+    "MVPs": "#0B3C5D",         # Azul profundo elegante
+    "Alto Valor": "#328CC1",   # Azul medio
+    "Ocasionales": "#6CA6C1",  # Azul grisáceo suave
+    "En Riesgo": "#D82822",    # Naranja rojizo (alerta sin ser agresivo)
+    "Hibernando": "#9AA0A6"    # Gris neutro
+} 
 
 # Simulación de las reglas de asociación reales por segmento
 mock_rules_segment = pd.DataFrame({

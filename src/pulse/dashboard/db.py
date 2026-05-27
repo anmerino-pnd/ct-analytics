@@ -32,16 +32,15 @@ SEGMENT_ORDER: list[str] = [
 ]
 
 _VIEWS: dict[str, str] = {
-    "segmentos":         "clientes_segmentados_2023_2025.parquet",
-    "orders":            "orders_2023_2025.parquet",
-    "items":             "items_2023_2025.parquet",
-    "rfm":               "rfm_2023_2025_v2.parquet",
-    "mba_accionables":   "mba_reglas_accionables.parquet",
-    "mba_por_segmento":  "mba_reglas_por_segmento.parquet",
-    "mba_exclusivas":    "mba_reglas_exclusivas.parquet",
-    "temp_hora_dia":     "temporalidad_segmento_hora_dia.parquet",
-    "temp_mes":          "temporalidad_segmento_mes.parquet",
-    "temp_bundles":      "temporalidad_bundles_mes.parquet",
+    "segmentos":         "clientes_segmentados.parquet", 
+    "orders":            "orders_historicos.parquet",     
+    "items":             "items_historicos.parquet",      
+    "mba_accionables":   "mba_accionables.parquet",       
+    "mba_por_segmento":  "mba_por_segmento.parquet",
+    "mba_exclusivas":    "mba_exclusivas.parquet",
+    "temp_hora_dia":     "temp_hora_dia.parquet",
+    "temp_mes":          "temp_mensual.parquet",         
+    "temp_bundles":      "temp_bundles.parquet",
 }
 
 

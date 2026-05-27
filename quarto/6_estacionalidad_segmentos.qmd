@@ -26,13 +26,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="white")
 
 # Paleta basada en segmentos
 SEGMENT_COLORS = {
-    'MVPs': '#2E75B6',          
-    'Alto Valor': '#5B9BD5',    
-    'Ocasionales': '#9DC3E6'
+    'MVPs': '#0B3C5D',          
+    'Alto Valor': '#328CC1',    
+    'Ocasionales': '#6CA6C1'
 }
 
 # Generar datos simulados que replican el patrón estacional real de CT

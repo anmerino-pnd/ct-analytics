@@ -26,9 +26,9 @@ import seaborn as sns
 from datetime import datetime, timedelta
 
 # Configuración visual
-sns.set_theme(style="whitegrid")
-COLOR_ACCENT = "#5B9BD5"
-COLOR_SEC = "#ED7D31"
+sns.set_theme(style="white")
+COLOR_ACCENT = "#000d81"
+COLOR_SEC = "#810000"
 
 np.random.seed(42)
 
