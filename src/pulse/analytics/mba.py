@@ -44,6 +44,7 @@ def calcular_mba(
     min_confidence: float = 0.20,
     min_lift: float = 3.0,
     top_n_accionables: int = 30,
+    claves_a_ignorar: Optional[list[str]] = None,
 ) -> dict[str, pd.DataFrame]:
     """
     Calcula reglas MBA por segmento y retorna los 3 parquets del pipeline.
@@ -62,6 +63,9 @@ def calcular_mba(
         min_lift: lift mínimo (3.0 = co-compra al menos 3x más probable que el azar).
         top_n_accionables: por segmento, cuántas reglas accionables enriquecemos
             con ticket_medio/revenue_total (es el cálculo más caro).
+        claves_a_ignorar: claves que se excluyen ANTES del análisis (cargos por
+            tarjeta, envíos, comisiones — cosas que no son productos para MBA).
+            Default: ["CARGO100"]. Pasar [] para no filtrar nada.
 
     Returns:
         dict con tres DataFrames:
@@ -72,6 +76,21 @@ def calcular_mba(
     _validar_columnas(df_items, ["order_id", "clave", "cliente_id", "familia"])
     _validar_columnas(df_segmentos, ["cliente_id", "segmento_cluster"])
     _validar_columnas(df_orders, ["order_id", "pago_total"])
+
+    # 0. Filtrar claves no-producto (cargos financieros, etc.) ANTES de cualquier cálculo.
+    #    Esto es consistente con el notebook v3 de referencia.
+    if claves_a_ignorar is None:
+        claves_a_ignorar = ["CARGO100"]
+    if claves_a_ignorar:
+        n_antes = len(df_items)
+        df_items = df_items[~df_items["clave"].isin(claves_a_ignorar)].copy()
+        n_filtrados = n_antes - len(df_items)
+        if n_filtrados > 0:
+            log.info(
+                "Filtradas %s líneas con claves no-producto %s",
+                f"{n_filtrados:,}",
+                claves_a_ignorar,
+            )
 
     # 1. Preparar canastas: solo pedidos multi-familia, cruzados con segmento
     df_basket = _preparar_canastas(df_items, df_segmentos)

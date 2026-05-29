@@ -212,12 +212,26 @@ def _cargar_historicos() -> tuple[pd.DataFrame, pd.DataFrame]:
     log.info("\n--- Cargando datos crudos ---")
     df_orders = pd.read_parquet(ORDERS_HIST)
     df_items = pd.read_parquet(ITEMS_HIST)
-    log.info("Orders: %s | Items: %s", f"{len(df_orders):,}", f"{len(df_items):,}")
+    log.info("Orders: %s | Items: %s (pre-filtro)",
+             f"{len(df_orders):,}", f"{len(df_items):,}")
 
     # Sanity: items debe tener familia
     if "familia" not in df_items.columns:
         log.warning("items sin columna familia. Derivándola al vuelo.")
         df_items = agregar_familia(df_items)
+
+    # Filtrar claves no-producto (cargos financieros, etc.).
+    # Consistente con notebook v3 de referencia.
+    claves_a_ignorar = ["CARGO100"]
+    n_antes = len(df_items)
+    df_items = df_items[~df_items["clave"].isin(claves_a_ignorar)].copy()
+    n_filtrados = n_antes - len(df_items)
+    if n_filtrados > 0:
+        log.info(
+            "Items filtrados (claves no-producto %s): %s líneas",
+            claves_a_ignorar,
+            f"{n_filtrados:,}",
+        )
 
     return df_orders, df_items
 

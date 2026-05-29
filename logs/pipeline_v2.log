@@ -1,0 +1,71 @@
+2026-05-29 14:39:38,162 INFO pulse.pipeline.runner: ============================================================
+2026-05-29 14:39:38,163 INFO pulse.pipeline.runner: 🚀 Pipeline iniciado · modo=weekly · fecha_ref=2026-05-29T21:39:38.162724+00:00
+2026-05-29 14:39:38,163 INFO pulse.pipeline.runner: ============================================================
+2026-05-29 14:39:38,163 INFO pulse.pipeline.runner: 
+--- Paso 1: Ingest desde MongoDB ---
+2026-05-29 14:39:42,955 INFO pulse.etl.ingest: Watermark actual: 2026-05-27 00:17:41.552000+00:00
+2026-05-29 14:39:42,957 INFO pulse.etl.ingest: Pedidos pendientes de cargar: 1,300
+2026-05-29 14:39:47,929 INFO pulse.etl.ingest: Extraídos: 1,300 pedidos, 2,985 items
+2026-05-29 14:39:49,640 INFO pulse.pipeline.runner: ✅ Ingesta OK
+   Watermark: 2026-05-27 00:17:41.552000+00:00 → 2026-05-29 21:37:47.423000+00:00
+   Nuevos:    1,300 pedidos, 2,985 items
+   Total:     784,088 pedidos, 1,843,613 items
+2026-05-29 14:39:49,641 INFO pulse.pipeline.validacion: ✅ Ingest OK: 782,788 → 784,088 pedidos (cambio +0.2%)
+2026-05-29 14:39:50,858 INFO pulse.analytics.familia: Familia derivada: 908 familias únicas, 0 items con familia nula
+2026-05-29 14:39:51,697 INFO pulse.pipeline.runner: 
+--- Cargando datos crudos ---
+2026-05-29 14:39:51,864 INFO pulse.pipeline.runner: Orders: 784,088 | Items: 1,843,613 (pre-filtro)
+2026-05-29 14:39:52,120 INFO pulse.pipeline.runner: Items filtrados (claves no-producto ['CARGO100']): 77,745 líneas
+2026-05-29 14:39:52,120 INFO pulse.pipeline.runner: 
+--- Paso 2: Segmentación de clientes ---
+2026-05-29 14:39:52,120 INFO pulse.analytics.rfm: RFM: fecha_ref=2026-05-29T21:39:38.162724+00:00, ventana=30 meses, fecha_corte=2023-12-11T21:39:38.162724+00:00
+2026-05-29 14:39:52,187 INFO pulse.analytics.rfm: Pedidos en ventana: 567,588/784,088 (72.4%)
+2026-05-29 14:39:56,738 INFO pulse.analytics.rfm: Clientes con features calculadas: 18,638 (single-buyers: 3,328)
+2026-05-29 14:39:56,741 INFO pulse.analytics.rfm: Imputación single-buyers: 3,328 clientes (17.9%) → cadencia=266 días (p95)
+2026-05-29 14:39:56,742 INFO pulse.analytics.segmentacion: Cargando modelo de segmentación versión 'v1'
+2026-05-29 14:39:56,748 INFO pulse.analytics.segmentacion: Modelo cargado: SegmentadorClientes(version='v1', features=['recency', 'frequency', 'monetary', 'dias_entre_compras'], clusters=['MVPs', 'Hibernando', 'En Riesgo', 'Alto Valor', 'Ocasionales'])
+2026-05-29 14:39:56,798 INFO pulse.analytics.segmentacion: Distribución de segmentos:
+2026-05-29 14:39:56,800 INFO pulse.analytics.segmentacion:   Alto Valor   4,973 (26.7%)
+2026-05-29 14:39:56,800 INFO pulse.analytics.segmentacion:   Hibernando   4,934 (26.5%)
+2026-05-29 14:39:56,800 INFO pulse.analytics.segmentacion:   En Riesgo    3,479 (18.7%)
+2026-05-29 14:39:56,800 INFO pulse.analytics.segmentacion:   Ocasionales  3,233 (17.3%)
+2026-05-29 14:39:56,800 INFO pulse.analytics.segmentacion:   MVPs         2,019 (10.8%)
+2026-05-29 14:39:56,803 INFO pulse.pipeline.validacion: ✅ Segmentación OK: 18,638 clientes, sin nulos
+2026-05-29 14:39:56,805 INFO pulse.pipeline.validacion: ✅ Distribución de segmentos OK (máximo: Alto Valor con 26.7%)
+2026-05-29 14:39:56,862 INFO pulse.pipeline.runner: ✅ Guardado: clientes_segmentados.parquet (18,638 clientes)
+2026-05-29 14:39:56,863 INFO pulse.pipeline.runner: 
+--- Paso 3: MBA (recálculo periódico) ---
+2026-05-29 14:39:59,051 INFO pulse.analytics.mba: Canastas multi-familia: 282,704 pedidos, 1,176,077 líneas, 5 segmentos
+2026-05-29 14:39:59,073 INFO pulse.analytics.mba: Procesando segmento 'MVPs'
+2026-05-29 14:39:59,147 INFO pulse.analytics.mba:   Pedidos: 165,973 | Umbral support: 165 pedidos (0.0994%)
+2026-05-29 14:40:03,091 INFO pulse.analytics.mba:   → 2,004 reglas
+2026-05-29 14:40:03,091 INFO pulse.analytics.mba: Procesando segmento 'Ocasionales'
+2026-05-29 14:40:03,108 INFO pulse.analytics.mba:   Pedidos: 9,331 | Umbral support: 30 pedidos (0.3215%)
+2026-05-29 14:40:03,329 INFO pulse.analytics.mba:   → 188 reglas
+2026-05-29 14:40:03,329 INFO pulse.analytics.mba: Procesando segmento 'Alto Valor'
+2026-05-29 14:40:03,385 INFO pulse.analytics.mba:   Pedidos: 84,198 | Umbral support: 84 pedidos (0.0998%)
+2026-05-29 14:40:05,388 INFO pulse.analytics.mba:   → 1,269 reglas
+2026-05-29 14:40:05,388 INFO pulse.analytics.mba: Procesando segmento 'Hibernando'
+2026-05-29 14:40:05,399 INFO pulse.analytics.mba:   Pedidos: 4,489 | Umbral support: 30 pedidos (0.6683%)
+2026-05-29 14:40:05,501 INFO pulse.analytics.mba:   → 35 reglas
+2026-05-29 14:40:05,501 INFO pulse.analytics.mba: Procesando segmento 'En Riesgo'
+2026-05-29 14:40:05,518 INFO pulse.analytics.mba:   Pedidos: 16,304 | Umbral support: 30 pedidos (0.1840%)
+2026-05-29 14:40:05,870 INFO pulse.analytics.mba:   → 364 reglas
+2026-05-29 14:40:05,871 INFO pulse.analytics.mba: Total reglas (todos los segmentos): 3,860
+2026-05-29 14:40:05,883 INFO pulse.analytics.mba: Reglas exclusivas: 1,516
+2026-05-29 14:40:14,957 INFO pulse.analytics.mba: Reglas accionables: 141
+2026-05-29 14:40:14,999 INFO pulse.pipeline.runner: ✅ MBA guardado: 3,860 reglas totales, 1,516 exclusivas, 141 accionables
+2026-05-29 14:40:14,999 INFO pulse.pipeline.runner: 
+--- Paso 4: Temporalidad ---
+2026-05-29 14:40:15,076 INFO pulse.analytics.temporalidad: Pedidos en ventana [2023-12-11, 2026-05-29]: 567,588/784,088
+2026-05-29 14:40:15,143 INFO pulse.analytics.temporalidad: Pedidos con segmento asignado: 567,588
+2026-05-29 14:40:16,927 INFO pulse.analytics.temporalidad: Agregado hora_dia: 826 filas
+2026-05-29 14:40:16,961 INFO pulse.analytics.temporalidad: Agregado mensual: 150 filas
+2026-05-29 14:40:16,963 INFO pulse.analytics.temporalidad: Procesando temporalidad de 100 reglas (top 20 por segmento, 5 segmentos)
+2026-05-29 14:40:20,791 INFO pulse.analytics.temporalidad: Agregado bundles: 2,830 filas
+2026-05-29 14:40:20,793 INFO pulse.pipeline.validacion: ✅ Cross-check temporalidad-RFM OK (diferencia 0.00%)
+2026-05-29 14:40:20,811 INFO pulse.pipeline.runner: ✅ Temporalidad guardada: 826/150/2,830 filas
+2026-05-29 14:40:20,812 INFO pulse.pipeline.runner: ============================================================
+2026-05-29 14:40:20,812 INFO pulse.pipeline.runner: ✅ OK Pipeline · modo=weekly · duración=42.6s
+   Pasos: ingest → segmentacion → mba → temporalidad
+2026-05-29 14:40:20,812 INFO pulse.pipeline.runner: ============================================================

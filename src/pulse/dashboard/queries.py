@@ -225,9 +225,8 @@ def cliente_perfil(cliente_id: str) -> dict | None:
                monetary,
                dias_entre_compras,
                es_single_buyer,
-               cluster,
-               segmento_cluster AS segmento,
-               R, F, M
+               cluster_id AS cluster,
+               segmento_cluster AS segmento
         FROM segmentos
         WHERE cliente_id = ?
         """,

@@ -29,8 +29,10 @@ def build_both_dfs(
         order_id   = str(doc["_id"])
         cliente_id = encabezado.get("cliente")
         fecha      = pedido.get("fecha")
-
-        # — orders (una fila por pedido) —
+        productos_validos = [
+            p for p in productos
+            if p.get("clave") is not None and p.get("clave") != "CARGO100"
+        ]
         order_rows.append({
             "order_id":       order_id,
             "cliente_id":     cliente_id,
@@ -40,7 +42,7 @@ def build_both_dfs(
             "iva_aplicado":   encabezado.get("iva"),
             "plazo":          encabezado.get("plazo"),
             "tipo_pago":      encabezado.get("tipoPago"),
-            "num_productos":  len(productos),
+            "num_productos":  len(productos_validos),  # ← antes: len(productos)
             "tiene_errores":  len(errores) > 0,
         })
 
