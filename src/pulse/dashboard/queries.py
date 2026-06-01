@@ -89,7 +89,6 @@ def resumen_por_segmento() -> list[dict]:
 def bundles_top_por_segmento(
     segmento: str | None,
     modo: Literal["accionables", "completa"] = "accionables",
-    limit: int = 15,
 ) -> list[dict]:
     """Top N reglas de market basket por segmento.
 
@@ -121,11 +120,62 @@ def bundles_top_por_segmento(
         order_by = "ORDER BY support_count DESC"
 
     if segmento and segmento != "Todos":
-        sql = f"{base} WHERE segmento = ? {order_by} LIMIT ?"
-        params = [segmento, limit]
+        sql = f"{base} WHERE segmento = ? {order_by}"
+        params = [segmento]
     else:
-        sql = f"{base} {order_by} LIMIT ?"
-        params = [limit]
+        sql = f"{base} {order_by}"
+        params = None
+    return fetch_dicts(sql, params)
+
+
+def bundles_scatter_map(
+    segmento: str | None,
+    modo: Literal["accionables", "completa"] = "accionables",
+    min_confidence: float = 0.30,
+    min_lift: float = 1.5,
+) -> list[dict]:
+    """Reglas para el Market Basket Opportunity Map.
+
+    A diferencia de `bundles_top_por_segmento`, NO limita por count — devuelve
+    TODAS las reglas que pasan los umbrales mínimos. El scatter las distribuye
+    en el plano confidence × lift.
+
+    Los umbrales son los de v3 (confidence > 0.3, lift > 1.5). Ordenadas por
+    lift desc, confidence desc — mismo orden que la tabla pedida.
+    """
+    if modo == "accionables":
+        base = """
+            SELECT antecedents, consequents, confidence, lift,
+                   support_count, n_pedidos,
+                   ticket_medio, ticket_mediano, revenue_total,
+                   segmento
+            FROM mba_accionables
+        """
+    else:
+        base = """
+            SELECT antecedents, consequents, confidence, lift,
+                   support_count,
+                   CAST(NULL AS DOUBLE) AS n_pedidos,
+                   CAST(NULL AS DOUBLE) AS ticket_medio,
+                   CAST(NULL AS DOUBLE) AS ticket_mediano,
+                   CAST(NULL AS DOUBLE) AS revenue_total,
+                   segmento
+            FROM mba_por_segmento
+        """
+
+    filtros = ["confidence > ?", "lift > ?"]
+    params: list = [min_confidence, min_lift]
+
+    if segmento and segmento != "Todos":
+        filtros.append("segmento = ?")
+        params.append(segmento)
+
+    where = " AND ".join(filtros)
+    sql = f"""
+        {base}
+        WHERE {where}
+        ORDER BY lift DESC, confidence DESC
+    """
     return fetch_dicts(sql, params)
 
 
@@ -225,8 +275,9 @@ def cliente_perfil(cliente_id: str) -> dict | None:
                monetary,
                dias_entre_compras,
                es_single_buyer,
-               cluster_id AS cluster,
-               segmento_cluster AS segmento
+               cluster,
+               segmento_cluster AS segmento,
+               R, F, M
         FROM segmentos
         WHERE cliente_id = ?
         """,
@@ -350,7 +401,7 @@ def metricas_segmento(segmento: str) -> dict | None:
 
 def top_bundles_segmento(segmento: str, limit: int = 3) -> list[dict]:
     """Top N bundles accionables del segmento (atajo para el comparador)."""
-    return bundles_top_por_segmento(segmento, modo="accionables", limit=limit)
+    return bundles_top_por_segmento(segmento, modo="accionables")
 
 
 def distribucion_monetary(segmento: str) -> list[float]:
@@ -380,6 +431,34 @@ def ranges_globales() -> dict:
           MIN(monetary) AS monetary_min, MAX(monetary) AS monetary_max,
           MIN(dias_entre_compras) AS cadencia_min, MAX(dias_entre_compras) AS cadencia_max
         FROM segmentos
+        """
+    )
+    return rows[0]
+
+def ranges_globales_por_segmento() -> dict:
+    """
+    Min/max de cada feature RFM medido sobre las MEDIANAS de los segmentos
+    (no sobre clientes individuales). Esto replica el comportamiento del
+    notebook v3 para el radar del comparador.
+    """
+    rows = fetch_dicts(
+        """
+        WITH medianas AS (
+            SELECT
+                segmento_cluster,
+                MEDIAN(recency)            AS m_recency,
+                MEDIAN(frequency)          AS m_frequency,
+                MEDIAN(monetary)           AS m_monetary,
+                MEDIAN(dias_entre_compras) AS m_cadencia
+            FROM segmentos
+            GROUP BY segmento_cluster
+        )
+        SELECT
+            MIN(m_recency)   AS recency_min,   MAX(m_recency)   AS recency_max,
+            MIN(m_frequency) AS frequency_min, MAX(m_frequency) AS frequency_max,
+            MIN(m_monetary)  AS monetary_min,  MAX(m_monetary)  AS monetary_max,
+            MIN(m_cadencia)  AS cadencia_min,  MAX(m_cadencia)  AS cadencia_max
+        FROM medianas
         """
     )
     return rows[0]

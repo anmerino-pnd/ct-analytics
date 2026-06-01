@@ -48,7 +48,7 @@ async def overview(request: Request) -> HTMLResponse:
 async def bundles(request: Request) -> HTMLResponse:
     """Bundles accionables: bar chart top + tabla, con filtro segmento + modo."""
     initial_data = {
-        "reglas": q.bundles_top_por_segmento(segmento=None, modo="accionables", limit=15),
+        "reglas": q.bundles_top_por_segmento(segmento=None, modo="accionables"),
     }
     ctx = _base_context("bundles")
     ctx["initial_data"] = initial_data
@@ -81,7 +81,7 @@ def _comparador_payload(seg_a: str, seg_b: str) -> dict:
         "bundles_b": q.top_bundles_segmento(seg_b, limit=3),
         "monetary_a": q.distribucion_monetary(seg_a),
         "monetary_b": q.distribucion_monetary(seg_b),
-        "ranges": q.ranges_globales(),
+        "ranges": q.ranges_globales_por_segmento(),
     }
 
 

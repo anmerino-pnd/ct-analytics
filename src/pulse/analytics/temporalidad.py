@@ -140,13 +140,23 @@ def _preparar_orders_con_segmento(
     return df
 
 
+TIMEZONE_LOCAL = "America/Mexico_City"
+
 def _agregar_features_temporales(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrega año_mes, dia_semana, dia_nombre, hora."""
+    """
+    Agrega año_mes, dia_semana, dia_nombre, hora en hora LOCAL (CDMX).
+    
+    Los pedidos en orders_historicos.parquet están guardados en UTC
+    (es como llegan de MongoDB). Para que el heatmap muestre hábitos
+    de compra en términos comprensibles para marketing, convertimos
+    a hora local antes de extraer hora/día.
+    """
     df = df.copy()
-    df["año_mes"] = df["fecha"].dt.strftime("%Y-%m")
-    df["dia_semana"] = df["fecha"].dt.dayofweek  # 0=Lunes
+    fecha_local = df["fecha"].dt.tz_convert(TIMEZONE_LOCAL)
+    df["año_mes"]    = fecha_local.dt.strftime("%Y-%m")
+    df["dia_semana"] = fecha_local.dt.dayofweek
     df["dia_nombre"] = df["dia_semana"].map(dict(enumerate(DIAS_ES)))
-    df["hora"] = df["fecha"].dt.hour
+    df["hora"]       = fecha_local.dt.hour
     return df
 
 

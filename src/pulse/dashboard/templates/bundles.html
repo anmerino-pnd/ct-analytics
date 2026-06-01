@@ -3,8 +3,8 @@
 
 {% block content %}
 <header class="page-header">
-  <h1>Bundles accionables</h1>
-  <p class="subtitle">Reglas de asociación que se traducen en recomendaciones por segmento.</p>
+  <h1>Market Basket Opportunity Map</h1>
+  <p class="subtitle">Reglas de asociación entre productos: qué se compra junto y dónde están las mejores oportunidades de cross-sell por segmento.</p>
 </header>
 
 <section class="filters">
@@ -18,43 +18,69 @@
   <div class="filter-group">
     <label>Vista</label>
     <div class="toggle-group" id="f-modo" role="tablist">
-      <button data-modo="accionables" class="active" type="button">Accionables (1→1, 1→2)</button>
-      <button data-modo="completa" type="button">Completa (todas)</button>
+      <button data-modo="accionables" class="active" type="button">Vista marketing</button>
+      <button data-modo="completa" type="button">Vista exploratoria</button>
     </div>
   </div>
 </section>
 
 <section class="chart-card">
-  <h2>Top 15 reglas</h2>
-  <div id="bar-bundles" class="chart"></div>
+  <h2>Mapa de oportunidades</h2>
+  <div id="scatter-bundles" class="chart"></div>
+
+  <div class="quadrant-legend">
+    <div class="legend-row">
+      <span class="legend-dot dot-strong"></span>
+      <strong>Oportunidades fuertes</strong>
+      <span class="legend-desc">Alta confidence + alto lift → cross-sell directo. <em>Lo que marketing debe activar primero.</em></span>
+    </div>
+    <div class="legend-row">
+      <span class="legend-dot dot-common"></span>
+      <strong>Co-compras frecuentes</strong>
+      <span class="legend-desc">Alta confidence + bajo lift → bundles muy comunes. Útiles pero no diferenciadores.</span>
+    </div>
+    <div class="legend-row">
+      <span class="legend-dot dot-niche"></span>
+      <strong>Nichos interesantes</strong>
+      <span class="legend-desc">Baja confidence + alto lift → patrones únicos para audiencias pequeñas pero específicas.</span>
+    </div>
+    <div class="legend-row">
+      <span class="legend-dot dot-noise"></span>
+      <strong>Ruido</strong>
+      <span class="legend-desc">Baja confidence + bajo lift → probablemente ignorar.</span>
+    </div>
+  </div>
 </section>
 
 <section class="chart-card">
-  <h2>Detalle de reglas</h2>
-  <table class="data-table" id="tabla-bundles">
-    <thead>
-      <tr>
-        <th>Antecedents</th>
-        <th>Consequents</th>
-        <th>Confidence</th>
-        <th>Lift</th>
-        <th>Support count</th>
-        <th>Ticket medio</th>
-        <th>Revenue total</th>
-        <th>Segmento</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h2>Detalle de reglas (confidence &gt; 30%, lift &gt; 1.5)</h2>
+  <p class="subtitle" id="tabla-count">—</p>
+  <div class="table-scroll">
+    <table class="data-table" id="tabla-bundles">
+      <thead>
+        <tr>
+          <th>Antecedents</th>
+          <th>Consequents</th>
+          <th>Lift</th>
+          <th>Confidence</th>
+          <th>Support count</th>
+          <th class="col-revenue">Ticket medio</th>
+          <th class="col-revenue">Revenue total</th>
+          <th>Segmento</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </section>
 
 <details class="explainer">
   <summary>¿Qué estoy viendo?</summary>
   <div class="explainer-content">
     <p><strong>Pregunta de negocio:</strong> ¿Qué productos puedo agrupar y recomendar a cada segmento?</p>
-    <p><strong>Cómo leer esto:</strong> Cada regla dice "quien compró <em>antecedents</em> también suele comprar <em>consequents</em>". <em>Confidence</em> es la probabilidad de que pase la asociación; <em>lift</em> indica cuánto más probable es que sin la asociación (lift &gt; 1 = relación real, &gt; 3 = fuerte). El bar chart está ordenado por revenue del segmento en modo accionables.</p>
-    <p><strong>Acciones sugeridas:</strong> Usar los bundles con alto revenue de <em>MVPs</em> y <em>Alto Valor</em> como cross-sell directo. En segmentos bajos, los bundles ayudan a aumentar el ticket promedio en campañas dirigidas.</p>
-    <p><strong>Notas técnicas:</strong> Vista <em>Accionables</em> limita a reglas 1→1 y 1→2 (más fáciles de operativizar). Vista <em>Completa</em> incluye todas las reglas del segmento (mejor para exploración técnica). En modo completa, las columnas de ticket / revenue no están disponibles — ordenamos por support count.</p>
+    <p><strong>Cómo leer el mapa:</strong> Cada burbuja es una regla "quien compró <em>A</em> también compró <em>B</em>". El eje horizontal es <em>confidence</em> (qué tan seguro es el patrón: 80% significa que 8 de cada 10 compradores de A también compraron B). El eje vertical es <em>lift</em> (qué tan fuerte es la asociación vs el azar: lift=3 significa que la co-compra es 3 veces más probable que el azar). El tamaño de la burbuja es el volumen de pedidos. El color indica el cuadrante de oportunidad. El segmento al que pertenece cada regla aparece en el hover.</p>
+    <p><strong>Las dos líneas dashed</strong> dividen el plano usando las medianas de las reglas mostradas — así los cuadrantes siempre quedan balanceados. La esquina superior derecha (oportunidades fuertes) es donde están las reglas que marketing debe priorizar.</p>
+    <p><strong>Vista marketing</strong> limita a reglas 1→1 y 1→2 (operativas) e incluye revenue. <strong>Vista exploratoria</strong> incluye reglas multi-producto pero no calcula revenue por regla (costoso). Filtro mínimo: confidence &gt; 30% y lift &gt; 1.5.</p>
   </div>
 </details>
 
@@ -62,6 +88,30 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+  .quadrant-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #fafafa;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .legend-row { display: flex; align-items: center; gap: 8px; }
+  .legend-row strong { white-space: nowrap; }
+  .legend-desc { color: var(--text-soft, #666); font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-strong { background: #0B3C5D; }
+  .dot-common { background: #328CC1; }
+  .dot-niche  { background: #D82822; }
+  .dot-noise  { background: #9AA0A6; }
+  .table-scroll { max-height: 600px; overflow-y: auto; }
+  .table-scroll thead th { position: sticky; top: 0; background: white; z-index: 2; }
+  /* Esconder las columnas de revenue/ticket en modo exploratorio */
+  .modo-completa .col-revenue { display: none; }
+</style>
 <script>
   (function () {
     const initial = JSON.parse(document.getElementById('initial-data').textContent);
@@ -70,8 +120,20 @@
     const fmtPct = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
 
+    const tablaContainer = document.querySelector('.table-scroll').parentElement;
+
+    function aplicarVisibilidadColumnas() {
+      // Activa el class modo-completa cuando estamos en exploratoria
+      if (state.modo === 'completa') {
+        tablaContainer.classList.add('modo-completa');
+      } else {
+        tablaContainer.classList.remove('modo-completa');
+      }
+    }
+
     function render(reglas) {
-      PulseCharts.renderBarBundles('bar-bundles', reglas);
+      PulseCharts.renderScatterBundles('scatter-bundles', reglas);
+
       const tbody = document.querySelector('#tabla-bundles tbody');
       tbody.innerHTML = '';
       reglas.forEach(r => {
@@ -80,38 +142,41 @@
         tr.innerHTML = `
           <td>${r.antecedents}</td>
           <td>${r.consequents}</td>
-          <td>${fmtPct(r.confidence)}</td>
           <td>${fmtNum(r.lift, 2)}</td>
+          <td>${fmtPct(r.confidence)}</td>
           <td>${fmtNum(r.support_count)}</td>
-          <td>${fmtMoneda(r.ticket_medio)}</td>
-          <td>${fmtMoneda(r.revenue_total)}</td>
+          <td class="col-revenue">${fmtMoneda(r.ticket_medio)}</td>
+          <td class="col-revenue">${fmtMoneda(r.revenue_total)}</td>
           <td><span class="seg-chip" style="background:${color}"></span>${r.segmento}</td>
         `;
         tbody.appendChild(tr);
       });
+
+      document.getElementById('tabla-count').textContent =
+        reglas.length + ' regla' + (reglas.length === 1 ? '' : 's');
+
+      aplicarVisibilidadColumnas();
     }
 
     async function reload() {
-      PulseFilters.setLoading('bar-bundles', true);
-      const url = `/api/bundles?segmento=${encodeURIComponent(state.segmento)}&modo=${state.modo}&limit=15`;
+      PulseFilters.setLoading('scatter-bundles', true);
+      const url = `/api/bundles?segmento=${encodeURIComponent(state.segmento)}&modo=${state.modo}`;
       try {
         const reglas = await PulseFilters.fetchJSON(url);
         render(reglas);
       } finally {
-        PulseFilters.setLoading('bar-bundles', false);
+        PulseFilters.setLoading('scatter-bundles', false);
       }
     }
 
     // Primera pintura con datos embebidos
     render(initial.reglas);
 
-    // Filtro segmento
     document.getElementById('f-segmento').addEventListener('change', (e) => {
       state.segmento = e.target.value;
       reload();
     });
 
-    // Toggle modo
     document.querySelectorAll('#f-modo button').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('#f-modo button').forEach(b => b.classList.remove('active'));

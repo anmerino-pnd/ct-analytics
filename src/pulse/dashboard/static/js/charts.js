@@ -28,6 +28,12 @@ window.PulseCharts = (function () {
     );
   }
 
+  // Inserta saltos de línea en labels de segmento multi-palabra para que
+  // quepan horizontalmente sin solaparse (e.g. "Alto Valor" → "Alto<br>Valor").
+  function wrapSegmentLabel(s) {
+    return (s || '').replace(/ /g, '<br>');
+  }
+
   // ─── Donut: distribución de clientes ────────────────────────────
   function renderDonut(elId, data, opts = {}) {
     const ordered = orderSegmentos(data, 'segmento');
@@ -40,14 +46,24 @@ window.PulseCharts = (function () {
       labels, values,
       hole: 0.55,
       marker: { colors, line: { color: 'white', width: 2 } },
-      textinfo: 'label+percent',
-      textposition: 'outside',
+      // Solo % en la rebanada (los nombres van en la leyenda → no se solapan)
+      textinfo: 'percent',
+      textposition: 'inside',
+      insidetextorientation: 'horizontal',
+      textfont: { color: 'white', size: 13 },
       hovertemplate: '%{label}<br>%{value:,} clientes<br>%{percent}<extra></extra>',
       sort: false,
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
-      showlegend: false,
-      margin: { t: 30, r: 20, b: 20, l: 20 },
+      showlegend: true,
+      legend: {
+        orientation: 'v',
+        x: 1, xanchor: 'left',
+        y: 0.5, yanchor: 'middle',
+        font: { size: 13 },
+        itemsizing: 'constant',
+      },
+      margin: { t: 20, r: 140, b: 20, l: 20 },
     }, opts.layout || {});
     Plotly.react(elId, [trace], layout, CONFIG_BASE);
   }
@@ -57,15 +73,24 @@ window.PulseCharts = (function () {
     const ordered = orderSegmentos(data, 'segmento');
     const trace = {
       type: 'bar',
-      x: ordered.map(r => r.segmento),
+      x: ordered.map(r => wrapSegmentLabel(r.segmento)),
       y: ordered.map(r => r.revenue),
       marker: { color: ordered.map(r => colorOf(r.segmento)) },
-      hovertemplate: '%{x}<br>$%{y:,.0f}<extra></extra>',
+      // Hover muestra el segmento sin el <br>
+      customdata: ordered.map(r => r.segmento),
+      hovertemplate: '%{customdata}<br>$%{y:,.0f}<extra></extra>',
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
       showlegend: false,
-      yaxis: { title: { text: 'Revenue (MXN)' }, tickformat: ',.0f' },
-      xaxis: { title: '' },
+      yaxis: {
+        title: { text: 'Revenue (MXN)' },
+        // '$~s' abrevia a $k/$M/$G (e.g. $1.21G) — números compactos
+        tickprefix: '$',
+        tickformat: '~s',
+        separatethousands: true,
+      },
+      xaxis: { title: '', tickangle: 0, automargin: true },
+      margin: { t: 30, r: 20, b: 70, l: 70 },
     });
     Plotly.react(elId, [trace], layout, CONFIG_BASE);
   }
@@ -95,6 +120,166 @@ window.PulseCharts = (function () {
       height: Math.max(360, 28 * rules.length + 80),
     });
     Plotly.react(elId, [trace], layout, CONFIG_BASE);
+  }
+
+  // ─── Scatter "Market Basket Opportunity Map" ────────────────────
+  // Replica v3 del notebook:
+  //   x: confidence  |  y: lift  |  tamaño: support  |  color: cuadrante
+  // Las líneas divisorias usan la MEDIANA de confidence y lift de las reglas
+  // mostradas (recalculado al filtrar). Esto garantiza división balanceada.
+  // Hover muestra el segmento de cada regla.
+  function renderScatterBundles(elId, rules, opts = {}) {
+    if (!rules.length) {
+      Plotly.purge(elId);
+      return;
+    }
+
+    // Cuadrantes basados en la mediana (consistente con v3)
+    const sortedConf = rules.map(r => r.confidence).slice().sort((a, b) => a - b);
+    const sortedLift = rules.map(r => r.lift).slice().sort((a, b) => a - b);
+    const median = arr => {
+      const n = arr.length;
+      return n % 2 === 0 ? (arr[n/2 - 1] + arr[n/2]) / 2 : arr[(n-1)/2];
+    };
+    const confMid = median(sortedConf);
+    const liftMid = median(sortedLift);
+
+    // Paleta de cuadrantes (de v3)
+    const QUADRANT_COLORS = {
+      "Oportunidades fuertes":  "#0B3C5D",
+      "Co-compras frecuentes":  "#328CC1",
+      "Nichos interesantes":    "#D82822",
+      "Ruido":                  "#9AA0A6",
+    };
+    const QUADRANT_ORDER = [
+      "Oportunidades fuertes",
+      "Co-compras frecuentes",
+      "Nichos interesantes",
+      "Ruido",
+    ];
+
+    // Clasificar cada regla
+    function clasificar(r) {
+      const altaConf = r.confidence >= confMid;
+      const altoLift = r.lift >= liftMid;
+      if (altaConf && altoLift)  return "Oportunidades fuertes";
+      if (altaConf && !altoLift) return "Co-compras frecuentes";
+      if (!altaConf && altoLift) return "Nichos interesantes";
+      return "Ruido";
+    }
+    rules.forEach(r => r._cuadrante = clasificar(r));
+
+    // Escalar tamaño de burbujas
+    const supports = rules.map(r => r.support_count || 1);
+    const maxSupport = Math.max(...supports, 1);
+    const sizeref = 2 * maxSupport / (40 ** 2);
+
+    // Agrupar por cuadrante para que la leyenda muestre los 4 grupos
+    const porCuad = {};
+    rules.forEach(r => {
+      if (!porCuad[r._cuadrante]) porCuad[r._cuadrante] = [];
+      porCuad[r._cuadrante].push(r);
+    });
+
+    const traces = QUADRANT_ORDER
+      .filter(q => porCuad[q])
+      .map(q => {
+        const sub = porCuad[q];
+        return {
+          type: 'scatter',
+          mode: 'markers',
+          name: q + ' (' + sub.length + ')',
+          x: sub.map(r => r.confidence),
+          y: sub.map(r => r.lift),
+          marker: {
+            size: sub.map(r => r.support_count || 1),
+            sizemode: 'area',
+            sizeref: sizeref,
+            sizemin: 4,
+            color: QUADRANT_COLORS[q],
+            opacity: 0.65,
+            line: { color: 'white', width: 1 },
+          },
+          customdata: sub.map(r => [
+            r.antecedents,
+            r.consequents,
+            r.support_count,
+            r.revenue_total,
+            r.ticket_medio,
+            r.segmento,
+          ]),
+          hovertemplate: (function () {
+            // Solo incluimos revenue/ticket si hay datos (vista marketing).
+            // En vista exploratoria llegan null y mostrarlos da texto literal feo.
+            const tieneValor = sub.some(r => r.revenue_total != null);
+            const baseTpl =
+              '<b>%{customdata[0]} → %{customdata[1]}</b>' +
+              '<br>Segmento: %{customdata[5]}' +
+              '<br>Confidence: %{x:.1%}' +
+              '<br>Lift: %{y:.2f}' +
+              '<br>Support: %{customdata[2]:,} pedidos';
+            const valorTpl = tieneValor
+              ? '<br>Revenue: $%{customdata[3]:,.0f}' +
+                '<br>Ticket medio: $%{customdata[4]:,.0f}'
+              : '';
+            return baseTpl + valorTpl + '<extra></extra>';
+          })(),
+        };
+      });
+
+    const xMin = Math.min(...rules.map(r => r.confidence)) - 0.02;
+    const xMax = Math.max(...rules.map(r => r.confidence)) + 0.02;
+    const yMin = 0;
+    const yMax = Math.max(...rules.map(r => r.lift)) * 1.05;
+
+    const layout = Object.assign({}, LAYOUT_BASE, {
+      xaxis: {
+        title: { text: 'Confidence (qué tan seguro es el patrón)' },
+        tickformat: '.0%',
+        range: [xMin, xMax],
+        zeroline: false,
+      },
+      yaxis: {
+        title: { text: 'Lift (qué tan fuerte es la asociación)' },
+        range: [yMin, yMax],
+        zeroline: false,
+      },
+      shapes: [
+        {
+          type: 'line',
+          x0: confMid, x1: confMid, y0: yMin, y1: yMax,
+          line: { color: '#9AA0A6', width: 1, dash: 'dash' },
+        },
+        {
+          type: 'line',
+          x0: xMin, x1: xMax, y0: liftMid, y1: liftMid,
+          line: { color: '#9AA0A6', width: 1, dash: 'dash' },
+        },
+      ],
+      annotations: [
+        {
+          x: confMid, y: yMax, xanchor: 'left', yanchor: 'top',
+          text: 'conf=' + (confMid * 100).toFixed(0) + '%',
+          showarrow: false,
+          font: { size: 10, color: '#666' },
+          bgcolor: 'rgba(255,255,255,0.8)',
+          xshift: 4,
+        },
+        {
+          x: xMax, y: liftMid, xanchor: 'right', yanchor: 'bottom',
+          text: 'lift=' + liftMid.toFixed(1),
+          showarrow: false,
+          font: { size: 10, color: '#666' },
+          bgcolor: 'rgba(255,255,255,0.8)',
+          yshift: 4,
+        },
+      ],
+      legend: { title: { text: 'Cuadrante (clic para ocultar/mostrar)' } },
+      height: 520,
+      margin: { t: 30, r: 20, b: 60, l: 60 },
+    });
+
+    Plotly.react(elId, traces, layout, CONFIG_BASE);
   }
 
   // ─── Heatmap hora × día por segmento ────────────────────────────
@@ -332,7 +517,7 @@ window.PulseCharts = (function () {
 
   return {
     LAYOUT_BASE, CONFIG_BASE, colorOf, orderSegmentos,
-    renderDonut, renderBarRevenue, renderBarBundles,
+    renderDonut, renderBarRevenue, renderBarBundles, renderScatterBundles,
     renderHeatmapHoraDia, renderLineMensual, renderBarMesCalendario,
     renderScatterCliente, renderClientePedidos, renderScatterAlertas,
     renderRadar, renderBoxMonetary, renderHeatmapBundles,

@@ -27,11 +27,12 @@ async def distribucion_segmentos() -> list[dict]:
 async def bundles(
     segmento: str | None = Query(default=None),
     modo: Literal["accionables", "completa"] = Query(default="accionables"),
-    limit: int = Query(default=15, ge=1, le=100),
 ) -> list[dict]:
-    """Top reglas de market basket. `segmento` vacío o 'Todos' = todos los segmentos."""
+    """Reglas para el scatter Market Basket Opportunity Map.
+    Filtra por confidence > 0.3 y lift > 1.5 (igual que v3).
+    """
     seg = segmento if segmento and segmento != "Todos" else None
-    return q.bundles_top_por_segmento(segmento=seg, modo=modo, limit=limit)
+    return q.bundles_scatter_map(segmento=seg, modo=modo)
 
 
 def _parse_segmentos(segmentos: str | None) -> list[str]:
