@@ -3,7 +3,6 @@ pulse.egg-info
 __pycache__/
 __init__.py
 notebooks/
-docs/
 datos/
 QWEN.md
 CLAUDE.md
