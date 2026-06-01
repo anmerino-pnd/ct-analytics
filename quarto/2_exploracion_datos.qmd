@@ -1,6 +1,6 @@
 ---
 title: "Exploración de Datos (EDA)"
-format: 
+format:
     html:
          page-layout: article
          code-fold: true
@@ -9,104 +9,179 @@ toc: true
 toc-depth: 3
 ---
 
-## 1. Análisis Exploratorio de Datos
+::: {style="text-align: justify"}
 
-Esta sección documenta los principales descubrimientos derivados de nuestra base transaccional, analizando más de **700,000 órdenes** de casi **20,000 clientes** durante el periodo 2023-2025.
+## 1. La base transaccional
 
-> [!NOTE]
-> Para proteger la confidencialidad de la información, los montos exactos y volúmenes precisos han sido anonimizados o escalados, presentando los hallazgos a través de **porcentajes y proporciones** que reflejan con exactitud la realidad del negocio de CT Internacional.
+Esta fase del proyecto consistió en levantar la primera fotografía completa de la base transaccional de CT Internacional para definir el alcance real del análisis y detectar problemas estructurales antes de cualquier modelado.
 
-### 1.1 Configuración Visual y Generación
+::: {.callout-note}
+**Sobre los datos en este sitio**: las cifras de volumen están publicadas con un nivel de precisión aproximado, los montos monetarios se presentan como índices o en escala log, y las claves de productos están **ofuscadas en familias genéricas**. Las proporciones, distribuciones, lifts y patrones temporales son auténticos.
+:::
+
+### 1.1 Cifras del universo analizado
+
+| Métrica | Valor |
+|---|---|
+| Pedidos totales en histórico | ~780K |
+| Pedidos en ventana de análisis (30 meses) | ~570K |
+| Items transaccionales | ~1.8M |
+| Clientes únicos con compras en ventana | 18,638 |
+| Familias de producto identificadas | 908 |
+| Periodo cubierto | Dic 2023 — May 2026 |
+
+La elección de ventana de 30 meses no fue arbitraria. Es lo suficientemente larga para capturar dos ciclos estacionales completos (Buen Fin, cierres fiscales) pero corta como para que no incluyamos comportamiento de clientes que ya no son relevantes para el negocio actual.
+
+## 2. Tres descubrimientos que cambiaron el rumbo del análisis
+
+### 2.1 Distribución log-normal extrema del ticket
+
+Lo primero que aprendimos al graficar la distribución de `pago_total` es que el promedio aritmético no significa nada. La mayoría de los tickets son compras pequeñas (consumibles, accesorios), pero existe una cola larga de tickets de infraestructura que arrastra la media hacia arriba de manera engañosa.
 
 ```{python}
+#| label: fig-ticket-distribution
+#| fig-cap: "Distribución del ticket en escala lineal vs logarítmica."
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime, timedelta
 
-# Configuración visual
 sns.set_theme(style="white")
-COLOR_ACCENT = "#000d81"
-COLOR_SEC = "#810000"
+COLOR_PRIMARY = "#0B3C5D"
+COLOR_SECONDARY = "#D82822"
 
 np.random.seed(42)
+# Simulación que preserva el comportamiento log-normal real
+n_orders = 15000
+pago_total = np.random.lognormal(mean=7.2, sigma=1.4, size=n_orders)
 
-# Simulación de la distribución real
-n_orders = 10000
-dates = [datetime(2023, 1, 1) + timedelta(days=np.random.randint(0, 730)) for _ in range(n_orders)]
-pago_total = np.random.lognormal(mean=7, sigma=1.2, size=n_orders)
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
 
-df_orders_mock = pd.DataFrame({
-    'fecha': dates,
-    'pago_total': pago_total
-})
-df_orders_mock['mes_anio'] = df_orders_mock['fecha'].dt.to_period('M')
-```
+sns.histplot(pago_total, bins=60, color=COLOR_SECONDARY, edgecolor="white", ax=axes[0])
+axes[0].set_title("Escala lineal: la cola larga aplasta el histograma")
+axes[0].set_xlabel("Ticket (índice relativo)")
+axes[0].set_ylabel("Frecuencia")
 
-## 2. Descubrimientos de Negocio
-
-### 2.1 El Ticket Promedio (Log-Normal)
-
-Analizar el "ticket promedio" puede ser sumamente engañoso en escenarios B2B. Descubrimos que nuestra distribución de pagos sigue una curva **Log-Normal** extrema. Esto significa que la inmensa mayoría de los tickets son compras menores (accesorios, consumibles), pero existe una "cola larga" de tickets masivos (infraestructura, servidores) que empujan el promedio estadístico hacia arriba, alejándolo de lo que es una compra "típica". 
-
-*Nota metodológica: Debido a este sesgo, en las fases de Machine Learning aplicaremos una transformación Logarítmica (`log1p`) a los montos económicos.*
-
-```{python}
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-# Escala Lineal
-sns.histplot(df_orders_mock['pago_total'], bins=50, color=COLOR_SEC, edgecolor="white", ax=axes[0])
-axes[0].set_title("Distribución de Tickets (Escala Lineal)")
-axes[0].set_xlabel("Monto")
-
-# Escala Logarítmica
-sns.histplot(df_orders_mock['pago_total'], bins=50, color=COLOR_ACCENT, edgecolor="white", log_scale=True, ax=axes[1])
-axes[1].set_title("Distribución de Tickets (Escala Logarítmica)")
-axes[1].set_xlabel("Monto (Log)")
+sns.histplot(pago_total, bins=60, color=COLOR_PRIMARY, edgecolor="white",
+             log_scale=True, ax=axes[1])
+axes[1].set_title("Escala logarítmica: la verdadera distribución")
+axes[1].set_xlabel("Ticket (escala log)")
+axes[1].set_ylabel("")
 
 sns.despine()
 plt.tight_layout()
 plt.show()
 ```
 
-### 2.2 Concentración de Revenue (Principio de Pareto)
+**El rumbo que nos hizo tomar**: este hallazgo definió una de las decisiones técnicas más importantes del proyecto. Antes de cualquier algoritmo de clustering, **aplicamos `log1p` a todas las variables monetarias y de frecuencia**. Sin esta transformación, el K-Means quedaría dominado por unos pocos outliers extremos y la segmentación carecería de sentido. Esta decisión vive **dentro** del pipeline serializado del modelo (no como un paso manual), garantizando que cualquier predicción futura aplique la misma transformación que el entrenamiento.
 
-Un hallazgo crítico es el nivel de concentración de nuestro negocio. Ordenamos a los clientes de mayor a menor según sus compras totales y calculamos el ingreso acumulado. Comprobamos la regla del **80/20 (Pareto)** de forma casi exacta: el **80% de nuestros ingresos es generado por una pequeña élite de clientes**.
+### 2.2 Concentración del revenue: principio de Pareto
+
+Ordenamos los clientes de mayor a menor según su gasto acumulado en la ventana y graficamos la curva de revenue acumulado.
 
 ```{python}
-# Simulación de clientes con concentración de Pareto
-n_clients = 2000
-ingresos_clientes = np.random.pareto(a=1.16, size=n_clients) # ~ 80/20 distribution
-ingresos_clientes.sort()
-ingresos_clientes = ingresos_clientes[::-1]
-acumulado = np.cumsum(ingresos_clientes) / np.sum(ingresos_clientes)
+#| label: fig-pareto
+#| fig-cap: "Curva de concentración del revenue."
+
+n_clients = 18638
+ingresos = np.random.pareto(a=1.05, size=n_clients)
+ingresos.sort()
+ingresos = ingresos[::-1]
+acumulado = np.cumsum(ingresos) / np.sum(ingresos)
+pct_clientes = np.arange(1, n_clients + 1) / n_clients * 100
 
 plt.figure(figsize=(10, 5))
-plt.plot(np.arange(1, n_clients + 1) / n_clients * 100, acumulado * 100, color=COLOR_ACCENT, linewidth=2.5)
-plt.axhline(y=80, color=COLOR_SEC, linestyle='--', linewidth=1)
-plt.axvline(x=20, color=COLOR_SEC, linestyle='--', linewidth=1)
-plt.title("Curva de Concentración de Ingresos (Pareto)")
-plt.xlabel("Porcentaje de Clientes (%)")
-plt.ylabel("Porcentaje del Revenue Acumulado (%)")
-plt.grid(True, linestyle='--', alpha=0.5)
+plt.plot(pct_clientes, acumulado * 100, color=COLOR_PRIMARY, linewidth=2.5)
+plt.fill_between(pct_clientes, 0, acumulado * 100, color=COLOR_PRIMARY, alpha=0.08)
+
+plt.axhline(y=80, color=COLOR_SECONDARY, linestyle='--', linewidth=1, alpha=0.6)
+plt.axvline(x=20, color=COLOR_SECONDARY, linestyle='--', linewidth=1, alpha=0.6)
+plt.scatter([20], [80], color=COLOR_SECONDARY, s=80, zorder=5)
+plt.annotate("20% de clientes\n80% del revenue", xy=(20, 80), xytext=(35, 65),
+             fontsize=11, color=COLOR_SECONDARY,
+             arrowprops=dict(arrowstyle="->", color=COLOR_SECONDARY))
+
+plt.title("Curva de concentración de revenue (Pareto)")
+plt.xlabel("Porcentaje acumulado de clientes (%)")
+plt.ylabel("Porcentaje acumulado del revenue (%)")
+plt.grid(True, linestyle='--', alpha=0.4)
 sns.despine()
+plt.tight_layout()
 plt.show()
 ```
 
-### 2.3 Ingeniería sobre Claves de Producto (Familias)
+**El rumbo que nos hizo tomar**: la concentración de Pareto reforzó la hipótesis de que **la segmentación tendría sentido**. Si todos los clientes fueran igual de valiosos, agruparlos no agregaría nada. Pero con un 20% de la base generando el 80% del revenue, identificar **quiénes son ese 20%** y **qué los distingue del resto** se vuelve la pregunta central del proyecto. Esto también nos llevó a desconfiar de cualquier modelo cuya distribución de clusters fuera muy plana — si el modelo dice "todos los clusters son del 20%", probablemente no captó la estructura real del negocio.
 
-En los datos originales, cada transacción está atada a una "Clave CT" alfanumérica única. Sin embargo, procesar miles de SKU individuales debilita cualquier análisis. 
+::: {.callout-warning}
+**Nota sobre la concentración real**: descubrimos que el top 10 de clientes solo representa ~3.8% del volumen total. Esto sí es Pareto pero **no es Pareto extremo**: nuestro negocio no depende de un puñado de clientes-llave, sino de una base amplia de clientes valiosos. Esto es importante para entender por qué el segmento MVPs no es "los 10 mejores" sino el cluster con un perfil de comportamiento específico.
+:::
 
-Durante el EDA, extrajimos el **prefijo de la clave** para construir la familia de productos. Ejemplos de mapeo:
-- `CAR` -> Cartuchos
-- `ACC` -> Accesorios
-- `MEM` -> Memorias
-- `DDU` -> Discos Duros
+### 2.3 El problema de las claves: 908 familias en lugar de 30,000 SKUs
 
-Esta limpieza estructural fue el paso habilitador que permitió realizar el análisis de Market Basket (MBA) con la dimensionalidad correcta.
+Los datos originales identifican cada item por una clave alfanumérica única (por ejemplo, `ESDKPK4710`). Para los humanos esto es manejable, pero para un algoritmo de Market Basket Analysis es catastrófico: con 30,000 SKUs distintos, casi ninguna regla alcanza el soporte mínimo necesario para considerarse estadísticamente significativa.
 
-### 2.4 Calidad de Datos
+La solución fue trivial pero crítica: **derivar la "familia" del producto removiendo los dígitos finales de la clave**. Con esto, `ESDKPK4710`, `ESDKPK4720` y `ESDKPK4730` se agrupan todos bajo la familia `ESDKPK`.
 
-- La integridad de la base de datos es excepcional: **0.00% de las órdenes críticas presentan errores estructurales** tras la exclusión de órdenes canceladas o inválidas.
-- Filtramos estrictamente los tickets para analizar únicamente compras finalizadas con procedencia confiable (CTonline).
+```{python}
+#| label: fig-familias
+#| fig-cap: "Reducción dramática de cardinalidad: de SKUs únicos a familias."
+
+cardinalidades = pd.DataFrame({
+    'Nivel': ['Claves SKU individuales', 'Familias de producto'],
+    'Cardinalidad': [30000, 908]
+})
+
+fig, ax = plt.subplots(figsize=(9, 3.5))
+bars = ax.barh(cardinalidades['Nivel'], cardinalidades['Cardinalidad'],
+               color=[COLOR_SECONDARY, COLOR_PRIMARY], edgecolor='none')
+
+for bar, val in zip(bars, cardinalidades['Cardinalidad']):
+    ax.text(val + 500, bar.get_y() + bar.get_height()/2,
+            f'{val:,}', va='center', fontsize=12, fontweight='bold')
+
+ax.set_xlabel('Número de categorías únicas')
+ax.set_title('Reducción de dimensionalidad mediante derivación de familias')
+ax.set_xlim(0, 35000)
+sns.despine()
+plt.tight_layout()
+plt.show()
+```
+
+**El rumbo que nos hizo tomar**: con 908 familias en lugar de 30,000 SKUs, el MBA pasó de "matemáticamente imposible" a "produce ~3,800 reglas accionables". Esta es la diferencia entre tener análisis o no tenerlo. La función `derivar_familia()` quedó como parte del módulo `analytics/familia.py` del pipeline.
+
+## 3. Calidad y limpieza de datos
+
+### 3.1 El cargo financiero CARGO100
+
+Al hacer match entre `num_productos` de cada orden y el conteo real de items, descubrimos un desfase sistemático: muchas órdenes tenían un item más del que decían. Investigando, identificamos que **CARGO100 es el cargo por pago con tarjeta de crédito** que se registra como un item dentro de la orden pero **no es un producto**.
+
+Si se incluye en MBA, contamina los lifts porque aparece en proporciones masivas. Si se incluye en el conteo de productos, infla `num_productos` por uno en cada orden afectada. La decisión fue:
+
+- **Filtrar CARGO100 antes de cualquier análisis** (segmentación, MBA, temporalidad).
+- **Preservarlo en el parquet histórico** porque es información financiera válida.
+- **Recalcular `num_productos`** para que refleje únicamente productos reales.
+
+Esto se aplicó tanto al backfill histórico como al ingest incremental para evitar inconsistencias futuras.
+
+### 3.2 Validación de calidad sistemática
+
+Decidimos integrar quality checks **dentro del pipeline**, no como scripts manuales. Por ejemplo:
+
+- En la ingesta: el conteo de pedidos no puede disminuir más de un 1% entre corridas (sería señal de un bug en el dedup).
+- En la segmentación: ningún cluster puede absorber más del 50% (el caso del bug histórico del log-transform mal aplicado, que veremos en la sección de segmentación).
+- En la temporalidad: la suma de pedidos por segmento debe coincidir exactamente con el conteo en RFM (cross-check). El sistema actual reporta **0.00% de divergencia**.
+
+**El rumbo que nos hizo tomar**: estas validaciones automáticas evitaron varios bugs durante el desarrollo. Por ejemplo, una versión preliminar del pipeline tenía un dedup defectuoso que perdía millones de items; el quality check del cross-check temporalidad-RFM marcó la inconsistencia antes de que llegara a producción.
+
+## 4. Lo que aprendimos en esta fase
+
+Esta fase parecía rutinaria — "explorar los datos antes de modelar" — pero generó tres de las decisiones más importantes del proyecto entero:
+
+1. **Encapsular el log-transform en el pipeline**: porque la distribución log-normal es estructural, no anecdótica.
+2. **Trabajar con familias en lugar de SKUs**: porque sin esto, el MBA no produce señal.
+3. **Filtrar CARGO100 sistemáticamente**: porque mezclar cargos financieros con productos contamina cualquier análisis.
+
+Las tres decisiones quedaron codificadas en el pipeline como código, no como notas. Esto significa que cualquier desarrollador futuro las aplica automáticamente sin tener que recordarlas.
+
+:::

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Análisis RFM Avanzado</title>
+<title>Análisis RFM</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -183,12 +183,12 @@ window.Quarto = {
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -206,28 +206,15 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#evolución-del-modelo-rfm" id="toc-evolución-del-modelo-rfm" class="nav-link active" data-scroll-target="#evolución-del-modelo-rfm">1. Evolución del Modelo RFM</a></li>
-  <li><a href="#métricas-dinámicas-cadencia-y-urgencia" id="toc-métricas-dinámicas-cadencia-y-urgencia" class="nav-link" data-scroll-target="#métricas-dinámicas-cadencia-y-urgencia">2. Métricas Dinámicas: Cadencia y Urgencia</a>
-  <ul class="collapse">
-  <li><a href="#single-buyers-vs-clientes-recurrentes" id="toc-single-buyers-vs-clientes-recurrentes" class="nav-link" data-scroll-target="#single-buyers-vs-clientes-recurrentes">2.1 Single Buyers vs Clientes Recurrentes</a></li>
-  <li><a href="#cadencia-de-compra-inter-purchase-time" id="toc-cadencia-de-compra-inter-purchase-time" class="nav-link" data-scroll-target="#cadencia-de-compra-inter-purchase-time">2.2 Cadencia de Compra (Inter-Purchase Time)</a></li>
-  <li><a href="#el-ratio-de-urgencia" id="toc-el-ratio-de-urgencia" class="nav-link" data-scroll-target="#el-ratio-de-urgencia">2.3 El “Ratio de Urgencia”</a></li>
-  </ul></li>
-  <li><a href="#generación-del-score-heurístico-base" id="toc-generación-del-score-heurístico-base" class="nav-link" data-scroll-target="#generación-del-score-heurístico-base">3. Generación del Score Heurístico Base</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Análisis RFM Avanzado</h1>
+<h1 class="title">Análisis RFM</h1>
 </div>
 
 
@@ -244,27 +231,106 @@ window.Quarto = {
 </header>
 
 
-<section id="evolución-del-modelo-rfm" class="level2">
-<h2 class="anchored" data-anchor-id="evolución-del-modelo-rfm">1. Evolución del Modelo RFM</h2>
-<p>Evaluamos a casi 20,000 clientes mediante el modelo <strong>RFM (Recency, Frequency, Monetary)</strong>. Este enfoque clásico establece una puntuación para entender el valor del cliente basado en la recencia de su última compra, su frecuencia total y el dinero invertido.</p>
-<p>Sin embargo, al procesar los datos, descubrimos limitaciones graves en el RFM tradicional. Decidir si un cliente está “En Riesgo” utilizando un límite arbitrario (por ejemplo, “no ha comprado en 60 días”) castiga injustamente a clientes cuya naturaleza B2B dicta comprar grandes volúmenes cada 6 meses.</p>
-<p>Por ello, hemos evolucionado el análisis integrando métricas dinámicas de cadencia.</p>
+<div style="text-align: justify">
+<section id="el-rfm-clásico-no-funciona-en-b2b" class="level2">
+<h2 class="anchored" data-anchor-id="el-rfm-clásico-no-funciona-en-b2b">1. El RFM clásico no funciona en B2B</h2>
+<p>El análisis <strong>RFM</strong> (Recency, Frequency, Monetary) es una técnica clásica de segmentación que evalúa a cada cliente en tres dimensiones:</p>
+<ul>
+<li><strong>Recency</strong>: días desde la última compra.</li>
+<li><strong>Frequency</strong>: número de compras en una ventana.</li>
+<li><strong>Monetary</strong>: valor monetario total de las compras.</li>
+</ul>
+<p>La versión heurística clásica asigna puntajes del 1 al 5 en cada dimensión por percentiles y combina los tres en una etiqueta tipo “555 = MVP, 111 = perdido”. Es elegante pero <strong>rompe en negocios B2B</strong>.</p>
+<section id="el-problema-concreto" class="level3">
+<h3 class="anchored" data-anchor-id="el-problema-concreto">1.1 El problema concreto</h3>
+<p>Un cliente B2B grande puede comprar <strong>dos veces al año</strong>, gastando varios cientos de miles cada vez. Para una regla heurística basada en “tiempo desde la última compra”, este cliente se ve como “En Riesgo” si pasaron más de 60 días. Pero matemáticamente, <strong>ese cliente está en su ciclo normal</strong>.</p>
+<p>Castigar a un cliente B2B por una recency alta cuando su cadencia natural es semestral genera dos errores caros:</p>
+<ol type="1">
+<li><strong>Falsos positivos</strong>: lanzar campañas de retención a clientes que iban a comprar de todas formas, desperdiciando presupuesto.</li>
+<li><strong>Falsos negativos</strong>: ignorar a clientes recurrentes que de pronto se ralentizan, perdiendo la oportunidad de retenerlos.</li>
+</ol>
+<p><strong>El rumbo que nos hizo tomar</strong>: necesitábamos una <strong>cuarta dimensión</strong> que capturara el ritmo natural de cada cliente individualmente. No basta con saber “cuánto tiempo desde la última compra” — necesitamos saber “cuánto tiempo es <strong>mucho</strong> para este cliente específico”.</p>
 </section>
-<section id="métricas-dinámicas-cadencia-y-urgencia" class="level2">
-<h2 class="anchored" data-anchor-id="métricas-dinámicas-cadencia-y-urgencia">2. Métricas Dinámicas: Cadencia y Urgencia</h2>
-<section id="single-buyers-vs-clientes-recurrentes" class="level3">
-<h3 class="anchored" data-anchor-id="single-buyers-vs-clientes-recurrentes">2.1 Single Buyers vs Clientes Recurrentes</h3>
-<p>El primer paso fue separar a los clientes con una sola compra (<em>Single Buyers</em>) del resto de la base. Los <em>Single Buyers</em> no tienen una frecuencia calculable y no pueden ser medidos con las mismas reglas de retención.</p>
 </section>
-<section id="cadencia-de-compra-inter-purchase-time" class="level3">
-<h3 class="anchored" data-anchor-id="cadencia-de-compra-inter-purchase-time">2.2 Cadencia de Compra (Inter-Purchase Time)</h3>
-<p>Para los clientes recurrentes, calculamos la mediana de días entre todas sus compras. Esta métrica personalizada representa el “ritmo vital” de cada cuenta individual.</p>
+<section id="la-cuarta-dimensión-cadencia-personalizada" class="level2">
+<h2 class="anchored" data-anchor-id="la-cuarta-dimensión-cadencia-personalizada">2. La cuarta dimensión: cadencia personalizada</h2>
+<section id="definición" class="level3">
+<h3 class="anchored" data-anchor-id="definición">2.1 Definición</h3>
+<p>Para cada cliente con más de una compra, calculamos la <strong>mediana de días entre compras consecutivas</strong>. Esto es su cadencia personal: el “ritmo vital” de la cuenta.</p>
+<p><span class="math display">\[
+\text{cadencia}_i = \text{mediana}\left(\{\Delta_1, \Delta_2, \ldots, \Delta_{n-1}\}\right)
+\]</span></p>
+<p>donde <span class="math inline">\(\Delta_k\)</span> es la diferencia en días entre la compra <span class="math inline">\(k\)</span> y la <span class="math inline">\(k+1\)</span> del cliente <span class="math inline">\(i\)</span>.</p>
+<p>Usamos mediana en lugar de media para que un solo retraso inusual no distorsione la métrica.</p>
 </section>
-<section id="el-ratio-de-urgencia" class="level3">
-<h3 class="anchored" data-anchor-id="el-ratio-de-urgencia">2.3 El “Ratio de Urgencia”</h3>
-<p>La verdadera innovación de esta fase fue la creación del <strong>Ratio de Urgencia</strong>. Se calcula matemáticamente como: <span class="math display">\[ \text{Ratio de Urgencia} = \frac{\text{Recency Actual (días)}}{\text{Cadencia Habitual (días)}} \]</span></p>
-<p><strong>¿Cómo interpretarlo?</strong> - <strong>Ratio &lt; 1.0</strong>: El cliente está en su ciclo normal de compra. (ej. Compra cada 30 días, y su última compra fue hace 15). - <strong>Ratio &gt; 1.5</strong>: Alarma temprana. El cliente ya se retrasó un 50% respecto a la fecha en que <em>matemáticamente</em> le tocaba comprar. - <strong>Ratio &gt; 3.0</strong>: Abandono inminente o completado.</p>
-<div id="412e1df0" class="cell" data-execution_count="1">
+<section id="el-problema-de-los-single-buyers" class="level3">
+<h3 class="anchored" data-anchor-id="el-problema-de-los-single-buyers">2.2 El problema de los single-buyers</h3>
+<p>Hay 3,328 clientes en la base (~17.9% del total) con <strong>una sola compra</strong> en la ventana. Para ellos, la cadencia es matemáticamente indefinida: no puedes calcular “diferencia entre compras consecutivas” si solo hay una compra.</p>
+<p>Dos enfoques posibles:</p>
+<ul>
+<li><strong>Eliminarlos</strong>: pero son casi una quinta parte de la base, y muchos podrían convertirse en recurrentes.</li>
+<li><strong>Imputar un valor razonable</strong>: para que el modelo pueda procesarlos.</li>
+</ul>
+<p>Elegimos la segunda opción con dos decisiones específicas:</p>
+<ol type="1">
+<li><strong>El valor imputado es el percentil 95 de cadencia de los clientes recurrentes</strong> (~265 días). Es decir, asumimos por default que un single-buyer es “muy lento” hasta que pruebe lo contrario.</li>
+<li><strong>Agregamos un flag binario <code>es_single_buyer</code></strong> para que cualquier análisis posterior pueda separarlos.</li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Por qué este diseño</strong>: si un single-buyer regresa y se convierte en recurrente, su cadencia se recalcula automáticamente con datos reales. La imputación es solo para “darle un valor mientras tanto” que no rompa el modelo. El flag permite que análisis sensibles (como las alertas de retención) los excluyan explícitamente.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="el-ratio-de-urgencia" class="level2">
+<h2 class="anchored" data-anchor-id="el-ratio-de-urgencia">3. El ratio de urgencia</h2>
+<section id="la-métrica" class="level3">
+<h3 class="anchored" data-anchor-id="la-métrica">3.1 La métrica</h3>
+<p>Con cadencia personalizada en mano, podemos construir una métrica que mide <strong>qué tan retrasado está cada cliente respecto a su propio ritmo</strong>:</p>
+<p><span class="math display">\[
+\text{ratio de urgencia} = \frac{\text{recency actual}}{\text{cadencia personal}}
+\]</span></p>
+<p><strong>Cómo interpretarlo:</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ratio</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>&lt; 1.0</code></td>
+<td>El cliente está dentro de su ciclo normal de compra</td>
+</tr>
+<tr class="even">
+<td><code>1.0 - 1.5</code></td>
+<td>Ligeramente retrasado, no es alarma</td>
+</tr>
+<tr class="odd">
+<td><code>1.5 - 3.0</code></td>
+<td><strong>Zona de riesgo</strong>: el cliente lleva más de 1.5× su cadencia sin comprar</td>
+</tr>
+<tr class="even">
+<td><code>&gt; 3.0</code></td>
+<td>Abandono casi seguro</td>
+</tr>
+</tbody>
+</table>
+<div id="cell-fig-ratio-urgencia" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -273,109 +339,118 @@ window.Quarto = {
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>COLOR_ACCENT <span class="op">=</span> <span class="st">"#000d81"</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>COLOR_WARN <span class="op">=</span> <span class="st">"#810000"</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>COLOR_PRIMARY <span class="op">=</span> <span class="st">"#0B3C5D"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>COLOR_WARN <span class="op">=</span> <span class="st">"#D82822"</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de la distribución del Ratio de Urgencia en la base recurrente</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>n_recurrentes <span class="op">=</span> <span class="dv">8000</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Generamos una distribución log-normal simulando ratios</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>ratios_urgencia <span class="op">=</span> np.random.lognormal(mean<span class="op">=</span><span class="dv">0</span>, sigma<span class="op">=</span><span class="fl">0.8</span>, size<span class="op">=</span>n_recurrentes)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Filtrar outliers extremos para la visualización</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>ratios_visual <span class="op">=</span> ratios_urgencia[ratios_urgencia <span class="op">&lt;</span> <span class="dv">10</span>]</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>sns.histplot(ratios_visual, bins<span class="op">=</span><span class="dv">60</span>, color<span class="op">=</span>COLOR_ACCENT, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>n_recurrentes <span class="op">=</span> <span class="dv">15310</span>  <span class="co"># 18638 - 3328 single-buyers</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Distribución mixta: la mayoría &lt; 1, una cola larga &gt; 1.5</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>n_normales <span class="op">=</span> <span class="bu">int</span>(n_recurrentes <span class="op">*</span> <span class="fl">0.62</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>n_riesgo <span class="op">=</span> <span class="bu">int</span>(n_recurrentes <span class="op">*</span> <span class="fl">0.28</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>n_abandono <span class="op">=</span> n_recurrentes <span class="op">-</span> n_normales <span class="op">-</span> n_riesgo</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>ratios_normales <span class="op">=</span> np.random.lognormal(mean<span class="op">=-</span><span class="fl">0.5</span>, sigma<span class="op">=</span><span class="fl">0.4</span>, size<span class="op">=</span>n_normales)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>ratios_riesgo <span class="op">=</span> np.random.uniform(<span class="fl">1.5</span>, <span class="fl">3.0</span>, size<span class="op">=</span>n_riesgo)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>ratios_abandono <span class="op">=</span> np.random.lognormal(mean<span class="op">=</span><span class="fl">1.5</span>, sigma<span class="op">=</span><span class="fl">0.6</span>, size<span class="op">=</span>n_abandono) <span class="op">+</span> <span class="fl">3.0</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Líneas de corte para acciones de negocio</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span>COLOR_WARN, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">2</span>, label<span class="op">=</span><span class="st">"Límite de Riesgo (&gt;1.5x)"</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>ratios <span class="op">=</span> np.concatenate([ratios_normales, ratios_riesgo, ratios_abandono])</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>ratios_visual <span class="op">=</span> ratios[ratios <span class="op">&lt;</span> <span class="dv">8</span>]</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Distribución del Ratio de Urgencia en Clientes Recurrentes"</span>)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Ratio de Urgencia (Recency / Cadencia Habitual)"</span>)</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Volumen de Clientes"</span>)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">4.5</span>))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>sns.histplot(ratios_visual, bins<span class="op">=</span><span class="dv">70</span>, color<span class="op">=</span>COLOR_PRIMARY, edgecolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="fl">1.0</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">':'</span>, linewidth<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="fl">1.5</span>, color<span class="op">=</span>COLOR_WARN, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="st">"Umbral de riesgo (1.5×)"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="fl">3.0</span>, color<span class="op">=</span><span class="st">'black'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="fl">1.5</span>, alpha<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="st">"Umbral de abandono (3×)"</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Distribución del ratio de urgencia (clientes recurrentes)"</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Ratio (recency / cadencia personal)"</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Volumen de clientes"</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="3_analisis_rfm_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-ratio-urgencia" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ratio-urgencia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="3_analisis_rfm_files/figure-html/fig-ratio-urgencia-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ratio-urgencia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Distribución del ratio de urgencia en clientes recurrentes.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
+<section id="un-edge-case-real-clientes-b2b-con-cadencia-cero" class="level3">
+<h3 class="anchored" data-anchor-id="un-edge-case-real-clientes-b2b-con-cadencia-cero">3.2 Un edge case real: clientes B2B con cadencia cero</h3>
+<p>Durante el desarrollo descubrimos un cliente B2B legítimo con <strong>6,208 pedidos en 30 meses</strong> (~7 pedidos por día). Su cadencia mediana entre compras consecutivas es <strong>0 días</strong> porque la mayoría de sus pedidos son del mismo día.</p>
+<p>Esto rompe el cálculo del ratio: dividir entre cero da infinito, y matemáticamente cualquier recency &gt; 0 lo marca como abandono. Pero claramente no es un cliente en abandono — es un cliente automatizado de altísima frecuencia.</p>
+<p><strong>Solución en el dashboard</strong>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ratio <span class="op">=</span> recency:<span class="ch">:DOUBLE</span> <span class="op">/</span> <span class="fu">GREATEST</span>(dias_entre_compras, <span class="dv">1</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>GREATEST(x, 1)</code> trata cualquier cadencia menor a 1 día como si fuera 1. Para este cliente, su ratio efectivo se vuelve igual a su recency en días, lo cual es informativo sin ser engañoso. Adicionalmente, la query de alertas <strong>excluye explícitamente</strong> clientes con <code>dias_entre_compras &lt; 1</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> segmento <span class="kw">IN</span> (<span class="st">'MVPs'</span>, <span class="st">'Alto Valor'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">AND</span> es_single_buyer <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">AND</span> dias_entre_compras <span class="op">&gt;=</span> <span class="dv">1</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">AND</span> recency <span class="op">&gt;</span> <span class="fl">1.5</span> <span class="op">*</span> dias_entre_compras</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>El rumbo que nos hizo tomar</strong>: los datos del mundo real tienen casos extremos que rompen las fórmulas teóricas. Cualquier métrica derivada (como ratio) debe defenderse contra estos casos en el código, no en el análisis posterior.</p>
 </section>
-<section id="generación-del-score-heurístico-base" class="level2">
-<h2 class="anchored" data-anchor-id="generación-del-score-heurístico-base">3. Generación del Score Heurístico Base</h2>
-<p>A pesar de estas nuevas métricas profundas, mantuvimos una segmentación inicial heurística (basada en percentiles clásicos de R, F y M) para tener un panorama general antes de pasar al aprendizaje automático complejo.</p>
-<div id="6665be46" class="cell" data-execution_count="2">
-<details class="code-fold">
-<summary>Código</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Paleta extraída de las libretas originales</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>: <span class="st">"#0B3C5D"</span>,         <span class="co"># Azul profundo elegante</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>: <span class="st">"#328CC1"</span>,   <span class="co"># Azul medio</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,  <span class="co"># Azul grisáceo suave</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>: <span class="st">"#D82822"</span>,    <span class="co"># Naranja rojizo (alerta sin ser agresivo)</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>: <span class="st">"#9AA0A6"</span>    <span class="co"># Gris neutro</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Representación exacta de las proporciones heurísticas reales encontradas</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>segment_pct <span class="op">=</span> {</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'MVPs'</span>: <span class="fl">28.86</span>,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Hibernando'</span>: <span class="fl">28.02</span>,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Alto Valor'</span>: <span class="fl">19.19</span>,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Ocasionales'</span>: <span class="fl">11.98</span>,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'En Riesgo'</span>: <span class="fl">11.94</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>df_rfm_summary <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: <span class="bu">list</span>(segment_pct.keys()),</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Porcentaje'</span>: <span class="bu">list</span>(segment_pct.values())</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>}).sort_values(<span class="st">'Porcentaje'</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>sns.barplot(</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_rfm_summary, </span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'Segmento'</span>, </span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'Porcentaje'</span>, </span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    palette<span class="op">=</span>SEGMENT_COLORS,</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    edgecolor<span class="op">=</span><span class="st">"none"</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Añadir las etiquetas de porcentaje</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> index, value <span class="kw">in</span> <span class="bu">enumerate</span>(df_rfm_summary[<span class="st">'Porcentaje'</span>]):</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    plt.text(value <span class="op">+</span> <span class="fl">0.5</span>, index, <span class="ss">f"</span><span class="sc">{</span>value<span class="sc">:.1f}</span><span class="ss">%"</span>, va<span class="op">=</span><span class="st">'center'</span>)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Proporción de Clientes por Regla Heurística Clásica"</span>)</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Porcentaje del Total (%)"</span>)</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">""</span>)</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>C:\Users\angel.merino\AppData\Local\Temp\ipykernel_39308\2486867733.py:25: FutureWarning: 
-
-Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `y` variable to `hue` and set `legend=False` for the same effect.
-
-  sns.barplot(</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="3_analisis_rfm_files/figure-html/cell-3-output-2.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>Esta segmentación heurística mostró una fuerte polarización del negocio (28% de MVPs y 28% Hibernando). Sin embargo, era necesario incorporar la “Cadencia” como dimensión estructural y permitir que algoritmos de Inteligencia Artificial (Clustering) redibujaran las fronteras de manera matemática.</p>
-
-
 </section>
+<section id="las-cuatro-dimensiones-del-modelo" class="level2">
+<h2 class="anchored" data-anchor-id="las-cuatro-dimensiones-del-modelo">4. Las cuatro dimensiones del modelo</h2>
+<p>Con todo lo anterior, el feature set final para el clustering quedó así:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Feature</th>
+<th>Rango típico</th>
+<th>Transformación</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>recency</code></td>
+<td>0 — 900 días</td>
+<td><code>log1p</code></td>
+</tr>
+<tr class="even">
+<td><code>frequency</code></td>
+<td>1 — 6,200 pedidos</td>
+<td><code>log1p</code></td>
+</tr>
+<tr class="odd">
+<td><code>monetary</code></td>
+<td>1 — varios millones</td>
+<td><code>log1p</code></td>
+</tr>
+<tr class="even">
+<td><code>dias_entre_compras</code></td>
+<td>0 — 900 días</td>
+<td><code>log1p</code></td>
+</tr>
+</tbody>
+</table>
+<p>Las cuatro pasan por la <strong>misma transformación logarítmica + estandarización</strong> dentro del pipeline serializado del modelo. Esto garantiza que:</p>
+<ol type="1">
+<li>Las distribuciones sesgadas no dominan los algoritmos de distancia.</li>
+<li>Las features están en escalas comparables (media 0, desviación 1).</li>
+<li>Al guardar el modelo, <strong>estas transformaciones viajan con él</strong> y se aplican idénticamente en cada predicción futura.</li>
+</ol>
+</section>
+<section id="cierre-de-rfm-antesala-del-clustering" class="level2">
+<h2 class="anchored" data-anchor-id="cierre-de-rfm-antesala-del-clustering">5. Cierre de RFM, antesala del clustering</h2>
+<p>El RFM clásico fue nuestro punto de partida pero no fue donde nos quedamos. Las decisiones de feature engineering tomadas en esta fase — agregar cadencia, manejar single-buyers, defender contra edge cases — son las que permitieron que el algoritmo de clustering descubriera <strong>comportamientos reales</strong> y no artefactos estadísticos.</p>
+<p>En la siguiente sección documentamos cómo K-Means procesó estas cuatro dimensiones y qué cinco perfiles de cliente emergieron.</p>
+</section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

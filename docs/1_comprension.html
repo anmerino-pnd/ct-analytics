@@ -120,12 +120,12 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -249,7 +249,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li><strong>Extracción:</strong> Recolección desde las Bases de Datos transaccionales.</li>
 <li><strong>Transformación:</strong> Proceso ETL que involucra limpieza, manejo de nulos y creación de variables (ingeniería de datos para RFM y MBA).</li>
-<li><strong>Carga y Consumo:</strong> Almacenamiento de datos limpios y su visualización final mediante un Dashboard interactivo en Power BI con filtros dinámicos y segmentación.</li>
+<li><strong>Carga y Consumo:</strong> Almacenamiento de datos limpios (Parquet) y su visualización final mediante un <strong>dashboard web interno desarrollado en FastAPI + DuckDB + Plotly</strong>, con filtros dinámicos, segmentación por usuario y siete vistas operativas accesibles desde cualquier navegador en la intranet corporativa.</li>
 </ol>
 </section>
 <section id="terminología-clave" class="level2" style="text-align: justify">
@@ -266,10 +266,10 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="análisis-foda" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="análisis-foda">6. Análisis FODA</h2>
-<p>Fortalezas: Sistema basado en datos consumible a través de un dashboard dinámico; capacidad de segmentación avanzada de clientes; entorno seguro de uso interno.</p>
-<p>Oportunidades: Transición de estrategias tradicionales a inteligencia de negocios; visualización dinámica de perfiles; reportes mensuales predictivos para optimizar inventario.</p>
+<p>Fortalezas: Sistema basado en datos consumible a través de un dashboard interactivo de siete vistas; capacidad de segmentación avanzada de clientes (K-Means k=5 sobre features RFM + cadencia); pipeline ETL incremental automatizado vía cron; stack open-source sin licenciamiento; entorno seguro de uso interno con supervisión de servicio (systemd) y supervivencia a reboots.</p>
+<p>Oportunidades: Transición de estrategias tradicionales a inteligencia de negocios; visualización dinámica de perfiles; reportes mensuales predictivos para optimizar inventario; integración futura del MBA como motor de recomendación al portal B2B; expansión del análisis a modelos predictivos (forecasting, CLV).</p>
 <p>Debilidades: Dependencia crítica de la calidad de los datos históricos y curva de aprendizaje para el equipo de marketing.</p>
-<p>Amenazas: Posibles incrementos de costo por licenciamiento de software de visualización (Power BI).</p>
+<p>Amenazas: Concept drift en los hábitos de compra (los segmentos descubiertos pueden volverse menos representativos con el tiempo) y dependencia operativa de la disponibilidad del servidor on-premise donde corre el dashboard.</p>
 </section>
 <section id="análisis-de-riesgos" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="análisis-de-riesgos">7. Análisis de Riesgos</h2>
@@ -307,10 +307,17 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td>Incremento de costos de software</td>
+<td>Baja</td>
+<td>Bajo</td>
+<td>Bajo</td>
+<td>El stack adoptado es 100% open-source (Python + FastAPI + DuckDB + Plotly). No hay licenciamiento que escale con el número de usuarios.</td>
+</tr>
+<tr class="even">
+<td>Concept drift del modelo</td>
 <td>Media</td>
-<td>Alto</td>
-<td>Media</td>
-<td>Evaluar el Free Tier inicial y comparar el costo-beneficio de licencias Pro frente a alternativas de código abierto.</td>
+<td>Medio</td>
+<td>Medio</td>
+<td>Se mantiene un snapshot de las asignaciones originales y un quality check automático que detecta divergencias en la distribución de segmentos por corrida.</td>
 </tr>
 </tbody>
 </table>
@@ -328,7 +335,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="próximos-pasos-y-costos" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="próximos-pasos-y-costos">9. Próximos pasos y Costos</h2>
 <p>El principal recurso invertido es el <strong>tiempo de desarrollo e investigación</strong> (estimado en 7 a 8 semanas para la versión inicial) para construir el pipeline de datos, realizar el análisis exploratorio y publicar el primer dashboard.</p>
-<p>Posteriormente, se requerirá tiempo en ciclos iterativos para refinar los modelos predictivos y costos financieros asociados a las suscripciones de las herramientas de visualización (ej. Power BI Pro) conforme aumente la adopción operativa del proyecto.</p>
+<p>Posteriormente, se requerirá tiempo en ciclos iterativos para refinar los modelos predictivos (forecasting, CLV) y para adoptar herramientas de tracking de experimentos (MLFlow) conforme se incorporen nuevos modelos al portfolio analítico. El stack actual (Python + FastAPI + DuckDB + Plotly) es 100% open-source, por lo que el escalamiento a más usuarios internos no implica costos de licenciamiento adicionales.</p>
 </section>
 
 

@@ -120,12 +120,12 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./9_vision_y_futuro.html" aria-current="page"> 
@@ -143,20 +143,8 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#resumen-de-implementación" id="toc-resumen-de-implementación" class="nav-link active" data-scroll-target="#resumen-de-implementación">1. Resumen de Implementación</a></li>
-  <li><a href="#hoja-de-ruta-siguientes-fases" id="toc-hoja-de-ruta-siguientes-fases" class="nav-link" data-scroll-target="#hoja-de-ruta-siguientes-fases">2. Hoja de Ruta (Siguientes Fases)</a>
-  <ul class="collapse">
-  <li><a href="#pronóstico-de-demanda-a-nivel-segmento" id="toc-pronóstico-de-demanda-a-nivel-segmento" class="nav-link" data-scroll-target="#pronóstico-de-demanda-a-nivel-segmento">2.1 Pronóstico de Demanda a Nivel Segmento</a></li>
-  <li><a href="#customer-lifetime-value-clv-predictivo" id="toc-customer-lifetime-value-clv-predictivo" class="nav-link" data-scroll-target="#customer-lifetime-value-clv-predictivo">2.2 Customer Lifetime Value (CLV) Predictivo</a></li>
-  <li><a href="#sistema-de-recomendación-integrado-al-e-commerce" id="toc-sistema-de-recomendación-integrado-al-e-commerce" class="nav-link" data-scroll-target="#sistema-de-recomendación-integrado-al-e-commerce">2.3 Sistema de Recomendación Integrado al E-commerce</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -180,36 +168,140 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="resumen-de-implementación" class="level2">
-<h2 class="anchored" data-anchor-id="resumen-de-implementación">1. Resumen de Implementación</h2>
-<p>Con el despliegue del <strong>Dashboard Pulse</strong> y el envoltorio MLOps del <strong>Segmentador de Clientes</strong>, hemos completado la primera iteración completa de Inteligencia de Clientes (Customer Intelligence) para CT Internacional.</p>
-<p>Hemos transitado con éxito por: 1. <strong>Descriptivo</strong>: Análisis EDA y limpiezas estructurales. 2. <strong>Diagnóstico</strong>: Modelado RFM base. 3. <strong>Predictivo / Minería</strong>: Clustering K-Means y MBA hiper-focalizado por segmento. 4. <strong>Prescriptivo</strong>: Puesta en producción de un Dashboard (Pulse) que prescribe campañas y ofertas específicas basadas en Lifts y estacionalidad.</p>
-</section>
-<section id="hoja-de-ruta-siguientes-fases" class="level2">
-<h2 class="anchored" data-anchor-id="hoja-de-ruta-siguientes-fases">2. Hoja de Ruta (Siguientes Fases)</h2>
-<p>La arquitectura actual sienta las bases para casos de uso aún más ambiciosos. El Roadmap a futuro incluye:</p>
-<section id="pronóstico-de-demanda-a-nivel-segmento" class="level3">
-<h3 class="anchored" data-anchor-id="pronóstico-de-demanda-a-nivel-segmento">2.1 Pronóstico de Demanda a Nivel Segmento</h3>
+<div style="text-align: justify">
+<section id="lo-que-se-completó" class="level2">
+<h2 class="anchored" data-anchor-id="lo-que-se-completó">1. Lo que se completó</h2>
+<p>Con el dashboard Pulse desplegado en el servidor de CT y el pipeline ETL corriendo diariamente, cerramos la primera iteración de Customer Intelligence. La plataforma transita por los cuatro niveles clásicos de madurez analítica:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Nivel</th>
+<th>Pregunta de negocio</th>
+<th>Cómo se responde en Pulse</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Descriptivo</strong></td>
+<td>¿Qué pasó?</td>
+<td>Vista Overview: KPIs, distribución de segmentos, revenue por segmento.</td>
+</tr>
+<tr class="even">
+<td><strong>Diagnóstico</strong></td>
+<td>¿Por qué pasó?</td>
+<td>Vista Comparador y vista Cliente: perfil RFM por segmento y drill-down individual.</td>
+</tr>
+<tr class="odd">
+<td><strong>Predictivo / Minería</strong></td>
+<td>¿Qué patrones hay?</td>
+<td>Vistas Bundles, Heatmap bundles y Estacionalidad: reglas de asociación, ventanas temporales óptimas.</td>
+</tr>
+<tr class="even">
+<td><strong>Prescriptivo</strong></td>
+<td>¿Qué hago?</td>
+<td>Vista Alertas: clientes en riesgo priorizados por monetary, listos para campaña de retención.</td>
+</tr>
+</tbody>
+</table>
+<p>Más allá del análisis, <strong>lo crítico fue cerrar el ciclo de productización</strong>:</p>
 <ul>
-<li>Utilizar series de tiempo (como Prophet o modelos autorregresivos) sobre la estacionalidad descubierta (Phase 6) para predecir el inventario exacto requerido para satisfacer a los <em>MVPs</em> en los cierres de mes.</li>
+<li>El modelo de segmentación está congelado y versionado (<code>v1</code>), con un snapshot guardado para detectar drift.</li>
+<li>El pipeline corre todos los días a las 3am sin intervención, generando los siete parquets que consume el dashboard.</li>
+<li>El servicio sobrevive reboots del servidor.</li>
+<li>Las decisiones técnicas (filtrado de cargos no-producto, manejo de timezone, fórmula de ratio para alertas) están documentadas y validadas con tests automáticos.</li>
 </ul>
+</section>
+<section id="iteración-inmediata-cosas-pendientes-de-la-versión-actual" class="level2">
+<h2 class="anchored" data-anchor-id="iteración-inmediata-cosas-pendientes-de-la-versión-actual">2. Iteración inmediata: cosas pendientes de la versión actual</h2>
+<p>Antes de pasar a fases nuevas, hay un trabajo de pulido que vale la pena hacer una vez que marketing use Pulse en producción durante algunas semanas. Esto sale del feedback real, no de adivinanzas:</p>
+<section id="sesión-de-validación-con-marketing" class="level3">
+<h3 class="anchored" data-anchor-id="sesión-de-validación-con-marketing">2.1 Sesión de validación con marketing</h3>
+<p>La primera prioridad es <strong>sentar al equipo de marketing frente a Pulse durante 30-45 minutos</strong>, recorrer las siete vistas y anotar literalmente lo que entienden, lo que confunde, y qué acciones concretas pueden tomar.</p>
+<p>Hay decisiones de UX que tomamos a propósito sabiendo que se iban a iterar:</p>
+<ul>
+<li><strong>Gráfico de dona en Overview</strong> vs.&nbsp;otras alternativas (donut bar, bar chart horizontal). Las mejores prácticas sugieren que las donas son débiles para comparar proporciones cercanas, pero también son más reconocibles para audiencias no técnicas.</li>
+<li><strong>Radar normalizado en el Comparador</strong>: matemáticamente correcto pero visualmente puede confundir cuando se comparan extremos como MVPs vs Hibernando.</li>
+<li><strong>Etiqueta visible del rango de fechas de los datos</strong>: hoy no aparece en las vistas. Si marketing necesita saber “¿esto es de cuándo?”, debe preguntarle al desarrollador.</li>
+</ul>
+<p>Estas decisiones se ajustan después de la sesión, no antes.</p>
+</section>
+<section id="cicd-con-github-actions" class="level3">
+<h3 class="anchored" data-anchor-id="cicd-con-github-actions">2.2 CI/CD con GitHub Actions</h3>
+<p>El pipeline tiene 60+ tests unitarios pero hoy se corren manualmente. La siguiente iteración técnica es:</p>
+<ul>
+<li><strong>En cada push</strong>: correr pytest automáticamente. Si falla, no se mergea.</li>
+<li><strong>En cada PR</strong>: correr linter (ruff) y reporte de coverage.</li>
+<li><strong>Eventualmente</strong>: deploy automático al servidor cuando se mergea a main.</li>
+</ul>
+<p>Esto baja el riesgo de que un cambio aparentemente inocuo rompa el pipeline en producción.</p>
+</section>
+<section id="drift-monitoring-activo" class="level3">
+<h3 class="anchored" data-anchor-id="drift-monitoring-activo">2.3 Drift monitoring activo</h3>
+<p>Hoy el pipeline registra distribuciones de segmentos en cada corrida y compara contra el snapshot original del modelo <code>v1</code>. <strong>El log queda pero nadie lo lee</strong>. La siguiente versión necesita:</p>
+<ul>
+<li><strong>Alertas automáticas</strong> cuando la distribución se desvía más de un umbral (por ejemplo, ±5% en cualquier cluster).</li>
+<li><strong>Dashboard de salud del modelo</strong>: una vista extra en Pulse que grafique el drift mes a mes.</li>
+<li><strong>Trigger de re-entrenamiento</strong>: cuando drift supera otro umbral, generar automáticamente un PR con el modelo <code>v2</code> candidato.</li>
+</ul>
+</section>
+</section>
+<section id="hoja-de-ruta-a-mediano-plazo" class="level2">
+<h2 class="anchored" data-anchor-id="hoja-de-ruta-a-mediano-plazo">3. Hoja de ruta a mediano plazo</h2>
+<p>Estas son las fases siguientes una vez Pulse esté validado y operando con CI/CD.</p>
+<section id="pronóstico-de-demanda-por-segmento" class="level3">
+<h3 class="anchored" data-anchor-id="pronóstico-de-demanda-por-segmento">3.1 Pronóstico de demanda por segmento</h3>
+<p>La estacionalidad descubierta en este proyecto se queda en el plano descriptivo. La siguiente capa es <strong>predictiva</strong>: usar series de tiempo (Prophet o LightGBM) sobre los agregados temporales que ya genera el pipeline para responder preguntas como:</p>
+<ul>
+<li>¿Cuántos pedidos de MVPs vamos a recibir en diciembre?</li>
+<li>¿Cuándo es el siguiente pico estacional de la familia X?</li>
+<li>¿Qué inventario óptimo necesitamos para satisfacer a Alto Valor en cierre de mes?</li>
+</ul>
+<p>Este forecasting alimentaría tanto al equipo de compras como al de planeación de campañas.</p>
 </section>
 <section id="customer-lifetime-value-clv-predictivo" class="level3">
-<h3 class="anchored" data-anchor-id="customer-lifetime-value-clv-predictivo">2.2 Customer Lifetime Value (CLV) Predictivo</h3>
+<h3 class="anchored" data-anchor-id="customer-lifetime-value-clv-predictivo">3.2 Customer Lifetime Value (CLV) predictivo</h3>
+<p>El RFM dice qué tan valioso es un cliente <strong>hoy</strong>. CLV dice cuánto va a generar en los próximos 12 meses. Esto cambia la conversación con marketing:</p>
 <ul>
-<li>Implementar modelos paramétricos o de Machine Learning que estimen cuántos ingresos generará un cliente “Alto Valor” en los próximos 12 meses.</li>
-<li>Esto permitirá asignar presupuestos de retención precisos (CAC vs CLV).</li>
+<li>¿Vale la pena gastar $X en retener a este cliente?</li>
+<li>¿Cuál es el costo de adquisición aceptable para un nuevo cliente del segmento MVPs?</li>
+<li>¿Qué clientes deberían recibir tratamiento VIP aunque hoy no estén en MVPs?</li>
 </ul>
+<p>Modelos como BG/NBD + Gamma-Gamma (Pareto/NBD) o redes neuronales secuenciales son los candidatos naturales.</p>
 </section>
-<section id="sistema-de-recomendación-integrado-al-e-commerce" class="level3">
-<h3 class="anchored" data-anchor-id="sistema-de-recomendación-integrado-al-e-commerce">2.3 Sistema de Recomendación Integrado al E-commerce</h3>
+<section id="sistema-de-recomendación-integrado" class="level3">
+<h3 class="anchored" data-anchor-id="sistema-de-recomendación-integrado">3.3 Sistema de recomendación integrado</h3>
+<p>El MBA actual se consume por marketing en Pulse. La siguiente fase es exponer estas reglas como <strong>API de baja latencia</strong> al portal web B2B de CT:</p>
 <ul>
-<li>Transformar el Market Basket Analysis, actualmente consumido por marketing en Pulse, en una API de baja latencia que ofrezca recomendaciones “en tiempo real” dentro del portal de compras web B2B de la empresa.</li>
+<li>Cuando un cliente agrega un producto al carrito, mostrar bundles relevantes basados en su segmento.</li>
+<li>Cuando un cliente VIP visita la página de inicio, destacar productos de su categoría de interés histórica.</li>
+<li>Cuando un cliente en riesgo entra al portal, mostrar incentivos personalizados.</li>
 </ul>
+<p>Esto convierte Pulse de herramienta interna a motor de recomendación operativo.</p>
+</section>
+<section id="mlflow-para-tracking-de-experimentos" class="level3">
+<h3 class="anchored" data-anchor-id="mlflow-para-tracking-de-experimentos">3.4 MLFlow para tracking de experimentos</h3>
+<p>Cuando tengamos múltiples modelos en juego (segmentación + forecasting + CLV + recomendación), el versionado artesanal actual deja de escalar. <strong>MLFlow</strong> entra naturalmente en ese punto:</p>
+<ul>
+<li>Tracking de runs de entrenamiento con métricas, parámetros e hiperparámetros.</li>
+<li>Model registry con versiones, etapas (staging/production/archived) y comparación de performance.</li>
+<li>Reproducibilidad garantizada de cualquier modelo desplegado en cualquier momento.</li>
+</ul>
+<p>Hoy no se justifica (un modelo, una versión congelada). Se justifica cuando tengamos 3-4 modelos productivos.</p>
+</section>
+</section>
+<section id="reflexión-final" class="level2">
+<h2 class="anchored" data-anchor-id="reflexión-final">4. Reflexión final</h2>
+<p>La diferencia entre un proyecto de Data Science que <strong>genera valor</strong> y uno que <strong>genera reportes</strong> está en la productización. Pulse no es un notebook: es un servicio que corre día a día, consume datos frescos, se mantiene solo y entrega información directamente al equipo que la usa.</p>
+<p>Cada iteración futura debe pasar por esa prueba: <strong>¿esto se usa, o solo se ve bonito en una presentación?</strong></p>
+</section>
+</div>
 
 
-</section>
-</section>
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

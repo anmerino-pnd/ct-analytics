@@ -1,6 +1,6 @@
 ---
 title: "Visión y Futuro"
-format: 
+format:
   html:
     page-layout: article
 toc-title: "Tabla de Contenidos"
@@ -8,26 +8,108 @@ toc: true
 toc-depth: 3
 ---
 
-## 1. Resumen de Implementación
+::: {style="text-align: justify"}
 
-Con el despliegue del **Dashboard Pulse** y el envoltorio MLOps del **Segmentador de Clientes**, hemos completado la primera iteración completa de Inteligencia de Clientes (Customer Intelligence) para CT Internacional.
+## 1. Lo que se completó
 
-Hemos transitado con éxito por:
-1. **Descriptivo**: Análisis EDA y limpiezas estructurales.
-2. **Diagnóstico**: Modelado RFM base.
-3. **Predictivo / Minería**: Clustering K-Means y MBA hiper-focalizado por segmento.
-4. **Prescriptivo**: Puesta en producción de un Dashboard (Pulse) que prescribe campañas y ofertas específicas basadas en Lifts y estacionalidad.
+Con el dashboard Pulse desplegado en el servidor de CT y el pipeline ETL corriendo diariamente, cerramos la primera iteración de Customer Intelligence. La plataforma transita por los cuatro niveles clásicos de madurez analítica:
 
-## 2. Hoja de Ruta (Siguientes Fases)
+| Nivel | Pregunta de negocio | Cómo se responde en Pulse |
+|---|---|---|
+| **Descriptivo** | ¿Qué pasó? | Vista Overview: KPIs, distribución de segmentos, revenue por segmento. |
+| **Diagnóstico** | ¿Por qué pasó? | Vista Comparador y vista Cliente: perfil RFM por segmento y drill-down individual. |
+| **Predictivo / Minería** | ¿Qué patrones hay? | Vistas Bundles, Heatmap bundles y Estacionalidad: reglas de asociación, ventanas temporales óptimas. |
+| **Prescriptivo** | ¿Qué hago? | Vista Alertas: clientes en riesgo priorizados por monetary, listos para campaña de retención. |
 
-La arquitectura actual sienta las bases para casos de uso aún más ambiciosos. El Roadmap a futuro incluye:
+Más allá del análisis, **lo crítico fue cerrar el ciclo de productización**:
 
-### 2.1 Pronóstico de Demanda a Nivel Segmento
-- Utilizar series de tiempo (como Prophet o modelos autorregresivos) sobre la estacionalidad descubierta (Phase 6) para predecir el inventario exacto requerido para satisfacer a los *MVPs* en los cierres de mes.
+- El modelo de segmentación está congelado y versionado (`v1`), con un snapshot guardado para detectar drift.
+- El pipeline corre todos los días a las 3am sin intervención, generando los siete parquets que consume el dashboard.
+- El servicio sobrevive reboots del servidor.
+- Las decisiones técnicas (filtrado de cargos no-producto, manejo de timezone, fórmula de ratio para alertas) están documentadas y validadas con tests automáticos.
 
-### 2.2 Customer Lifetime Value (CLV) Predictivo
-- Implementar modelos paramétricos o de Machine Learning que estimen cuántos ingresos generará un cliente "Alto Valor" en los próximos 12 meses.
-- Esto permitirá asignar presupuestos de retención precisos (CAC vs CLV).
+## 2. Iteración inmediata: cosas pendientes de la versión actual
 
-### 2.3 Sistema de Recomendación Integrado al E-commerce
-- Transformar el Market Basket Analysis, actualmente consumido por marketing en Pulse, en una API de baja latencia que ofrezca recomendaciones "en tiempo real" dentro del portal de compras web B2B de la empresa.
+Antes de pasar a fases nuevas, hay un trabajo de pulido que vale la pena hacer una vez que marketing use Pulse en producción durante algunas semanas. Esto sale del feedback real, no de adivinanzas:
+
+### 2.1 Sesión de validación con marketing
+
+La primera prioridad es **sentar al equipo de marketing frente a Pulse durante 30-45 minutos**, recorrer las siete vistas y anotar literalmente lo que entienden, lo que confunde, y qué acciones concretas pueden tomar.
+
+Hay decisiones de UX que tomamos a propósito sabiendo que se iban a iterar:
+
+- **Gráfico de dona en Overview** vs. otras alternativas (donut bar, bar chart horizontal). Las mejores prácticas sugieren que las donas son débiles para comparar proporciones cercanas, pero también son más reconocibles para audiencias no técnicas.
+- **Radar normalizado en el Comparador**: matemáticamente correcto pero visualmente puede confundir cuando se comparan extremos como MVPs vs Hibernando.
+- **Etiqueta visible del rango de fechas de los datos**: hoy no aparece en las vistas. Si marketing necesita saber "¿esto es de cuándo?", debe preguntarle al desarrollador.
+
+Estas decisiones se ajustan después de la sesión, no antes.
+
+### 2.2 CI/CD con GitHub Actions
+
+El pipeline tiene 60+ tests unitarios pero hoy se corren manualmente. La siguiente iteración técnica es:
+
+- **En cada push**: correr pytest automáticamente. Si falla, no se mergea.
+- **En cada PR**: correr linter (ruff) y reporte de coverage.
+- **Eventualmente**: deploy automático al servidor cuando se mergea a main.
+
+Esto baja el riesgo de que un cambio aparentemente inocuo rompa el pipeline en producción.
+
+### 2.3 Drift monitoring activo
+
+Hoy el pipeline registra distribuciones de segmentos en cada corrida y compara contra el snapshot original del modelo `v1`. **El log queda pero nadie lo lee**. La siguiente versión necesita:
+
+- **Alertas automáticas** cuando la distribución se desvía más de un umbral (por ejemplo, ±5% en cualquier cluster).
+- **Dashboard de salud del modelo**: una vista extra en Pulse que grafique el drift mes a mes.
+- **Trigger de re-entrenamiento**: cuando drift supera otro umbral, generar automáticamente un PR con el modelo `v2` candidato.
+
+## 3. Hoja de ruta a mediano plazo
+
+Estas son las fases siguientes una vez Pulse esté validado y operando con CI/CD.
+
+### 3.1 Pronóstico de demanda por segmento
+
+La estacionalidad descubierta en este proyecto se queda en el plano descriptivo. La siguiente capa es **predictiva**: usar series de tiempo (Prophet o LightGBM) sobre los agregados temporales que ya genera el pipeline para responder preguntas como:
+
+- ¿Cuántos pedidos de MVPs vamos a recibir en diciembre?
+- ¿Cuándo es el siguiente pico estacional de la familia X?
+- ¿Qué inventario óptimo necesitamos para satisfacer a Alto Valor en cierre de mes?
+
+Este forecasting alimentaría tanto al equipo de compras como al de planeación de campañas.
+
+### 3.2 Customer Lifetime Value (CLV) predictivo
+
+El RFM dice qué tan valioso es un cliente **hoy**. CLV dice cuánto va a generar en los próximos 12 meses. Esto cambia la conversación con marketing:
+
+- ¿Vale la pena gastar $X en retener a este cliente?
+- ¿Cuál es el costo de adquisición aceptable para un nuevo cliente del segmento MVPs?
+- ¿Qué clientes deberían recibir tratamiento VIP aunque hoy no estén en MVPs?
+
+Modelos como BG/NBD + Gamma-Gamma (Pareto/NBD) o redes neuronales secuenciales son los candidatos naturales.
+
+### 3.3 Sistema de recomendación integrado
+
+El MBA actual se consume por marketing en Pulse. La siguiente fase es exponer estas reglas como **API de baja latencia** al portal web B2B de CT:
+
+- Cuando un cliente agrega un producto al carrito, mostrar bundles relevantes basados en su segmento.
+- Cuando un cliente VIP visita la página de inicio, destacar productos de su categoría de interés histórica.
+- Cuando un cliente en riesgo entra al portal, mostrar incentivos personalizados.
+
+Esto convierte Pulse de herramienta interna a motor de recomendación operativo.
+
+### 3.4 MLFlow para tracking de experimentos
+
+Cuando tengamos múltiples modelos en juego (segmentación + forecasting + CLV + recomendación), el versionado artesanal actual deja de escalar. **MLFlow** entra naturalmente en ese punto:
+
+- Tracking de runs de entrenamiento con métricas, parámetros e hiperparámetros.
+- Model registry con versiones, etapas (staging/production/archived) y comparación de performance.
+- Reproducibilidad garantizada de cualquier modelo desplegado en cualquier momento.
+
+Hoy no se justifica (un modelo, una versión congelada). Se justifica cuando tengamos 3-4 modelos productivos.
+
+## 4. Reflexión final
+
+La diferencia entre un proyecto de Data Science que **genera valor** y uno que **genera reportes** está en la productización. Pulse no es un notebook: es un servicio que corre día a día, consume datos frescos, se mantiene solo y entrega información directamente al equipo que la usa.
+
+Cada iteración futura debe pasar por esa prueba: **¿esto se usa, o solo se ve bonito en una presentación?**
+
+:::

@@ -11,7 +11,7 @@
 <meta name="author" content="Roberto Navarro Bartolini">
 <meta name="author" content="Abraham Rojo Salazar">
 
-<title>Customer Analytics: Análisis RFM, Segmentación y MBA</title>
+<title>Customer Analytics: del notebook a producción</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -124,12 +124,12 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -153,7 +153,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Customer Analytics: Análisis RFM, Segmentación y MBA</h1>
+<h1 class="title">Customer Analytics: del notebook a producción</h1>
 </div>
 
 
@@ -192,7 +192,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Fecha de publicación</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">20 de mayo de 2026</p>
+      <p class="date">1 de junio de 2026</p>
     </div>
   </div>
   
@@ -204,25 +204,116 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="introducción" class="level2">
-<h2 class="anchored" data-anchor-id="introducción">Introducción</h2>
-<p>Bienvenido a la documentación del proyecto de <strong>Customer Analytics</strong>. Este sitio consolida los análisis y descubrimientos realizados sobre el comportamiento y las transacciones de nuestros clientes.</p>
-<p>Nuestros objetivos principales con esta investigación son: - Entender mejor a nuestra base de clientes. - Descubrir patrones de compra. - Proponer estrategias basadas en datos (Data-Driven).</p>
+<div style="text-align: justify">
+<section id="resumen-ejecutivo" class="level2">
+<h2 class="anchored" data-anchor-id="resumen-ejecutivo">Resumen ejecutivo</h2>
+<p>Este sitio documenta el desarrollo end-to-end de <strong>Pulse</strong>, una plataforma de Customer Analytics construida para CT Internacional. El proyecto cubre el ciclo completo desde el primer análisis exploratorio sobre datos transaccionales hasta el despliegue en producción de un dashboard operativo consumido por el equipo de marketing.</p>
+<p>El alcance no es teórico. El sistema corre hoy sobre un servidor on-premise, ejecuta un pipeline ETL diario, sirve un dashboard interactivo con siete vistas distintas y monitorea automáticamente la salud del modelo de segmentación. Todo el código fue construido para ser reproducible, testeado y operable sin intervención del desarrollador.</p>
 </section>
-<section id="contenido-del-proyecto" class="level2">
-<h2 class="anchored" data-anchor-id="contenido-del-proyecto">Contenido del Proyecto</h2>
-<p>A través de la navegación superior podrás explorar cada etapa del análisis:</p>
+<section id="lo-que-se-construyó" class="level2">
+<h2 class="anchored" data-anchor-id="lo-que-se-construyó">Lo que se construyó</h2>
+<p><strong>Capa analítica</strong></p>
+<ul>
+<li>Segmentación de clientes con <strong>K-Means (k=5)</strong> sobre features RFM más cadencia de compra, con transformación logarítmica y estandarización encapsuladas en un pipeline de scikit-learn.</li>
+<li><strong>Market Basket Analysis</strong> segmentado: el algoritmo FP-Growth se aplica de forma independiente por cluster, produciendo miles de reglas de asociación con filtros de soporte, confidence y lift.</li>
+<li><strong>Análisis de estacionalidad</strong> con granularidad hora-día-mes para detectar ventanas de campaña óptimas por segmento.</li>
+</ul>
+<p><strong>Capa de productización</strong></p>
+<ul>
+<li><strong>Pipeline ETL modular</strong> con ingesta incremental desde MongoDB, watermarks, validaciones de calidad cruzadas, manejo de drift y outputs persistidos en Parquet.</li>
+<li><strong>Dashboard web</strong> (FastAPI + DuckDB + Plotly) con siete vistas operativas: distribución de segmentos, mapa de oportunidades de bundles, estacionalidad por segmento, comparador, heatmap de bundles, alertas de clientes en riesgo, y drill-down individual.</li>
+<li><strong>Deployment</strong> sobre AlmaLinux con systemd, firewalld, cron diario y supervivencia a reboot validada.</li>
+</ul>
+</section>
+<section id="cifras-clave-del-proyecto" class="level2">
+<h2 class="anchored" data-anchor-id="cifras-clave-del-proyecto">Cifras clave del proyecto</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clientes analizados</td>
+<td>18,638</td>
+</tr>
+<tr class="even">
+<td>Pedidos procesados (ventana 30 meses)</td>
+<td>~570K</td>
+</tr>
+<tr class="odd">
+<td>Reglas MBA generadas</td>
+<td>~3,800</td>
+</tr>
+<tr class="even">
+<td>Reglas accionables (1→1, 1→2)</td>
+<td>~140</td>
+</tr>
+<tr class="odd">
+<td>Vistas del dashboard</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>Duración del pipeline diario</td>
+<td>30-45 segundos</td>
+</tr>
+<tr class="odd">
+<td>Tests unitarios</td>
+<td>60+</td>
+</tr>
+<tr class="even">
+<td>Cross-check temporalidad ↔︎ RFM</td>
+<td>0.00% de divergencia</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Nota
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Por confidencialidad operacional, en las visualizaciones de este sitio los valores monetarios se presentan <strong>transformados a índices relativos o en escala logarítmica</strong>, y las claves de productos están <strong>ofuscadas en familias genéricas</strong>. Las proporciones, distribuciones, lifts y patrones temporales son auténticos.</p>
+</div>
+</div>
+</section>
+<section id="cómo-está-organizado-este-sitio" class="level2">
+<h2 class="anchored" data-anchor-id="cómo-está-organizado-este-sitio">Cómo está organizado este sitio</h2>
+<p>A través de la navegación superior puedes recorrer cada etapa del proyecto:</p>
 <ol type="1">
-<li><strong>Comprensión del Negocio</strong>: Definir los objetivos centrales y el impacto esperado.</li>
-<li><strong>Exploración de Datos</strong>: Resumen de los hallazgos en la fase EDA (usando datos mock para proteger la privacidad).</li>
-<li><strong>Análisis RFM</strong>: Metodología para evaluar la Recencia, Frecuencia y Valor Monetario.</li>
-<li><strong>Segmentación</strong>: Agrupación de clientes usando modelos de Machine Learning (Clustering).</li>
-<li><strong>Market Basket Analysis (MBA)</strong>: Análisis de canasta para descubrir reglas de asociación entre productos.</li>
-<li><strong>Visión y Futuro</strong>: Próximos pasos hacia la construcción de un Dashboard Dinámico y modelos predictivos.</li>
+<li><strong>Comprensión del negocio</strong> — Los objetivos del proyecto y el impacto esperado.</li>
+<li><strong>Exploración de datos</strong> — Hallazgos de la fase EDA y características de la base transaccional.</li>
+<li><strong>Análisis RFM</strong> — Cómo definimos recencia, frecuencia, valor monetario y cadencia personalizada.</li>
+<li><strong>Segmentación</strong> — El proceso de clustering, la elección de k=5 y los cinco perfiles identificados.</li>
+<li><strong>Market Basket</strong> — Reglas de asociación por segmento y el concepto de Market Basket Opportunity Map.</li>
+<li><strong>Estacionalidad</strong> — Patrones temporales descubiertos y su traducción a recomendaciones de campaña.</li>
+<li><strong>De investigación a producción</strong> — Cómo congelamos el modelo, construimos el pipeline ETL y desplegamos el dashboard.</li>
+<li><strong>Documentación técnica</strong> — Instalación, comandos de operación, estructura del código y diagramas de arquitectura.</li>
+<li><strong>Visión y futuro</strong> — El roadmap hacia forecasting, recomendación en tiempo real y monitoreo de drift activo.</li>
 </ol>
-
-
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Si solo tienes 5 minutos, lee <strong>Comprensión del negocio</strong> (sección 1) y <strong>De investigación a producción</strong> (sección 7). Esos dos artículos resumen el qué y el cómo.</p>
+</div>
+</div>
 </section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

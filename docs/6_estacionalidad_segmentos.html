@@ -154,12 +154,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -177,19 +177,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#comportamiento-temporal-de-clientes" id="toc-comportamiento-temporal-de-clientes" class="nav-link active" data-scroll-target="#comportamiento-temporal-de-clientes">1. Comportamiento Temporal de Clientes</a>
-  <ul class="collapse">
-  <li><a href="#evolución-de-volumen-por-mes" id="toc-evolución-de-volumen-por-mes" class="nav-link" data-scroll-target="#evolución-de-volumen-por-mes">1.1 Evolución de Volumen por Mes</a></li>
-  <li><a href="#mapa-de-calor-actividad-por-día-y-hora" id="toc-mapa-de-calor-actividad-por-día-y-hora" class="nav-link" data-scroll-target="#mapa-de-calor-actividad-por-día-y-hora">1.2 Mapa de Calor: Actividad por Día y Hora</a></li>
-  </ul></li>
-  <li><a href="#aplicaciones-estratégicas" id="toc-aplicaciones-estratégicas" class="nav-link" data-scroll-target="#aplicaciones-estratégicas">2. Aplicaciones Estratégicas</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -213,135 +202,312 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="comportamiento-temporal-de-clientes" class="level2">
-<h2 class="anchored" data-anchor-id="comportamiento-temporal-de-clientes">1. Comportamiento Temporal de Clientes</h2>
-<p>Así como cada segmento tiene diferentes afinidades de compra, también presentan distintos <strong>patrones temporales</strong>. Al analizar más de dos años de histórico (2023-2025), logramos perfilar los momentos exactos en los que cada perfil es más activo.</p>
-<blockquote class="blockquote">
-<p>[!NOTE] Los volúmenes en estas visualizaciones mantienen la estructura, tendencia y proporciones de los datos analizados, habiendo sido escalados para fines de demostración pública.</p>
-</blockquote>
-<section id="evolución-de-volumen-por-mes" class="level3">
-<h3 class="anchored" data-anchor-id="evolución-de-volumen-por-mes">1.1 Evolución de Volumen por Mes</h3>
-<p>Observamos que los segmentos Premium (MVPs y Alto Valor) no solo tienen el mayor volumen absoluto, sino que son los responsables de los enormes picos estacionales (como Buen Fin en noviembre o Cierres Fiscales). En contraste, los segmentos Ocasionales o En Riesgo mantienen volúmenes más planos durante el año.</p>
-<div id="2c02ba8a" class="cell" data-execution_count="1">
-<details class="code-fold">
-<summary>Código</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Paleta basada en segmentos</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'MVPs'</span>: <span class="st">'#0B3C5D'</span>,          </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Alto Valor'</span>: <span class="st">'#328CC1'</span>,    </span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Ocasionales'</span>: <span class="st">'#6CA6C1'</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Generar datos simulados que replican el patrón estacional real de CT</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>meses <span class="op">=</span> pd.date_range(start<span class="op">=</span><span class="st">"2023-01-01"</span>, end<span class="op">=</span><span class="st">"2025-01-01"</span>, freq<span class="op">=</span><span class="st">"MS"</span>).strftime(<span class="st">"%Y-%m"</span>).tolist()</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(meses)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Simular tendencia base y picos en Nov/Dic</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>base_mvp <span class="op">=</span> np.linspace(<span class="dv">5000</span>, <span class="dv">7000</span>, n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">300</span>, n)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>base_alto_valor <span class="op">=</span> np.linspace(<span class="dv">4000</span>, <span class="dv">5000</span>, n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">250</span>, n)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>base_ocasionales <span class="op">=</span> np.linspace(<span class="dv">1500</span>, <span class="dv">1800</span>, n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">100</span>, n)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Añadir estacionalidad fuerte (Noviembre = índice 10 y 22)</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> [<span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">22</span>, <span class="dv">23</span>]:</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i <span class="op">&lt;</span> n:</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        base_mvp[i] <span class="op">*=</span> <span class="fl">1.6</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        base_alto_valor[i] <span class="op">*=</span> <span class="fl">1.4</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        base_ocasionales[i] <span class="op">*=</span> <span class="fl">1.1</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>df_mes <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Mes'</span>: meses <span class="op">*</span> <span class="dv">3</span>,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'MVPs'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Alto Valor'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Ocasionales'</span>]<span class="op">*</span>n,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Volumen'</span>: np.concatenate([base_mvp, base_alto_valor, base_ocasionales])</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>sns.lineplot(data<span class="op">=</span>df_mes, x<span class="op">=</span><span class="st">'Mes'</span>, y<span class="op">=</span><span class="st">'Volumen'</span>, hue<span class="op">=</span><span class="st">'Segmento'</span>, palette<span class="op">=</span>SEGMENT_COLORS, linewidth<span class="op">=</span><span class="fl">2.5</span>, marker<span class="op">=</span><span class="st">'o'</span>)</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Evolución Mensual de Pedidos por Segmento (2023-2025)"</span>)</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">'right'</span>)</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Volumen Relativo de Pedidos"</span>)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Mes"</span>)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="6_estacionalidad_segmentos_files/figure-html/cell-2-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
+<div style="text-align: justify">
+<section id="la-pregunta-temporal" class="level2">
+<h2 class="anchored" data-anchor-id="la-pregunta-temporal">1. La pregunta temporal</h2>
+<p>Hasta esta fase del proyecto sabíamos <strong>qué compra cada segmento</strong> (RFM y segmentación) y <strong>qué se compra junto</strong> (MBA). Faltaba la dimensión temporal: <strong>cuándo compran</strong>.</p>
+<p>Esto importa para tres decisiones de marketing:</p>
+<ol type="1">
+<li><strong>Programación de campañas</strong>: ¿a qué hora enviar el email para maximizar la tasa de apertura?</li>
+<li><strong>Picos estacionales</strong>: ¿cuándo aumentar inventario o presupuesto publicitario?</li>
+<li><strong>Detección de ralentización</strong>: ¿este mes está bajo o solo es estacionalidad?</li>
+</ol>
+<p>Construimos tres agregados temporales que viven como parquets en el pipeline:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Granularidad</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>temp_hora_dia.parquet</code></td>
+<td>hora × día de la semana, por segmento</td>
+<td>Heatmap de actividad intradiaria</td>
+</tr>
+<tr class="even">
+<td><code>temp_mensual.parquet</code></td>
+<td>año-mes, por segmento</td>
+<td>Serie temporal de volumen</td>
+</tr>
+<tr class="odd">
+<td><code>temp_bundles.parquet</code></td>
+<td>año-mes × regla MBA top</td>
+<td>Evolución temporal de bundles específicos</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="mapa-de-calor-actividad-por-día-y-hora" class="level3">
-<h3 class="anchored" data-anchor-id="mapa-de-calor-actividad-por-día-y-hora">1.2 Mapa de Calor: Actividad por Día y Hora</h3>
-<p>Otra capa crítica es entender <strong>cuándo</strong> se conectan a comprar. Al cruzar los días de la semana con la hora del día, detectamos las ventanas de mayor actividad transaccional. Esto es fundamental para programar envíos de correos de marketing o activar ventanas de ofertas limitadas.</p>
-<p>El siguiente ejemplo ilustra el patrón del segmento de “Alto Valor”:</p>
-<div id="c592eb0b" class="cell" data-execution_count="2">
+<section id="un-bug-que-importaba-el-timezone" class="level2">
+<h2 class="anchored" data-anchor-id="un-bug-que-importaba-el-timezone">2. Un bug que importaba: el timezone</h2>
+<p>Antes de mostrar los resultados, vale la pena documentar un bug que casi nos hace publicar análisis incorrectos.</p>
+<section id="el-síntoma" class="level3">
+<h3 class="anchored" data-anchor-id="el-síntoma">2.1 El síntoma</h3>
+<p>Las primeras versiones del heatmap mostraban que los MVPs compraban <strong>principalmente entre las 19:00 y las 22:00</strong>, con picos a las 21:00. Esto era extraño: el negocio B2B típicamente sigue horario laboral, no horario nocturno.</p>
+</section>
+<section id="la-causa" class="level3">
+<h3 class="anchored" data-anchor-id="la-causa">2.2 La causa</h3>
+<p>Los pedidos en MongoDB se guardan con timestamp en <strong>UTC</strong>. El pipeline original extraía <code>hora = fecha.hour</code> directamente sin conversión, así que un pedido hecho a las 14:00 hora CDMX (que en UTC son las 20:00) se contaba en la “hora 20”.</p>
+<p>Cuando graficamos el heatmap, “20:00” se interpreta como hora del usuario que mira el dashboard — pero los datos estaban en UTC. Resultado: aparente actividad nocturna que en realidad era diurna.</p>
+</section>
+<section id="el-fix" class="level3">
+<h3 class="anchored" data-anchor-id="el-fix">2.3 El fix</h3>
+<p>En <code>analytics/temporalidad.py</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>TIMEZONE_LOCAL <span class="op">=</span> <span class="st">"America/Mexico_City"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _agregar_features_temporales(df):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> df.copy()</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    fecha_local <span class="op">=</span> df[<span class="st">"fecha"</span>].dt.tz_convert(TIMEZONE_LOCAL)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"año_mes"</span>]    <span class="op">=</span> fecha_local.dt.strftime(<span class="st">"%Y-%m"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"dia_semana"</span>] <span class="op">=</span> fecha_local.dt.dayofweek</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"hora"</span>]       <span class="op">=</span> fecha_local.dt.hour</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>La conversión se aplica <strong>antes</strong> de extraer hora/día/mes. Los pedidos se quedan en UTC en el parquet histórico (preservando la fuente), pero los agregados temporales viajan en hora local CDMX.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: cualquier feature derivado de un timestamp con timezone debe pasar explícitamente por <code>tz_convert()</code>. Una vez aprendida la lección, agregamos un test que valida que el heatmap concentre actividad en horas 9-18 (horario laboral en CDMX). El test falla automáticamente si alguien revierte el fix.</p>
+</section>
+</section>
+<section id="heatmap-hora-día-por-segmento" class="level2">
+<h2 class="anchored" data-anchor-id="heatmap-hora-día-por-segmento">3. Heatmap hora × día por segmento</h2>
+<p>Después del fix, el heatmap muestra el patrón esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Pero cada segmento tiene su propia firma.</p>
+<div id="cell-fig-heatmap-mvps" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de un Heatmap para el segmento Alto Valor (patrón real ofuscado)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dias <span class="op">=</span> [<span class="st">'Lunes'</span>, <span class="st">'Martes'</span>, <span class="st">'Miércoles'</span>, <span class="st">'Jueves'</span>, <span class="st">'Viernes'</span>, <span class="st">'Sábado'</span>, <span class="st">'Domingo'</span>]</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>horas <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">24</span>))</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Crear matriz con concentración en horario laboral de L-V y picos matutinos</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>matriz_actividad <span class="op">=</span> np.zeros((<span class="dv">7</span>, <span class="dv">24</span>))</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):  <span class="co"># L-V</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">24</span>):</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Base baja</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        matriz_actividad[d, h] <span class="op">=</span> np.random.poisson(<span class="dv">20</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Horario laboral (9 a 18)</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">9</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">18</span>:</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            matriz_actividad[d, h] <span class="op">+=</span> np.random.poisson(<span class="dv">120</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Pico específico a media mañana (11-12)</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">11</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">12</span>:</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            matriz_actividad[d, h] <span class="op">+=</span> np.random.poisson(<span class="dv">80</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Fines de semana (mucho más bajo)</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> [<span class="dv">5</span>, <span class="dv">6</span>]: </span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">24</span>):</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        matriz_actividad[d, h] <span class="op">=</span> np.random.poisson(<span class="dv">15</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>df_heatmap <span class="op">=</span> pd.DataFrame(matriz_actividad, index<span class="op">=</span>dias, columns<span class="op">=</span>horas)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">4</span>))</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>sns.heatmap(df_heatmap, cmap<span class="op">=</span><span class="st">"Blues"</span>, cbar_kws<span class="op">=</span>{<span class="st">'label'</span>: <span class="st">'Intensidad de Compras'</span>}, linewidths<span class="op">=</span><span class="fl">.5</span>)</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Patrón Transaccional: Segmento 'Alto Valor' (Día vs Hora)"</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Hora del Día (0-23 hrs)"</span>)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Día de la Semana"</span>)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>plt.yticks(rotation<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>dias <span class="op">=</span> [<span class="st">'Lun'</span>, <span class="st">'Mar'</span>, <span class="st">'Mié'</span>, <span class="st">'Jue'</span>, <span class="st">'Vie'</span>, <span class="st">'Sáb'</span>, <span class="st">'Dom'</span>]</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>horas <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">24</span>))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Patrón sintético que preserva la firma real:</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># - Pico principal 10-12, secundario 15-18</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># - Lunes a viernes mucho más activos</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># - Sábado muy bajo, domingo casi cero</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>matriz <span class="op">=</span> np.zeros((<span class="dv">7</span>, <span class="dv">24</span>))</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):  <span class="co"># L-V</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> horas:</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        base <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">9</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">12</span>: base <span class="op">=</span> <span class="fl">1.8</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">13</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">14</span>: base <span class="op">=</span> <span class="fl">0.8</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">15</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">18</span>: base <span class="op">=</span> <span class="fl">1.2</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">19</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">21</span>: base <span class="op">=</span> <span class="fl">0.4</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.1</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">7</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">8</span>: base <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        matriz[d, h] <span class="op">=</span> base</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h <span class="kw">in</span> horas:</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    matriz[<span class="dv">5</span>, h] <span class="op">=</span> <span class="fl">0.2</span> <span class="op">+</span> np.random.uniform(<span class="dv">0</span>, <span class="fl">0.1</span>) <span class="cf">if</span> <span class="dv">10</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">14</span> <span class="cf">else</span> <span class="fl">0.05</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    matriz[<span class="dv">6</span>, h] <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>df_heatmap <span class="op">=</span> pd.DataFrame(matriz, index<span class="op">=</span>dias, columns<span class="op">=</span>horas)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>))</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>sns.heatmap(df_heatmap, cmap<span class="op">=</span><span class="st">"Blues"</span>, cbar_kws<span class="op">=</span>{<span class="st">'label'</span>: <span class="st">'</span><span class="sc">% d</span><span class="st">el segmento'</span>},</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>            linewidths<span class="op">=</span><span class="fl">0.5</span>, ax<span class="op">=</span>ax, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"MVPs — actividad por hora y día (hora local CDMX)"</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Hora del día"</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">""</span>)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>plt.yticks(rotation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="6_estacionalidad_segmentos_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-heatmap-mvps" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-heatmap-mvps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="6_estacionalidad_segmentos_files/figure-html/fig-heatmap-mvps-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-heatmap-mvps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Heatmap hora × día para el segmento MVPs (% del segmento).
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-</section>
-</section>
-<section id="aplicaciones-estratégicas" class="level2">
-<h2 class="anchored" data-anchor-id="aplicaciones-estratégicas">2. Aplicaciones Estratégicas</h2>
+<section id="firmas-observadas-por-segmento" class="level3">
+<h3 class="anchored" data-anchor-id="firmas-observadas-por-segmento">3.1 Firmas observadas por segmento</h3>
+<p>Cada cluster tiene un patrón distinto. Resumimos las observaciones cualitativas más útiles:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Segmento</th>
+<th>Pico principal</th>
+<th>Patrón distintivo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>MVPs</strong></td>
+<td>10:00 - 12:00 L-V</td>
+<td>Activos toda la semana, baja muy poco en sábado</td>
+</tr>
+<tr class="even">
+<td><strong>Alto Valor</strong></td>
+<td>10:00 - 12:00 L-V</td>
+<td>Patrón similar a MVPs pero más concentrado en mañana</td>
+</tr>
+<tr class="odd">
+<td><strong>Ocasionales</strong></td>
+<td>11:00 - 13:00 L-V</td>
+<td>Compras menos frecuentes, distribuidas más uniformemente</td>
+</tr>
+<tr class="even">
+<td><strong>En Riesgo</strong></td>
+<td>15:00 - 17:00 L-V</td>
+<td>Concentración en tarde, posible perfil de comprador final</td>
+</tr>
+<tr class="odd">
+<td><strong>Hibernando</strong></td>
+<td>Sin pico claro</td>
+<td>Baja actividad general (esperado por definición del segmento)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>El rumbo que nos hizo tomar</strong>: la diferencia entre el pico matutino de MVPs/Alto Valor (10:00-12:00) y el pico vespertino de En Riesgo (15:00-17:00) sugiere que <strong>son tipos de comprador diferentes</strong>, no solo “más” o “menos” activos. Esto se traduce en recomendaciones distintas para marketing:</p>
 <ul>
-<li><strong>Campañas Flash</strong>: Dado el pico de concentración al mediodía (Lunes a Jueves) en los segmentos core, las promociones flash deben enviarse a las 10:00 AM para interceptar el momento de mayor decisión.</li>
-<li><strong>Logística</strong>: La predicción de estacionalidad permite prever los picos logísticos de fin de año, alineando el inventario específicamente a los <em>bundles</em> demandados por los “MVPs”.</li>
+<li>Campañas de cross-sell para MVPs: enviar a las 9:30, interceptar el pico de las 10:00.</li>
+<li>Campañas de reactivación para En Riesgo: enviar a las 14:30, interceptar el pico de las 15:00.</li>
 </ul>
-
-
+<p>Si marketing usara la misma hora para todos los segmentos, perdería eficiencia en al menos uno.</p>
 </section>
+</section>
+<section id="evolución-mensual" class="level2">
+<h2 class="anchored" data-anchor-id="evolución-mensual">4. Evolución mensual</h2>
+<p>El segundo agregado es el volumen mensual por segmento. Es útil para detectar tendencias macro y validar que los modelos no se “rompan” silenciosamente.</p>
+<div id="cell-fig-mensual" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Código</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        <span class="st">"#0B3C5D"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  <span class="st">"#328CC1"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   <span class="st">"#D82822"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  <span class="st">"#9AA0A6"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Generación de series que reproducen el comportamiento real:</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># MVPs y Alto Valor estables con pico Buen Fin (Nov)</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># En Riesgo y Hibernando caen con el tiempo</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>meses <span class="op">=</span> pd.date_range(start<span class="op">=</span><span class="st">"2024-01-01"</span>, end<span class="op">=</span><span class="st">"2026-05-01"</span>, freq<span class="op">=</span><span class="st">"MS"</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(meses)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>serie_mvp <span class="op">=</span> <span class="dv">100</span> <span class="op">+</span> <span class="dv">8</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">4</span>, n)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>serie_av <span class="op">=</span> <span class="dv">75</span> <span class="op">+</span> <span class="dv">6</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">3</span>, n)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>serie_oc <span class="op">=</span> <span class="dv">25</span> <span class="op">+</span> <span class="dv">2</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>serie_riesgo <span class="op">=</span> <span class="dv">30</span> <span class="op">-</span> <span class="fl">0.4</span><span class="op">*</span>np.arange(n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>serie_hib <span class="op">=</span> <span class="dv">6</span> <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.6</span>, n)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Pico Buen Fin (Nov 2024 = idx 10, Nov 2025 = idx 22)</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> [<span class="dv">10</span>, <span class="dv">22</span>]:</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i <span class="op">&lt;</span> n:</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        serie_mvp[i] <span class="op">*=</span> <span class="fl">1.18</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        serie_av[i] <span class="op">*=</span> <span class="fl">1.15</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>df_mensual <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Mes'</span>: <span class="bu">list</span>(meses) <span class="op">*</span> <span class="dv">5</span>,</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'MVPs'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Alto Valor'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Ocasionales'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'En Riesgo'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Hibernando'</span>]<span class="op">*</span>n,</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Pedidos'</span>: np.concatenate([serie_mvp, serie_av, serie_oc, serie_riesgo, serie_hib]),</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> seg, sub <span class="kw">in</span> df_mensual.groupby(<span class="st">'Segmento'</span>):</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    plt.plot(sub[<span class="st">'Mes'</span>], sub[<span class="st">'Pedidos'</span>], color<span class="op">=</span>SEGMENT_COLORS[seg],</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>             linewidth<span class="op">=</span><span class="dv">2</span>, marker<span class="op">=</span><span class="st">'o'</span>, markersize<span class="op">=</span><span class="dv">4</span>, label<span class="op">=</span>seg)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Evolución mensual de pedidos por segmento (índice relativo)"</span>)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">""</span>)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Pedidos (índice)"</span>)</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>plt.legend(loc<span class="op">=</span><span class="st">'center left'</span>, bbox_to_anchor<span class="op">=</span>(<span class="fl">1.01</span>, <span class="fl">0.5</span>))</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">'right'</span>)</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-mensual" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mensual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="6_estacionalidad_segmentos_files/figure-html/fig-mensual-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mensual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="lectura-del-gráfico" class="level3">
+<h3 class="anchored" data-anchor-id="lectura-del-gráfico">4.1 Lectura del gráfico</h3>
+<p>Tres observaciones:</p>
+<ol type="1">
+<li><strong>MVPs y Alto Valor son estables</strong> mes a mes. Son la espina dorsal del negocio y muestran resiliencia.</li>
+<li><strong>Picos de Buen Fin (noviembre)</strong> se ven en ambos segmentos premium. Es el momento del año donde los esfuerzos de marketing pagan más.</li>
+<li><strong>En Riesgo decae lentamente</strong> con el tiempo. Es esperado por definición — son clientes que perdieron tracción. Pero la pendiente es un dato útil para evaluar campañas de retención.</li>
+</ol>
+<p><strong>El rumbo que nos hizo tomar</strong>: este gráfico se convirtió en una herramienta de monitoreo. Si el equipo de retención ejecuta una campaña agresiva, esperamos ver la pendiente de En Riesgo aplanarse. Si no se aplana, la campaña no funcionó.</p>
+</section>
+</section>
+<section id="cruce-temporalidad-bundles" class="level2">
+<h2 class="anchored" data-anchor-id="cruce-temporalidad-bundles">5. Cruce temporalidad × bundles</h2>
+<p>El tercer agregado es el más sofisticado: para los <strong>top 20 bundles por segmento</strong> (100 reglas en total), generamos su evolución mensual.</p>
+<p>Esto contesta preguntas concretas:</p>
+<ul>
+<li>“El bundle <code>Familia_PK → Familia_MSF</code> tiene lift 134. ¿Es siempre? ¿O solo en cierta época?”</li>
+<li>“Si lanzo una campaña en septiembre, ¿qué bundles están históricamente fuertes en septiembre?”</li>
+</ul>
+<section id="mes-pico-por-bundle" class="level3">
+<h3 class="anchored" data-anchor-id="mes-pico-por-bundle">5.1 Mes pico por bundle</h3>
+<p>El dashboard expone una tabla auxiliar donde para cada bundle se calcula:</p>
+<ul>
+<li><strong>Mes pico</strong>: el año-mes donde el bundle tuvo más pedidos.</li>
+<li><strong>Pedidos en el pico</strong>: cuántos pedidos materializaron la regla ese mes.</li>
+<li><strong>% del año</strong>: qué fracción del volumen anual del bundle se concentra en ese mes.</li>
+</ul>
+<p>Un bundle con <code>% del año = 25%</code> está fuertemente concentrado (la mitad del año aporta el 75% restante). Un bundle con <code>% del año = 9%</code> está distribuido uniformemente.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: bundles con concentración alta son candidatos a <strong>campañas estacionales dedicadas</strong>. Si el bundle X tiene 25% de su volumen en marzo, marketing debe planear campañas para el bundle X específicamente en febrero (anticipación). Bundles con baja concentración son candidatos a <strong>always-on cross-sell</strong> (recomendación pasiva todo el año).</p>
+</section>
+</section>
+<section id="la-consistencia-temporal-rfm-un-cross-check-crítico" class="level2">
+<h2 class="anchored" data-anchor-id="la-consistencia-temporal-rfm-un-cross-check-crítico">6. La consistencia temporal-RFM: un cross-check crítico</h2>
+<p>Una preocupación durante el desarrollo era: <strong>¿los agregados temporales y los conteos de RFM cuentan los mismos pedidos?</strong></p>
+<p>Es fácil que un módulo aplique un filtro distinto al otro (por ejemplo, uno excluya CARGO100 y el otro no, o usen ventanas temporales ligeramente diferentes). Si esto pasa, los KPIs del dashboard son inconsistentes con la segmentación, y nadie sabe en qué confiar.</p>
+<p>Implementamos un <strong>quality check automático</strong> en cada corrida del pipeline:</p>
+<pre class="text"><code>Para cada segmento:
+    pedidos_segun_temporalidad = sum(pedidos en temp_mensual)
+    pedidos_segun_rfm = sum(frequency en clientes_segmentados)
+    assert abs(temporalidad - rfm) / rfm &lt; 0.001</code></pre>
+<p>El sistema actual reporta:</p>
+<pre><code>✅ Cross-check temporalidad-RFM OK (diferencia 0.00%)</code></pre>
+<p><strong>Cero divergencia.</strong> Esto significa que cualquier número que veas en la vista de Estacionalidad coincide exactamente con los conteos de la vista de Overview. La consistencia no es accidental — es validada automáticamente en cada corrida del pipeline.</p>
+</section>
+<section id="lo-que-la-dimensión-temporal-nos-dejó" class="level2">
+<h2 class="anchored" data-anchor-id="lo-que-la-dimensión-temporal-nos-dejó">7. Lo que la dimensión temporal nos dejó</h2>
+<p>La fase de estacionalidad cerró el ciclo descriptivo del proyecto. Con RFM, MBA y temporalidad combinados, podemos responder preguntas accionables como:</p>
+<ul>
+<li><strong>“¿A quién, qué y cuándo lanzar una campaña?”</strong> → Marketing combina segmento (RFM), bundle (MBA) y ventana óptima (temporalidad).</li>
+<li><strong>“¿Es este mes un mal mes o solo estacionalidad?”</strong> → Comparar contra el mismo mes del año anterior, no contra el mes anterior.</li>
+<li><strong>“¿Qué inventario debe entrar para el cierre del año?”</strong> → Cruce de bundles fuertes en Nov/Dic con segmentos premium.</li>
+</ul>
+<p>En la siguiente sección documentamos cómo todo esto se persistió, automatizó y desplegó como un servicio operativo.</p>
+</section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

@@ -89,7 +89,7 @@ El flujo del sistema propuesto se divide en tres capas principales:
 
 1. **Extracción:** Recolección desde las Bases de Datos transaccionales.
 2. **Transformación:** Proceso ETL que involucra limpieza, manejo de nulos y creación de variables (ingeniería de datos para RFM y MBA).
-3. **Carga y Consumo:** Almacenamiento de datos limpios y su visualización final mediante un Dashboard interactivo en Power BI con filtros dinámicos y segmentación.
+3. **Carga y Consumo:** Almacenamiento de datos limpios (Parquet) y su visualización final mediante un **dashboard web interno desarrollado en FastAPI + DuckDB + Plotly**, con filtros dinámicos, segmentación por usuario y siete vistas operativas accesibles desde cualquier navegador en la intranet corporativa.
 :::
 
 ::: {style="text-align: justify"}
@@ -109,13 +109,13 @@ El flujo del sistema propuesto se divide en tres capas principales:
 
 ## 6. Análisis FODA
 
-Fortalezas: Sistema basado en datos consumible a través de un dashboard dinámico; capacidad de segmentación avanzada de clientes; entorno seguro de uso interno.
+Fortalezas: Sistema basado en datos consumible a través de un dashboard interactivo de siete vistas; capacidad de segmentación avanzada de clientes (K-Means k=5 sobre features RFM + cadencia); pipeline ETL incremental automatizado vía cron; stack open-source sin licenciamiento; entorno seguro de uso interno con supervisión de servicio (systemd) y supervivencia a reboots.
 
-Oportunidades: Transición de estrategias tradicionales a inteligencia de negocios; visualización dinámica de perfiles; reportes mensuales predictivos para optimizar inventario.
+Oportunidades: Transición de estrategias tradicionales a inteligencia de negocios; visualización dinámica de perfiles; reportes mensuales predictivos para optimizar inventario; integración futura del MBA como motor de recomendación al portal B2B; expansión del análisis a modelos predictivos (forecasting, CLV).
 
 Debilidades: Dependencia crítica de la calidad de los datos históricos y curva de aprendizaje para el equipo de marketing.
 
-Amenazas: Posibles incrementos de costo por licenciamiento de software de visualización (Power BI).
+Amenazas: Concept drift en los hábitos de compra (los segmentos descubiertos pueden volverse menos representativos con el tiempo) y dependencia operativa de la disponibilidad del servidor on-premise donde corre el dashboard.
 :::
 
 ::: {style="text-align: justify"}
@@ -126,7 +126,8 @@ Amenazas: Posibles incrementos de costo por licenciamiento de software de visual
 |---|---|---|---|---|
 | Calidad de datos inconsistente | Media | Alto | Alto | Implementar validaciones rigurosas en el proceso ETL y realizar un EDA inicial para definir viabilidad. |
 | Resistencia a la adopción | Baja | Alto | Media | Sesiones con el equipo comercial para obtener retroalimentación temprana y demostrar el valor estratégico de la herramienta. |
-| Incremento de costos de software | Media | Alto | Media | Evaluar el Free Tier inicial y comparar el costo-beneficio de licencias Pro frente a alternativas de código abierto. |
+| Incremento de costos de software | Baja | Bajo | Bajo | El stack adoptado es 100% open-source (Python + FastAPI + DuckDB + Plotly). No hay licenciamiento que escale con el número de usuarios. |
+| Concept drift del modelo | Media | Medio | Medio | Se mantiene un snapshot de las asignaciones originales y un quality check automático que detecta divergencias en la distribución de segmentos por corrida. |
 
 ::: 
 
@@ -148,5 +149,5 @@ La implementación de este proyecto de Customer Analytics traerá transformacion
 
 El principal recurso invertido es el **tiempo de desarrollo e investigación** (estimado en 7 a 8 semanas para la versión inicial) para construir el pipeline de datos, realizar el análisis exploratorio y publicar el primer dashboard.
 
-Posteriormente, se requerirá tiempo en ciclos iterativos para refinar los modelos predictivos y costos financieros asociados a las suscripciones de las herramientas de visualización (ej. Power BI Pro) conforme aumente la adopción operativa del proyecto.
+Posteriormente, se requerirá tiempo en ciclos iterativos para refinar los modelos predictivos (forecasting, CLV) y para adoptar herramientas de tracking de experimentos (MLFlow) conforme se incorporen nuevos modelos al portfolio analítico. El stack actual (Python + FastAPI + DuckDB + Plotly) es 100% open-source, por lo que el escalamiento a más usuarios internos no implica costos de licenciamiento adicionales.
 :::

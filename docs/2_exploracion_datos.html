@@ -154,12 +154,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -177,24 +177,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#análisis-exploratorio-de-datos" id="toc-análisis-exploratorio-de-datos" class="nav-link active" data-scroll-target="#análisis-exploratorio-de-datos">1. Análisis Exploratorio de Datos</a>
-  <ul class="collapse">
-  <li><a href="#configuración-visual-y-generación" id="toc-configuración-visual-y-generación" class="nav-link" data-scroll-target="#configuración-visual-y-generación">1.1 Configuración Visual y Generación</a></li>
-  </ul></li>
-  <li><a href="#descubrimientos-de-negocio" id="toc-descubrimientos-de-negocio" class="nav-link" data-scroll-target="#descubrimientos-de-negocio">2. Descubrimientos de Negocio</a>
-  <ul class="collapse">
-  <li><a href="#el-ticket-promedio-log-normal" id="toc-el-ticket-promedio-log-normal" class="nav-link" data-scroll-target="#el-ticket-promedio-log-normal">2.1 El Ticket Promedio (Log-Normal)</a></li>
-  <li><a href="#concentración-de-revenue-principio-de-pareto" id="toc-concentración-de-revenue-principio-de-pareto" class="nav-link" data-scroll-target="#concentración-de-revenue-principio-de-pareto">2.2 Concentración de Revenue (Principio de Pareto)</a></li>
-  <li><a href="#ingeniería-sobre-claves-de-producto-familias" id="toc-ingeniería-sobre-claves-de-producto-familias" class="nav-link" data-scroll-target="#ingeniería-sobre-claves-de-producto-familias">2.3 Ingeniería sobre Claves de Producto (Familias)</a></li>
-  <li><a href="#calidad-de-datos" id="toc-calidad-de-datos" class="nav-link" data-scroll-target="#calidad-de-datos">2.4 Calidad de Datos</a></li>
-  </ul></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -218,127 +202,256 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="análisis-exploratorio-de-datos" class="level2">
-<h2 class="anchored" data-anchor-id="análisis-exploratorio-de-datos">1. Análisis Exploratorio de Datos</h2>
-<p>Esta sección documenta los principales descubrimientos derivados de nuestra base transaccional, analizando más de <strong>700,000 órdenes</strong> de casi <strong>20,000 clientes</strong> durante el periodo 2023-2025.</p>
-<blockquote class="blockquote">
-<p>[!NOTE] Para proteger la confidencialidad de la información, los montos exactos y volúmenes precisos han sido anonimizados o escalados, presentando los hallazgos a través de <strong>porcentajes y proporciones</strong> que reflejan con exactitud la realidad del negocio de CT Internacional.</p>
-</blockquote>
-<section id="configuración-visual-y-generación" class="level3">
-<h3 class="anchored" data-anchor-id="configuración-visual-y-generación">1.1 Configuración Visual y Generación</h3>
-<div id="dbac3cef" class="cell" data-execution_count="1">
+<div style="text-align: justify">
+<section id="la-base-transaccional" class="level2">
+<h2 class="anchored" data-anchor-id="la-base-transaccional">1. La base transaccional</h2>
+<p>Esta fase del proyecto consistió en levantar la primera fotografía completa de la base transaccional de CT Internacional para definir el alcance real del análisis y detectar problemas estructurales antes de cualquier modelado.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Nota
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Sobre los datos en este sitio</strong>: las cifras de volumen están publicadas con un nivel de precisión aproximado, los montos monetarios se presentan como índices o en escala log, y las claves de productos están <strong>ofuscadas en familias genéricas</strong>. Las proporciones, distribuciones, lifts y patrones temporales son auténticos.</p>
+</div>
+</div>
+<section id="cifras-del-universo-analizado" class="level3">
+<h3 class="anchored" data-anchor-id="cifras-del-universo-analizado">1.1 Cifras del universo analizado</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pedidos totales en histórico</td>
+<td>~780K</td>
+</tr>
+<tr class="even">
+<td>Pedidos en ventana de análisis (30 meses)</td>
+<td>~570K</td>
+</tr>
+<tr class="odd">
+<td>Items transaccionales</td>
+<td>~1.8M</td>
+</tr>
+<tr class="even">
+<td>Clientes únicos con compras en ventana</td>
+<td>18,638</td>
+</tr>
+<tr class="odd">
+<td>Familias de producto identificadas</td>
+<td>908</td>
+</tr>
+<tr class="even">
+<td>Periodo cubierto</td>
+<td>Dic 2023 — May 2026</td>
+</tr>
+</tbody>
+</table>
+<p>La elección de ventana de 30 meses no fue arbitraria. Es lo suficientemente larga para capturar dos ciclos estacionales completos (Buen Fin, cierres fiscales) pero corta como para que no incluyamos comportamiento de clientes que ya no son relevantes para el negocio actual.</p>
+</section>
+</section>
+<section id="tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis" class="level2">
+<h2 class="anchored" data-anchor-id="tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis">2. Tres descubrimientos que cambiaron el rumbo del análisis</h2>
+<section id="distribución-log-normal-extrema-del-ticket" class="level3">
+<h3 class="anchored" data-anchor-id="distribución-log-normal-extrema-del-ticket">2.1 Distribución log-normal extrema del ticket</h3>
+<p>Lo primero que aprendimos al graficar la distribución de <code>pago_total</code> es que el promedio aritmético no significa nada. La mayoría de los tickets son compras pequeñas (consumibles, accesorios), pero existe una cola larga de tickets de infraestructura que arrastra la media hacia arriba de manera engañosa.</p>
+<div id="cell-fig-ticket-distribution" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime, timedelta</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Configuración visual</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>COLOR_ACCENT <span class="op">=</span> <span class="st">"#000d81"</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>COLOR_SEC <span class="op">=</span> <span class="st">"#810000"</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de la distribución real</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>n_orders <span class="op">=</span> <span class="dv">10000</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> [datetime(<span class="dv">2023</span>, <span class="dv">1</span>, <span class="dv">1</span>) <span class="op">+</span> timedelta(days<span class="op">=</span>np.random.randint(<span class="dv">0</span>, <span class="dv">730</span>)) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_orders)]</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>pago_total <span class="op">=</span> np.random.lognormal(mean<span class="op">=</span><span class="dv">7</span>, sigma<span class="op">=</span><span class="fl">1.2</span>, size<span class="op">=</span>n_orders)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>df_orders_mock <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'fecha'</span>: dates,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'pago_total'</span>: pago_total</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>df_orders_mock[<span class="st">'mes_anio'</span>] <span class="op">=</span> df_orders_mock[<span class="st">'fecha'</span>].dt.to_period(<span class="st">'M'</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>COLOR_PRIMARY <span class="op">=</span> <span class="st">"#0B3C5D"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>COLOR_SECONDARY <span class="op">=</span> <span class="st">"#D82822"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación que preserva el comportamiento log-normal real</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>n_orders <span class="op">=</span> <span class="dv">15000</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>pago_total <span class="op">=</span> np.random.lognormal(mean<span class="op">=</span><span class="fl">7.2</span>, sigma<span class="op">=</span><span class="fl">1.4</span>, size<span class="op">=</span>n_orders)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.5</span>))</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>sns.histplot(pago_total, bins<span class="op">=</span><span class="dv">60</span>, color<span class="op">=</span>COLOR_SECONDARY, edgecolor<span class="op">=</span><span class="st">"white"</span>, ax<span class="op">=</span>axes[<span class="dv">0</span>])</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Escala lineal: la cola larga aplasta el histograma"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Ticket (índice relativo)"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Frecuencia"</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>sns.histplot(pago_total, bins<span class="op">=</span><span class="dv">60</span>, color<span class="op">=</span>COLOR_PRIMARY, edgecolor<span class="op">=</span><span class="st">"white"</span>,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>             log_scale<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>axes[<span class="dv">1</span>])</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Escala logarítmica: la verdadera distribución"</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Ticket (escala log)"</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">""</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-display">
+<div id="fig-ticket-distribution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ticket-distribution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="2_exploracion_datos_files/figure-html/fig-ticket-distribution-output-1.png" class="img-fluid figure-img">
 </div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ticket-distribution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Distribución del ticket en escala lineal vs logarítmica.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>El rumbo que nos hizo tomar</strong>: este hallazgo definió una de las decisiones técnicas más importantes del proyecto. Antes de cualquier algoritmo de clustering, <strong>aplicamos <code>log1p</code> a todas las variables monetarias y de frecuencia</strong>. Sin esta transformación, el K-Means quedaría dominado por unos pocos outliers extremos y la segmentación carecería de sentido. Esta decisión vive <strong>dentro</strong> del pipeline serializado del modelo (no como un paso manual), garantizando que cualquier predicción futura aplique la misma transformación que el entrenamiento.</p>
 </section>
-</section>
-<section id="descubrimientos-de-negocio" class="level2">
-<h2 class="anchored" data-anchor-id="descubrimientos-de-negocio">2. Descubrimientos de Negocio</h2>
-<section id="el-ticket-promedio-log-normal" class="level3">
-<h3 class="anchored" data-anchor-id="el-ticket-promedio-log-normal">2.1 El Ticket Promedio (Log-Normal)</h3>
-<p>Analizar el “ticket promedio” puede ser sumamente engañoso en escenarios B2B. Descubrimos que nuestra distribución de pagos sigue una curva <strong>Log-Normal</strong> extrema. Esto significa que la inmensa mayoría de los tickets son compras menores (accesorios, consumibles), pero existe una “cola larga” de tickets masivos (infraestructura, servidores) que empujan el promedio estadístico hacia arriba, alejándolo de lo que es una compra “típica”.</p>
-<p><em>Nota metodológica: Debido a este sesgo, en las fases de Machine Learning aplicaremos una transformación Logarítmica (<code>log1p</code>) a los montos económicos.</em></p>
-<div id="ab310e9b" class="cell" data-execution_count="2">
+<section id="concentración-del-revenue-principio-de-pareto" class="level3">
+<h3 class="anchored" data-anchor-id="concentración-del-revenue-principio-de-pareto">2.2 Concentración del revenue: principio de Pareto</h3>
+<p>Ordenamos los clientes de mayor a menor según su gasto acumulado en la ventana y graficamos la curva de revenue acumulado.</p>
+<div id="cell-fig-pareto" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">5</span>))</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Escala Lineal</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>sns.histplot(df_orders_mock[<span class="st">'pago_total'</span>], bins<span class="op">=</span><span class="dv">50</span>, color<span class="op">=</span>COLOR_SEC, edgecolor<span class="op">=</span><span class="st">"white"</span>, ax<span class="op">=</span>axes[<span class="dv">0</span>])</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Distribución de Tickets (Escala Lineal)"</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Monto"</span>)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n_clients <span class="op">=</span> <span class="dv">18638</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ingresos <span class="op">=</span> np.random.pareto(a<span class="op">=</span><span class="fl">1.05</span>, size<span class="op">=</span>n_clients)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>ingresos.sort()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ingresos <span class="op">=</span> ingresos[::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>acumulado <span class="op">=</span> np.cumsum(ingresos) <span class="op">/</span> np.<span class="bu">sum</span>(ingresos)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>pct_clientes <span class="op">=</span> np.arange(<span class="dv">1</span>, n_clients <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> n_clients <span class="op">*</span> <span class="dv">100</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Escala Logarítmica</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>sns.histplot(df_orders_mock[<span class="st">'pago_total'</span>], bins<span class="op">=</span><span class="dv">50</span>, color<span class="op">=</span>COLOR_ACCENT, edgecolor<span class="op">=</span><span class="st">"white"</span>, log_scale<span class="op">=</span><span class="va">True</span>, ax<span class="op">=</span>axes[<span class="dv">1</span>])</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Distribución de Tickets (Escala Logarítmica)"</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Monto (Log)"</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>plt.plot(pct_clientes, acumulado <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>COLOR_PRIMARY, linewidth<span class="op">=</span><span class="fl">2.5</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>plt.fill_between(pct_clientes, <span class="dv">0</span>, acumulado <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>COLOR_PRIMARY, alpha<span class="op">=</span><span class="fl">0.08</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>plt.axhline(y<span class="op">=</span><span class="dv">80</span>, color<span class="op">=</span>COLOR_SECONDARY, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span>COLOR_SECONDARY, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>plt.scatter([<span class="dv">20</span>], [<span class="dv">80</span>], color<span class="op">=</span>COLOR_SECONDARY, s<span class="op">=</span><span class="dv">80</span>, zorder<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>plt.annotate(<span class="st">"20</span><span class="sc">% d</span><span class="st">e clientes</span><span class="ch">\n</span><span class="st">80</span><span class="sc">% d</span><span class="st">el revenue"</span>, xy<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">80</span>), xytext<span class="op">=</span>(<span class="dv">35</span>, <span class="dv">65</span>),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>             fontsize<span class="op">=</span><span class="dv">11</span>, color<span class="op">=</span>COLOR_SECONDARY,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>             arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>, color<span class="op">=</span>COLOR_SECONDARY))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Curva de concentración de revenue (Pareto)"</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Porcentaje acumulado de clientes (%)"</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Porcentaje acumulado del revenue (%)"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="2_exploracion_datos_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-pareto" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pareto-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="2_exploracion_datos_files/figure-html/fig-pareto-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pareto-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;2: Curva de concentración del revenue.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
+<p><strong>El rumbo que nos hizo tomar</strong>: la concentración de Pareto reforzó la hipótesis de que <strong>la segmentación tendría sentido</strong>. Si todos los clientes fueran igual de valiosos, agruparlos no agregaría nada. Pero con un 20% de la base generando el 80% del revenue, identificar <strong>quiénes son ese 20%</strong> y <strong>qué los distingue del resto</strong> se vuelve la pregunta central del proyecto. Esto también nos llevó a desconfiar de cualquier modelo cuya distribución de clusters fuera muy plana — si el modelo dice “todos los clusters son del 20%”, probablemente no captó la estructura real del negocio.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Advertencia
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Nota sobre la concentración real</strong>: descubrimos que el top 10 de clientes solo representa ~3.8% del volumen total. Esto sí es Pareto pero <strong>no es Pareto extremo</strong>: nuestro negocio no depende de un puñado de clientes-llave, sino de una base amplia de clientes valiosos. Esto es importante para entender por qué el segmento MVPs no es “los 10 mejores” sino el cluster con un perfil de comportamiento específico.</p>
+</div>
+</div>
 </section>
-<section id="concentración-de-revenue-principio-de-pareto" class="level3">
-<h3 class="anchored" data-anchor-id="concentración-de-revenue-principio-de-pareto">2.2 Concentración de Revenue (Principio de Pareto)</h3>
-<p>Un hallazgo crítico es el nivel de concentración de nuestro negocio. Ordenamos a los clientes de mayor a menor según sus compras totales y calculamos el ingreso acumulado. Comprobamos la regla del <strong>80/20 (Pareto)</strong> de forma casi exacta: el <strong>80% de nuestros ingresos es generado por una pequeña élite de clientes</strong>.</p>
-<div id="7ef17b2c" class="cell" data-execution_count="3">
+<section id="el-problema-de-las-claves-908-familias-en-lugar-de-30000-skus" class="level3">
+<h3 class="anchored" data-anchor-id="el-problema-de-las-claves-908-familias-en-lugar-de-30000-skus">2.3 El problema de las claves: 908 familias en lugar de 30,000 SKUs</h3>
+<p>Los datos originales identifican cada item por una clave alfanumérica única (por ejemplo, <code>ESDKPK4710</code>). Para los humanos esto es manejable, pero para un algoritmo de Market Basket Analysis es catastrófico: con 30,000 SKUs distintos, casi ninguna regla alcanza el soporte mínimo necesario para considerarse estadísticamente significativa.</p>
+<p>La solución fue trivial pero crítica: <strong>derivar la “familia” del producto removiendo los dígitos finales de la clave</strong>. Con esto, <code>ESDKPK4710</code>, <code>ESDKPK4720</code> y <code>ESDKPK4730</code> se agrupan todos bajo la familia <code>ESDKPK</code>.</p>
+<div id="cell-fig-familias" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de clientes con concentración de Pareto</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>n_clients <span class="op">=</span> <span class="dv">2000</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ingresos_clientes <span class="op">=</span> np.random.pareto(a<span class="op">=</span><span class="fl">1.16</span>, size<span class="op">=</span>n_clients) <span class="co"># ~ 80/20 distribution</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ingresos_clientes.sort()</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>ingresos_clientes <span class="op">=</span> ingresos_clientes[::<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>acumulado <span class="op">=</span> np.cumsum(ingresos_clientes) <span class="op">/</span> np.<span class="bu">sum</span>(ingresos_clientes)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>plt.plot(np.arange(<span class="dv">1</span>, n_clients <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> n_clients <span class="op">*</span> <span class="dv">100</span>, acumulado <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>COLOR_ACCENT, linewidth<span class="op">=</span><span class="fl">2.5</span>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>plt.axhline(y<span class="op">=</span><span class="dv">80</span>, color<span class="op">=</span>COLOR_SEC, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">20</span>, color<span class="op">=</span>COLOR_SEC, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Curva de Concentración de Ingresos (Pareto)"</span>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Porcentaje de Clientes (%)"</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Porcentaje del Revenue Acumulado (%)"</span>)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cardinalidades <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Nivel'</span>: [<span class="st">'Claves SKU individuales'</span>, <span class="st">'Familias de producto'</span>],</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Cardinalidad'</span>: [<span class="dv">30000</span>, <span class="dv">908</span>]</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.5</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>bars <span class="op">=</span> ax.barh(cardinalidades[<span class="st">'Nivel'</span>], cardinalidades[<span class="st">'Cardinalidad'</span>],</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>               color<span class="op">=</span>[COLOR_SECONDARY, COLOR_PRIMARY], edgecolor<span class="op">=</span><span class="st">'none'</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bar, val <span class="kw">in</span> <span class="bu">zip</span>(bars, cardinalidades[<span class="st">'Cardinalidad'</span>]):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    ax.text(val <span class="op">+</span> <span class="dv">500</span>, bar.get_y() <span class="op">+</span> bar.get_height()<span class="op">/</span><span class="dv">2</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>            <span class="ss">f'</span><span class="sc">{</span>val<span class="sc">:,}</span><span class="ss">'</span>, va<span class="op">=</span><span class="st">'center'</span>, fontsize<span class="op">=</span><span class="dv">12</span>, fontweight<span class="op">=</span><span class="st">'bold'</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Número de categorías únicas'</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Reducción de dimensionalidad mediante derivación de familias'</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="dv">0</span>, <span class="dv">35000</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="2_exploracion_datos_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-familias" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-familias-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="2_exploracion_datos_files/figure-html/fig-familias-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-familias-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3: Reducción dramática de cardinalidad: de SKUs únicos a familias.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
+<p><strong>El rumbo que nos hizo tomar</strong>: con 908 familias en lugar de 30,000 SKUs, el MBA pasó de “matemáticamente imposible” a “produce ~3,800 reglas accionables”. Esta es la diferencia entre tener análisis o no tenerlo. La función <code>derivar_familia()</code> quedó como parte del módulo <code>analytics/familia.py</code> del pipeline.</p>
 </section>
-<section id="ingeniería-sobre-claves-de-producto-familias" class="level3">
-<h3 class="anchored" data-anchor-id="ingeniería-sobre-claves-de-producto-familias">2.3 Ingeniería sobre Claves de Producto (Familias)</h3>
-<p>En los datos originales, cada transacción está atada a una “Clave CT” alfanumérica única. Sin embargo, procesar miles de SKU individuales debilita cualquier análisis.</p>
-<p>Durante el EDA, extrajimos el <strong>prefijo de la clave</strong> para construir la familia de productos. Ejemplos de mapeo: - <code>CAR</code> -&gt; Cartuchos - <code>ACC</code> -&gt; Accesorios - <code>MEM</code> -&gt; Memorias - <code>DDU</code> -&gt; Discos Duros</p>
-<p>Esta limpieza estructural fue el paso habilitador que permitió realizar el análisis de Market Basket (MBA) con la dimensionalidad correcta.</p>
 </section>
-<section id="calidad-de-datos" class="level3">
-<h3 class="anchored" data-anchor-id="calidad-de-datos">2.4 Calidad de Datos</h3>
+<section id="calidad-y-limpieza-de-datos" class="level2">
+<h2 class="anchored" data-anchor-id="calidad-y-limpieza-de-datos">3. Calidad y limpieza de datos</h2>
+<section id="el-cargo-financiero-cargo100" class="level3">
+<h3 class="anchored" data-anchor-id="el-cargo-financiero-cargo100">3.1 El cargo financiero CARGO100</h3>
+<p>Al hacer match entre <code>num_productos</code> de cada orden y el conteo real de items, descubrimos un desfase sistemático: muchas órdenes tenían un item más del que decían. Investigando, identificamos que <strong>CARGO100 es el cargo por pago con tarjeta de crédito</strong> que se registra como un item dentro de la orden pero <strong>no es un producto</strong>.</p>
+<p>Si se incluye en MBA, contamina los lifts porque aparece en proporciones masivas. Si se incluye en el conteo de productos, infla <code>num_productos</code> por uno en cada orden afectada. La decisión fue:</p>
 <ul>
-<li>La integridad de la base de datos es excepcional: <strong>0.00% de las órdenes críticas presentan errores estructurales</strong> tras la exclusión de órdenes canceladas o inválidas.</li>
-<li>Filtramos estrictamente los tickets para analizar únicamente compras finalizadas con procedencia confiable (CTonline).</li>
+<li><strong>Filtrar CARGO100 antes de cualquier análisis</strong> (segmentación, MBA, temporalidad).</li>
+<li><strong>Preservarlo en el parquet histórico</strong> porque es información financiera válida.</li>
+<li><strong>Recalcular <code>num_productos</code></strong> para que refleje únicamente productos reales.</li>
 </ul>
-
-
+<p>Esto se aplicó tanto al backfill histórico como al ingest incremental para evitar inconsistencias futuras.</p>
+</section>
+<section id="validación-de-calidad-sistemática" class="level3">
+<h3 class="anchored" data-anchor-id="validación-de-calidad-sistemática">3.2 Validación de calidad sistemática</h3>
+<p>Decidimos integrar quality checks <strong>dentro del pipeline</strong>, no como scripts manuales. Por ejemplo:</p>
+<ul>
+<li>En la ingesta: el conteo de pedidos no puede disminuir más de un 1% entre corridas (sería señal de un bug en el dedup).</li>
+<li>En la segmentación: ningún cluster puede absorber más del 50% (el caso del bug histórico del log-transform mal aplicado, que veremos en la sección de segmentación).</li>
+<li>En la temporalidad: la suma de pedidos por segmento debe coincidir exactamente con el conteo en RFM (cross-check). El sistema actual reporta <strong>0.00% de divergencia</strong>.</li>
+</ul>
+<p><strong>El rumbo que nos hizo tomar</strong>: estas validaciones automáticas evitaron varios bugs durante el desarrollo. Por ejemplo, una versión preliminar del pipeline tenía un dedup defectuoso que perdía millones de items; el quality check del cross-check temporalidad-RFM marcó la inconsistencia antes de que llegara a producción.</p>
 </section>
 </section>
+<section id="lo-que-aprendimos-en-esta-fase" class="level2">
+<h2 class="anchored" data-anchor-id="lo-que-aprendimos-en-esta-fase">4. Lo que aprendimos en esta fase</h2>
+<p>Esta fase parecía rutinaria — “explorar los datos antes de modelar” — pero generó tres de las decisiones más importantes del proyecto entero:</p>
+<ol type="1">
+<li><strong>Encapsular el log-transform en el pipeline</strong>: porque la distribución log-normal es estructural, no anecdótica.</li>
+<li><strong>Trabajar con familias en lugar de SKUs</strong>: porque sin esto, el MBA no produce señal.</li>
+<li><strong>Filtrar CARGO100 sistemáticamente</strong>: porque mezclar cargos financieros con productos contamina cualquier análisis.</li>
+</ol>
+<p>Las tres decisiones quedaron codificadas en el pipeline como código, no como notas. Esto significa que cualquier desarrollador futuro las aplica automáticamente sin tener que recordarlas.</p>
+</section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

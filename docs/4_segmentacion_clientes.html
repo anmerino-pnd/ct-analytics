@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Segmentación de Clientes (Clustering)</title>
+<title>Segmentación de Clientes</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -183,12 +183,12 @@ window.Quarto = {
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -206,26 +206,15 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#feature-engineering-4-dimensiones" id="toc-feature-engineering-4-dimensiones" class="nav-link active" data-scroll-target="#feature-engineering-4-dimensiones">1. Feature Engineering: 4 Dimensiones</a></li>
-  <li><a href="#rigor-matemático-seleccionando-k5" id="toc-rigor-matemático-seleccionando-k5" class="nav-link" data-scroll-target="#rigor-matemático-seleccionando-k5">2. Rigor Matemático: Seleccionando <span class="math inline">\(K=5\)</span></a>
-  <ul class="collapse">
-  <li><a href="#proporciones-del-modelo-de-clustering" id="toc-proporciones-del-modelo-de-clustering" class="nav-link" data-scroll-target="#proporciones-del-modelo-de-clustering">2.1 Proporciones del Modelo de Clustering</a></li>
-  </ul></li>
-  <li><a href="#visualización-dimensional-pca" id="toc-visualización-dimensional-pca" class="nav-link" data-scroll-target="#visualización-dimensional-pca">3. Visualización Dimensional (PCA)</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Segmentación de Clientes (Clustering)</h1>
+<h1 class="title">Segmentación de Clientes</h1>
 </div>
 
 
@@ -242,19 +231,35 @@ window.Quarto = {
 </header>
 
 
-<section id="feature-engineering-4-dimensiones" class="level2">
-<h2 class="anchored" data-anchor-id="feature-engineering-4-dimensiones">1. Feature Engineering: 4 Dimensiones</h2>
-<p>Para refinar las reglas heurísticas del análisis RFM tradicional, diseñamos una canalización matemática (<em>Pipeline</em>) que procesó la información de transacciones.</p>
-<p>A diferencia del RFM clásico (3 variables), nuestro algoritmo <strong>K-Means</strong> fue entrenado en <strong>4 dimensiones</strong>: 1. Recency 2. Frequency 3. Monetary 4. <strong>Cadencia de Compra</strong> (La métrica personalizada de velocidad de compra descubierta en la fase anterior).</p>
+<div style="text-align: justify">
+<section id="del-feature-set-al-algoritmo" class="level2">
+<h2 class="anchored" data-anchor-id="del-feature-set-al-algoritmo">1. Del feature set al algoritmo</h2>
+<p>En la fase anterior construimos un dataset con cuatro features por cliente: <code>recency</code>, <code>frequency</code>, <code>monetary</code> y <code>dias_entre_compras</code>. En esta sección documentamos cómo seleccionamos el algoritmo, cómo determinamos <span class="math inline">\(k=5\)</span> matemáticamente, qué cinco perfiles emergieron y un bug temprano que casi nos hace tomar el camino equivocado.</p>
 </section>
-<section id="rigor-matemático-seleccionando-k5" class="level2">
-<h2 class="anchored" data-anchor-id="rigor-matemático-seleccionando-k5">2. Rigor Matemático: Seleccionando <span class="math inline">\(K=5\)</span></h2>
-<p>Para evitar sesgos humanos al decidir cuántos segmentos de clientes tiene CT Internacional, aplicamos el método del codo (<em>Elbow Method</em> midiendo la <strong>Inercia</strong>) y calculamos el <strong>Silhouette Score</strong> iterando algoritmos para agrupar a los clientes desde <span class="math inline">\(K=2\)</span> hasta <span class="math inline">\(K=10\)</span>.</p>
-<p>La inercia cayó drásticamente y el Silhouette Score alcanzó su punto de equilibrio óptimo estructural en <strong>K=5</strong>. Esto probó matemáticamente que nuestra base de clientes B2B se divide naturalmente en 5 comportamientos distintos.</p>
-<section id="proporciones-del-modelo-de-clustering" class="level3">
-<h3 class="anchored" data-anchor-id="proporciones-del-modelo-de-clustering">2.1 Proporciones del Modelo de Clustering</h3>
-<p>Al pasar la información por el modelo, las fronteras se ajustaron. El grupo “Hibernando” se redujo drásticamente del 28% (regla heurística) al 10.7% (Machine Learning), indicando que muchos inactivos fueron correctamente clasificados como “Ocasionales” al ponderar su larga <em>Cadencia</em> B2B.</p>
-<div id="a9d10087" class="cell" data-execution_count="1">
+<section id="elección-del-algoritmo-y-de-k" class="level2">
+<h2 class="anchored" data-anchor-id="elección-del-algoritmo-y-de-k">2. Elección del algoritmo y de k</h2>
+<section id="k-means-por-qué-y-por-qué-no" class="level3">
+<h3 class="anchored" data-anchor-id="k-means-por-qué-y-por-qué-no">2.1 K-Means: por qué y por qué no</h3>
+<p>K-Means es la elección obvia cuando los clusters son aproximadamente esféricos en el espacio de features, y cuando el negocio espera grupos relativamente balanceados. Tiene sus limitaciones:</p>
+<ul>
+<li>Asume clusters convexos (rompería si hubiera segmentos con forma extraña).</li>
+<li>Es sensible a outliers (resuelto con <code>log1p</code>).</li>
+<li>Requiere fijar <span class="math inline">\(k\)</span> a priori.</li>
+</ul>
+<p>Evaluamos brevemente DBSCAN y clustering jerárquico, pero la decisión final fue K-Means por dos razones prácticas:</p>
+<ol type="1">
+<li><strong>Interpretabilidad para marketing</strong>: explicar “cada cliente pertenece a uno de 5 grupos balanceados” es mucho más fácil que explicar densidad de regiones o dendrogramas.</li>
+<li><strong>Producción</strong>: K-Means es trivial de serializar, predice rápido y escala a miles de clientes nuevos sin problema.</li>
+</ol>
+</section>
+<section id="selección-de-k-con-el-método-del-codo-silhouette" class="level3">
+<h3 class="anchored" data-anchor-id="selección-de-k-con-el-método-del-codo-silhouette">2.2 Selección de <span class="math inline">\(k\)</span> con el método del codo + Silhouette</h3>
+<p>Iteramos <span class="math inline">\(k\)</span> de 2 a 10 calculando dos métricas:</p>
+<ul>
+<li><strong>Inercia</strong> (suma de distancias al centroide): debe bajar con cada <span class="math inline">\(k\)</span> adicional, pero el “codo” indica el punto donde agregar clusters deja de aportar.</li>
+<li><strong>Silhouette Score</strong>: mide qué tan bien separados están los clusters. Va de -1 a 1; valores altos significan clusters compactos y bien separados.</li>
+</ul>
+<div id="cell-fig-elbow" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -263,124 +268,255 @@ window.Quarto = {
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>: <span class="st">"#0B3C5D"</span>,         <span class="co"># Azul profundo elegante</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>: <span class="st">"#328CC1"</span>,   <span class="co"># Azul medio</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,  <span class="co"># Azul grisáceo suave</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>: <span class="st">"#D82822"</span>,    <span class="co"># Naranja rojizo (alerta sin ser agresivo)</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>: <span class="st">"#9AA0A6"</span>    <span class="co"># Gris neutro</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>} </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>COLOR_PRIMARY <span class="op">=</span> <span class="st">"#0B3C5D"</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>COLOR_SECONDARY <span class="op">=</span> <span class="st">"#D82822"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Valores que preservan la forma cualitativa de las curvas reales</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>k_range <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">2</span>, <span class="dv">11</span>))</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>inercia <span class="op">=</span> [<span class="dv">42000</span>, <span class="dv">28000</span>, <span class="dv">21500</span>, <span class="dv">17200</span>, <span class="dv">15800</span>, <span class="dv">14900</span>, <span class="dv">14200</span>, <span class="dv">13700</span>, <span class="dv">13300</span>]</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>silhouette <span class="op">=</span> [<span class="fl">0.28</span>, <span class="fl">0.31</span>, <span class="fl">0.34</span>, <span class="fl">0.36</span>, <span class="fl">0.33</span>, <span class="fl">0.30</span>, <span class="fl">0.28</span>, <span class="fl">0.26</span>, <span class="fl">0.24</span>]</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Distribución real extraída del modelo de ML (K-Means v1)</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>cluster_pct <span class="op">=</span> {</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Alto Valor'</span>: <span class="fl">34.41</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'MVPs'</span>: <span class="fl">23.89</span>,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Ocasionales'</span>: <span class="fl">19.09</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'En Riesgo'</span>: <span class="fl">11.89</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Hibernando'</span>: <span class="fl">10.72</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>df_cluster_summary <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento_ML'</span>: <span class="bu">list</span>(cluster_pct.keys()),</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Porcentaje'</span>: <span class="bu">list</span>(cluster_pct.values())</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> sns.barplot(</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_cluster_summary.sort_values(<span class="st">'Porcentaje'</span>, ascending<span class="op">=</span><span class="va">False</span>), </span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'Segmento_ML'</span>, </span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'Porcentaje'</span>, </span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    palette<span class="op">=</span>SEGMENT_COLORS,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    edgecolor<span class="op">=</span><span class="st">"none"</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Etiquetas</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> container <span class="kw">in</span> ax.containers:</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    ax.bar_label(container, fmt<span class="op">=</span><span class="st">'</span><span class="sc">%.1f%%</span><span class="st">'</span>, padding<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Distribución Final de Clientes (Machine Learning K=5)"</span>)</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Segmento Descubierto"</span>)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Porcentaje (%)"</span>)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.5</span>))</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(k_range, inercia, <span class="st">'o-'</span>, color<span class="op">=</span>COLOR_PRIMARY, linewidth<span class="op">=</span><span class="fl">2.5</span>, markersize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].axvline(x<span class="op">=</span><span class="dv">5</span>, color<span class="op">=</span>COLOR_SECONDARY, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="fl">1.5</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].scatter([<span class="dv">5</span>], [<span class="dv">17200</span>], color<span class="op">=</span>COLOR_SECONDARY, s<span class="op">=</span><span class="dv">200</span>, zorder<span class="op">=</span><span class="dv">5</span>, marker<span class="op">=</span><span class="st">'*'</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Inercia (método del codo)"</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Número de clusters (k)"</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Inercia"</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].plot(k_range, silhouette, <span class="st">'o-'</span>, color<span class="op">=</span>COLOR_PRIMARY, linewidth<span class="op">=</span><span class="fl">2.5</span>, markersize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axvline(x<span class="op">=</span><span class="dv">5</span>, color<span class="op">=</span>COLOR_SECONDARY, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="fl">1.5</span>, alpha<span class="op">=</span><span class="fl">0.7</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].scatter([<span class="dv">5</span>], [<span class="fl">0.36</span>], color<span class="op">=</span>COLOR_SECONDARY, s<span class="op">=</span><span class="dv">200</span>, zorder<span class="op">=</span><span class="dv">5</span>, marker<span class="op">=</span><span class="st">'*'</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Silhouette Score"</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Número de clusters (k)"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Score"</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].grid(<span class="va">True</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, alpha<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>C:\Users\angel.merino\AppData\Local\Temp\ipykernel_24156\595847382.py:30: FutureWarning: 
-
-Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `x` variable to `hue` and set `legend=False` for the same effect.
-
-  ax = sns.barplot(</code></pre>
-</div>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="4_segmentacion_clientes_files/figure-html/cell-2-output-2.png" class="img-fluid figure-img"></p>
+<div id="fig-elbow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-elbow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="4_segmentacion_clientes_files/figure-html/fig-elbow-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-elbow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Método del codo e índice Silhouette para k=2..10.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
+<p>El codo de la inercia y el máximo de Silhouette coincidieron en <span class="math inline">\(k=5\)</span>. Esto no garantiza que sea la mejor segmentación posible, pero sí que es matemáticamente defendible y reproducible.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: fijar <span class="math inline">\(k=5\)</span> por evidencia cuantitativa, no por intuición de negocio. Esto evita el sesgo de “ya tenemos 4 segmentos en la cabeza, hagamos que el modelo los confirme”.</p>
 </section>
 </section>
-<section id="visualización-dimensional-pca" class="level2">
-<h2 class="anchored" data-anchor-id="visualización-dimensional-pca">3. Visualización Dimensional (PCA)</h2>
-<p>Dado que entrenamos el algoritmo en 4 dimensiones, es imposible para el ojo humano visualizar los clústeres en su forma natural.</p>
-<p>Para documentar y perfilar los segmentos, aplicamos <strong>Análisis de Componentes Principales (PCA)</strong>. Esto nos permitió comprimir la matemática de 4D a un plano 2D, capturando la máxima varianza de los datos. El siguiente gráfico ilustra la topología y separación de nuestros clústeres.</p>
-<div id="dfd19bb7" class="cell" data-execution_count="2">
+<section id="un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline" class="level2">
+<h2 class="anchored" data-anchor-id="un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline">3. Un bug que casi cambia el modelo: log-transform fuera del pipeline</h2>
+<p>Antes de mostrarte la distribución final, vale la pena documentar un error temprano que detectamos gracias a los quality checks del pipeline. Es la mejor anécdota de por qué la productización importa.</p>
+<section id="el-síntoma" class="level3">
+<h3 class="anchored" data-anchor-id="el-síntoma">3.1 El síntoma</h3>
+<p>En una primera versión del modelo, el quality check de “distribución de segmentos” disparó una alerta: <strong>MVPs absorbió el 92% de los clientes</strong>. Imposible — los MVPs deben ser una minoría valiosa, no toda la base.</p>
+</section>
+<section id="la-causa" class="level3">
+<h3 class="anchored" data-anchor-id="la-causa">3.2 La causa</h3>
+<p>El log-transform estaba siendo aplicado <strong>manualmente fuera del pipeline de sklearn</strong> antes de llamar a <code>predict()</code>. Pero al persistir el modelo (<code>pipeline.pkl</code>), solo se serializaba el <code>StandardScaler + KMeans</code>, no la transformación logarítmica.</p>
+<p>Cuando el dashboard cargaba el modelo y llamaba <code>predict()</code> sobre features sin transformar, el K-Means recibía valores en su escala original (recency hasta 900, monetary hasta millones). El centroide más cercano a casi cualquier cliente terminaba siendo el de MVPs, porque era el centroide entrenado con los valores más grandes.</p>
+</section>
+<section id="el-fix" class="level3">
+<h3 class="anchored" data-anchor-id="el-fix">3.3 El fix</h3>
+<p>Movimos el log-transform <strong>dentro del pipeline serializado</strong>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler, FunctionTransformer</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.cluster <span class="im">import</span> KMeans</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>pipeline <span class="op">=</span> Pipeline([</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'log_transform'</span>, FunctionTransformer(np.log1p)),</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'scaler'</span>, StandardScaler()),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'kmeans'</span>, KMeans(n_clusters<span class="op">=</span><span class="dv">5</span>, random_state<span class="op">=</span><span class="dv">42</span>)),</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>])</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Con esto, <strong>el log-transform viaja con el modelo</strong>. Cualquier <code>predict()</code> futuro aplica las tres transformaciones en orden, idénticamente a como se entrenó.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: cualquier preprocesamiento crítico debe vivir <strong>dentro del pipeline serializado</strong>, no como un paso manual en el código que llama al modelo. Esta lección se aplicó a todas las versiones siguientes.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Este bug fue el que más reforzó la importancia del <strong>quality check de distribución</strong> dentro del pipeline. Si no hubiéramos validado automáticamente “ningún cluster puede absorber más del 50%”, el bug habría llegado a marketing y habrían visto un dashboard donde 92% de los clientes son MVPs — destruyendo cualquier credibilidad del proyecto.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="distribución-final-de-segmentos" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-final-de-segmentos">4. Distribución final de segmentos</h2>
+<p>Con el log-transform correctamente encapsulado, el modelo <code>v1</code> produjo la siguiente distribución:</p>
+<div id="cell-fig-distribucion-final" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de la topología 2D extraída con PCA en la libreta real</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Parámetros para generar nubes de puntos separadas y superpuestas</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Se respeta la proporción de tamaño real</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>segmentos_info <span class="op">=</span> [</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'MVPs'</span>, <span class="dv">2389</span>, [<span class="dv">4</span>, <span class="dv">4</span>], <span class="fl">0.8</span>),</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'Alto Valor'</span>, <span class="dv">3441</span>, [<span class="fl">1.5</span>, <span class="dv">2</span>], <span class="fl">1.2</span>),</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'Ocasionales'</span>, <span class="dv">1909</span>, [<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], <span class="fl">1.5</span>),</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'En Riesgo'</span>, <span class="dv">1189</span>, [<span class="op">-</span><span class="dv">3</span>, <span class="dv">1</span>], <span class="fl">1.0</span>),</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'Hibernando'</span>, <span class="dv">1072</span>, [<span class="op">-</span><span class="dv">4</span>, <span class="op">-</span><span class="dv">3</span>], <span class="fl">0.7</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>dfs <span class="op">=</span> []</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nombre, n, centro, dispersion <span class="kw">in</span> segmentos_info:</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.random.normal(centro[<span class="dv">0</span>], dispersion, n)</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.random.normal(centro[<span class="dv">1</span>], dispersion, n)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    dfs.append(pd.DataFrame({<span class="st">'PCA 1'</span>: x, <span class="st">'PCA 2'</span>: y, <span class="st">'Segmento'</span>: nombre}))</span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        <span class="st">"#0B3C5D"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  <span class="st">"#328CC1"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   <span class="st">"#D82822"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  <span class="st">"#9AA0A6"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>distribucion <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'Alto Valor'</span>, <span class="st">'Hibernando'</span>, <span class="st">'En Riesgo'</span>, <span class="st">'Ocasionales'</span>, <span class="st">'MVPs'</span>],</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Porcentaje'</span>: [<span class="fl">26.7</span>, <span class="fl">26.5</span>, <span class="fl">18.7</span>, <span class="fl">17.3</span>, <span class="fl">10.8</span>],</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'N_clientes'</span>: [<span class="dv">4973</span>, <span class="dv">4934</span>, <span class="dv">3479</span>, <span class="dv">3233</span>, <span class="dv">2019</span>],</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">5</span>))</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>colores <span class="op">=</span> [SEGMENT_COLORS[s] <span class="cf">for</span> s <span class="kw">in</span> distribucion[<span class="st">'Segmento'</span>]]</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>bars <span class="op">=</span> ax.barh(distribucion[<span class="st">'Segmento'</span>], distribucion[<span class="st">'Porcentaje'</span>],</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>               color<span class="op">=</span>colores, edgecolor<span class="op">=</span><span class="st">'none'</span>)</span>
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>df_pca <span class="op">=</span> pd.concat(dfs, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>sns.scatterplot(</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_pca, </span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'PCA 1'</span>, </span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'PCA 2'</span>, </span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    hue<span class="op">=</span><span class="st">'Segmento'</span>,</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    palette<span class="op">=</span>SEGMENT_COLORS,</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">15</span>, </span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.6</span>, </span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    edgecolor<span class="op">=</span><span class="st">'none'</span></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Proyección PCA en 2D de los 5 Segmentos de Clientes (Basado en 4 Dimensiones)"</span>, pad<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Componente Principal 1 (Varianza Monetaria/Frecuencia)"</span>)</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Componente Principal 2 (Varianza Recencia/Cadencia)"</span>)</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>plt.legend(title<span class="op">=</span><span class="st">"Clúster K-Means"</span>, markerscale<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bar, pct, n <span class="kw">in</span> <span class="bu">zip</span>(bars, distribucion[<span class="st">'Porcentaje'</span>], distribucion[<span class="st">'N_clientes'</span>]):</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    ax.text(pct <span class="op">+</span> <span class="fl">0.4</span>, bar.get_y() <span class="op">+</span> bar.get_height()<span class="op">/</span><span class="dv">2</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>            <span class="ss">f'</span><span class="sc">{</span>pct<span class="sc">}</span><span class="ss">%  (</span><span class="sc">{</span>n<span class="sc">:,}</span><span class="ss"> clientes)'</span>, va<span class="op">=</span><span class="st">'center'</span>, fontsize<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="dv">0</span>, <span class="dv">32</span>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Porcentaje del total (%)'</span>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Distribución de los 18,638 clientes en los 5 segmentos del modelo v1'</span>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="4_segmentacion_clientes_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-distribucion-final" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-distribucion-final-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="4_segmentacion_clientes_files/figure-html/fig-distribucion-final-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distribucion-final-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;2: Distribución final de los 18,638 clientes en 5 segmentos.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Como se observa en la proyección matemática, los <strong>MVPs</strong> (azul oscuro) están estrechamente compactados debido a sus consistentes e intensos patrones de compra, mientras que los clientes <strong>Ocasionales</strong> y <strong>En Riesgo</strong> presentan una dispersión muchísimo mayor en sus hábitos comerciales.</p>
-
-
+<section id="por-qué-esta-distribución-tiene-sentido" class="level3">
+<h3 class="anchored" data-anchor-id="por-qué-esta-distribución-tiene-sentido">4.1 Por qué esta distribución tiene sentido</h3>
+<p>Tres observaciones:</p>
+<ol type="1">
+<li><strong>MVPs es minoría (10.8%)</strong>: alineado con la idea de “élite valiosa”. Si MVPs fuera 30% del total, el segmento perdería su poder descriptivo.</li>
+<li><strong>Alto Valor + Hibernando dominan (&gt;50% combinado)</strong>: hay un eje claro entre clientes activos pero no premium, y clientes que han dejado de comprar pero antes lo hacían. Este eje es el que más le interesa al equipo de retención.</li>
+<li><strong>En Riesgo + Ocasionales suman ~36%</strong>: estos son los segmentos donde marketing tiene más palanca. No están perdidos pero tampoco son leales — son el campo de batalla.</li>
+</ol>
 </section>
+</section>
+<section id="perfilando-cada-segmento" class="level2">
+<h2 class="anchored" data-anchor-id="perfilando-cada-segmento">5. Perfilando cada segmento</h2>
+<p>Cada cluster tiene un centroide en 4D (después de log y scale). Para interpretarlos, recalculamos las medianas en las escalas originales:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Segmento</th>
+<th style="text-align: right;">N° clientes</th>
+<th style="text-align: right;">Recency mediana</th>
+<th style="text-align: right;">Frequency mediana</th>
+<th style="text-align: right;">Monetary mediano</th>
+<th style="text-align: right;">Cadencia mediana</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>MVPs</strong></td>
+<td style="text-align: right;">2,019</td>
+<td style="text-align: right;">9 días</td>
+<td style="text-align: right;">118 pedidos</td>
+<td style="text-align: right;">índice 100</td>
+<td style="text-align: right;">4 días</td>
+</tr>
+<tr class="even">
+<td><strong>Alto Valor</strong></td>
+<td style="text-align: right;">4,973</td>
+<td style="text-align: right;">69 días</td>
+<td style="text-align: right;">27 pedidos</td>
+<td style="text-align: right;">índice 19</td>
+<td style="text-align: right;">14 días</td>
+</tr>
+<tr class="odd">
+<td><strong>Ocasionales</strong></td>
+<td style="text-align: right;">3,233</td>
+<td style="text-align: right;">90 días</td>
+<td style="text-align: right;">5 pedidos</td>
+<td style="text-align: right;">índice 4</td>
+<td style="text-align: right;">81 días</td>
+</tr>
+<tr class="even">
+<td><strong>En Riesgo</strong></td>
+<td style="text-align: right;">3,479</td>
+<td style="text-align: right;">312 días</td>
+<td style="text-align: right;">6 pedidos</td>
+<td style="text-align: right;">índice 4</td>
+<td style="text-align: right;">21 días</td>
+</tr>
+<tr class="odd">
+<td><strong>Hibernando</strong></td>
+<td style="text-align: right;">4,934</td>
+<td style="text-align: right;">410 días</td>
+<td style="text-align: right;">1 pedido</td>
+<td style="text-align: right;">índice 0.6</td>
+<td style="text-align: right;">266 días</td>
+</tr>
+</tbody>
+</table>
+<p><em>(Monetary expresado como índice relativo al monetary mediano de MVPs = 100)</em></p>
+<section id="interpretación-de-cada-perfil" class="level3">
+<h3 class="anchored" data-anchor-id="interpretación-de-cada-perfil">5.1 Interpretación de cada perfil</h3>
+<ul>
+<li><p><strong>MVPs</strong> — Compran cada 4 días, 118 veces en 30 meses, alto monetary. Son la columna vertebral del negocio. Estrategia: <strong>fidelización y retención premium</strong>.</p></li>
+<li><p><strong>Alto Valor</strong> — Compran cada 2 semanas, 27 veces, monetary respetable. El segundo escalón del valor. Estrategia: <strong>fortalecer la lealtad y empujar hacia MVPs</strong>.</p></li>
+<li><p><strong>Ocasionales</strong> — Compras esparcidas (cada 3 meses), volumen bajo. El “público general”. Estrategia: <strong>activación de campañas masivas, cross-sell de bundles básicos</strong>.</p></li>
+<li><p><strong>En Riesgo</strong> — Aquí está el descubrimiento más interesante. Estos clientes tienen <strong>una cadencia natural de 21 días</strong> (eran activos) pero llevan <strong>312 días sin comprar</strong> — ratio de urgencia &gt; 14. Son MVPs/Alto Valor que se enfriaron. Estrategia: <strong>campañas urgentes de reactivación con descuento personalizado</strong>.</p></li>
+<li><p><strong>Hibernando</strong> — Cadencia ya larga de origen (266 días), una sola compra histórica. No están “en riesgo” porque nunca fueron leales. Estrategia: <strong>mínimo costo de atención</strong>.</p></li>
+</ul>
+</section>
+<section id="la-diferencia-entre-en-riesgo-y-hibernando" class="level3">
+<h3 class="anchored" data-anchor-id="la-diferencia-entre-en-riesgo-y-hibernando">5.2 La diferencia entre En Riesgo y Hibernando</h3>
+<p>Vale la pena explicarlo porque es contraintuitivo:</p>
+<ul>
+<li><strong>Hibernando</strong> tiene <strong>alta recency Y alta cadencia natural</strong>. No los esperábamos comprando frecuentemente, y de hecho no compran. <strong>Sistema funcionando como esperaba.</strong></li>
+<li><strong>En Riesgo</strong> tiene <strong>alta recency PERO baja cadencia natural</strong>. Sí los esperábamos comprando frecuentemente, y han dejado de hacerlo. <strong>Sistema señalando un problema.</strong></li>
+</ul>
+<p>Por eso las <strong>alertas del dashboard solo incluyen clientes MVPs y Alto Valor</strong> (los segmentos con cadencia natural baja). Es donde el ratio de urgencia tiene poder predictivo real.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: la segmentación no es solo descriptiva. Cada segmento tiene una estrategia accionable asociada, y el dashboard expone esas acciones (la vista de Alertas vive arriba del segmento En Riesgo, no de Hibernando).</p>
+</section>
+</section>
+<section id="persistencia-del-modelo" class="level2">
+<h2 class="anchored" data-anchor-id="persistencia-del-modelo">6. Persistencia del modelo</h2>
+<p>Una vez validada la distribución, el modelo <code>v1</code> se congeló:</p>
+<ul>
+<li><strong><code>pipeline.pkl</code></strong>: el <code>Pipeline</code> completo serializado con <code>joblib</code>, incluyendo <code>log_transform</code>, <code>scaler</code> y <code>kmeans</code>.</li>
+<li><strong><code>metadata.json</code></strong>: versión, fecha de entrenamiento, features esperadas, mapeo cluster_id → nombre de segmento.</li>
+<li><strong><code>modelo_snapshot_v1.parquet</code></strong>: las asignaciones de los 18,638 clientes en el momento del entrenamiento.</li>
+</ul>
+<p>El snapshot es la base para detección de drift: cada vez que el pipeline reasigna segmentos, compara la distribución actual contra el snapshot. Cambios mayores indican que los hábitos de compra se desplazaron y el modelo debería re-entrenarse (versión <code>v2</code>).</p>
+<p>Los detalles técnicos de persistencia y drift los documentamos en la sección <strong>“De investigación a producción”</strong>.</p>
+</section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

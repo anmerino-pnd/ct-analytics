@@ -1,0 +1,391 @@
+---
+title: "De Investigación a Producción"
+format:
+  html:
+    page-layout: article
+    code-fold: true
+toc-title: "Tabla de Contenidos"
+toc: true
+toc-depth: 3
+---
+
+::: {style="text-align: justify"}
+
+## 1. La brecha entre notebook y producción
+
+Hasta este punto del proyecto, todo vivía en notebooks: análisis exploratorios, RFM, K-Means, MBA y estacionalidad. Esto está bien para descubrir patrones, pero **no es operativo**. Si marketing necesita los resultados, alguien tiene que abrir Jupyter, recordar el orden de las celdas, ejecutarlas, exportar gráficas y mandarlas por correo. Esa fricción mata cualquier adopción.
+
+La fase de productización consistió en cerrar esa brecha. El resultado es **Pulse**: una plataforma operativa que corre todos los días, mantiene los datos frescos y expone los resultados como un servicio web que cualquier persona del equipo de marketing puede abrir en su navegador. Esta sección documenta cómo se construyó.
+
+::: {.callout-tip}
+**Tres principios que orientaron toda la productización**:
+
+1. **Lo crítico vive en código, no en notas**: cada decisión técnica (filtros, transformaciones, ventanas) está codificada con tests que la protegen.
+2. **El sistema debe operar sin desarrollador**: cron + systemd + quality checks automáticos.
+3. **Cualquier cambio debe ser auditable**: el snapshot del modelo congelado nos permite saber si las predicciones de hoy coinciden con las de hace 6 meses.
+:::
+
+## 2. Persistencia del modelo: MLOps minimalista
+
+### 2.1 Por qué congelar el modelo
+
+Un error común en proyectos analíticos es re-entrenar el modelo cada vez que se ejecuta. Esto tiene varias consecuencias graves:
+
+- **Las predicciones cambian sin control**: un cliente puede ser MVP en marzo y En Riesgo en abril sin que su comportamiento haya cambiado, solo porque el K-Means reinicializó sus centroides.
+- **No hay auditoría**: ¿por qué la distribución de hoy es distinta a la del mes pasado? Imposible saber si fue el modelo o los datos.
+- **Marketing pierde confianza**: nadie quiere segmentar audiencias sobre algo que cambia bajo sus pies.
+
+La solución es **congelar el modelo en un artefacto serializable** y aplicarlo idénticamente en cada predicción futura.
+
+### 2.2 La clase wrapper `SegmentadorClientes`
+
+Construimos un wrapper de scikit-learn que encapsula:
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.cluster import KMeans
+import numpy as np
+
+pipeline = Pipeline([
+    ('log_transform', FunctionTransformer(np.log1p)),
+    ('scaler', StandardScaler()),
+    ('kmeans', KMeans(n_clusters=5, random_state=42)),
+])
+```
+
+Tres componentes en orden:
+
+1. **`log_transform`** — Suaviza las distribuciones sesgadas (recordá la sección de EDA).
+2. **`scaler`** — Estandariza para que las cuatro features estén en escalas comparables.
+3. **`kmeans`** — Asigna a cada cliente uno de los 5 clusters.
+
+Lo crítico es que las tres transformaciones viajan juntas. Cuando guardamos el pipeline con `joblib.dump()`, **el log-transform queda dentro del archivo `.pkl`**. Esto previene el bug histórico que documentamos en la sección de Segmentación (donde el log vivía fuera y MVPs absorbió el 92%).
+
+### 2.3 Tres artefactos congelados en `models/v1/`
+
+```text
+models/v1/
+├── pipeline.pkl              # Pipeline serializado completo
+├── metadata.json             # Versión, fecha, features, mapeo cluster → nombre
+└── (snapshot vive en datos/processed/modelo_snapshot_v1.parquet)
+```
+
+**`pipeline.pkl`**: el binario serializado de la clase `SegmentadorClientes`, listo para `load()` y `predict()`.
+
+**`metadata.json`** contiene información operativa:
+
+```json
+{
+  "version": "v1",
+  "fecha_entrenamiento": "2026-05-15T00:00:00Z",
+  "features": ["recency", "frequency", "monetary", "dias_entre_compras"],
+  "n_clientes_entrenamiento": 18638,
+  "cluster_names": {
+    "0": "MVPs",
+    "1": "Hibernando",
+    "2": "En Riesgo",
+    "3": "Alto Valor",
+    "4": "Ocasionales"
+  }
+}
+```
+
+**`modelo_snapshot_v1.parquet`** contiene las asignaciones **exactas** de los 18,638 clientes en el momento del entrenamiento. Es la base para el control de drift que documentamos abajo.
+
+### 2.4 Control de drift por snapshot
+
+Los hábitos de compra cambian con el tiempo (**concept drift**). Un modelo entrenado en 2025 puede dejar de ser representativo en 2026 si el negocio cambia significativamente.
+
+Para detectar esto **sin re-entrenar a ciegas**, comparamos cada nueva corrida del pipeline contra el snapshot original:
+
+```{python}
+#| label: fig-drift-monitoring
+#| fig-cap: "Detección de drift por comparación contra snapshot original."
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_theme(style="white")
+SEGMENT_COLORS = {
+    "MVPs":        "#0B3C5D",
+    "Alto Valor":  "#328CC1",
+    "Ocasionales": "#6CA6C1",
+    "En Riesgo":   "#D82822",
+    "Hibernando":  "#9AA0A6",
+}
+
+# Snapshot original (v1) vs corridas posteriores con drift simulado
+snapshot = {'MVPs': 10.8, 'Alto Valor': 26.7, 'Ocasionales': 17.3, 'En Riesgo': 18.7, 'Hibernando': 26.5}
+corrida_hoy = {'MVPs': 10.4, 'Alto Valor': 26.4, 'Ocasionales': 17.6, 'En Riesgo': 19.0, 'Hibernando': 26.6}
+
+df_drift = pd.DataFrame({
+    'Segmento': list(snapshot.keys()),
+    'Snapshot v1 (%)': list(snapshot.values()),
+    'Corrida actual (%)': list(corrida_hoy.values()),
+})
+df_drift['Diferencia (pp)'] = df_drift['Corrida actual (%)'] - df_drift['Snapshot v1 (%)']
+
+fig, ax = plt.subplots(figsize=(10, 4))
+x = np.arange(len(df_drift))
+width = 0.35
+colores_seg = [SEGMENT_COLORS[s] for s in df_drift['Segmento']]
+
+ax.bar(x - width/2, df_drift['Snapshot v1 (%)'], width,
+       color=colores_seg, alpha=0.55, edgecolor='none', label='Snapshot v1')
+ax.bar(x + width/2, df_drift['Corrida actual (%)'], width,
+       color=colores_seg, edgecolor='black', linewidth=0.5, label='Corrida actual')
+
+ax.set_xticks(x)
+ax.set_xticklabels(df_drift['Segmento'])
+ax.set_ylabel("Porcentaje de clientes (%)")
+ax.set_title("Comparativa de distribución: snapshot vs corrida actual")
+ax.legend(loc='upper right')
+
+ax.axhline(y=0, color='black', linewidth=0.5)
+sns.despine()
+plt.tight_layout()
+plt.show()
+```
+
+**El sistema lo registra automáticamente** en cada corrida `monthly`. Si la diferencia en cualquier segmento supera un umbral (hoy 5 puntos porcentuales), el log marca una alerta. La acción humana es decidir si entrenar un modelo `v2`.
+
+**El rumbo que nos hizo tomar**: este control de drift es la diferencia entre un modelo que "funciona hoy" y un modelo en producción real. Sin él, el modelo `v1` podría seguir produciendo segmentaciones tres años después aunque los hábitos cambiaron radicalmente, y nadie se daría cuenta hasta que marketing reportara "estas alertas ya no tienen sentido".
+
+::: {.callout-note}
+**Por qué no usamos MLFlow desde el inicio**: MLFlow es excelente cuando tienes múltiples modelos en juego, tracking de runs, y un equipo experimentando en paralelo. Para un único modelo congelado con snapshot, agregaría infraestructura (servidor MLFlow, registry, UI) sin valor inmediato. La decisión es introducir MLFlow cuando lleguen más modelos (forecasting, CLV) — está documentado en "Visión y futuro".
+:::
+
+## 3. Pipeline ETL modular
+
+### 3.1 La necesidad
+
+Los notebooks ejecutaban el ciclo completo: extraer datos, calcular RFM, segmentar, generar MBA, agregados temporales. Pero los notebooks tienen varios problemas para producción:
+
+- **Orden frágil**: si ejecutas una celda fuera de orden, los resultados se rompen silenciosamente.
+- **Estado oculto**: variables del kernel pueden quedar de ejecuciones anteriores.
+- **No testeable**: no hay forma de validar que un cambio en RFM no rompa el MBA.
+- **Difícil de orquestar**: ejecutar diariamente requiere intervención manual.
+
+La solución fue refactorizar todo en módulos Python con responsabilidades claras y orquestarlos desde un runner.
+
+### 3.2 Arquitectura por capas
+
+```{mermaid}
+flowchart TD
+    A[MongoDB] -->|ingest incremental| B[etl/ingest.py]
+    B -->|orders_historicos.parquet<br/>items_historicos.parquet| C[runner.py]
+    C --> D[analytics/familia.py]
+    D --> E[analytics/rfm.py]
+    E --> F[analytics/segmentacion.py]
+    F --> G[analytics/mba.py]
+    F --> H[analytics/temporalidad.py]
+
+    F -->|clientes_segmentados.parquet| O[7 parquets outputs]
+    G -->|mba_*.parquet| O
+    H -->|temp_*.parquet| O
+
+    M[models/v1/<br/>pipeline.pkl] -.->|load + predict| F
+
+    V[pipeline/validacion.py] -.->|quality checks| C
+
+    style A fill:#e3f2fd
+    style M fill:#fff3e0
+    style O fill:#e8f5e9
+    style V fill:#fce4ec
+```
+
+Cada flecha es un input/output explícito. Cada módulo es testeable independientemente con su propia suite de pytest.
+
+### 3.3 Los tres modos de ejecución
+
+El runner expone tres modos según la frecuencia del trabajo:
+
+| Modo | Pasos ejecutados | Duración típica | Cuándo |
+|---|---|---|---|
+| **`daily`** | ingest → segmentación → temporalidad | ~30s | Cron diario (3am). MBA solo si no existe. |
+| **`weekly`** | daily + recálculo completo de MBA | ~45s | Manual semanal o cuando se quiere actualizar reglas. |
+| **`monthly`** | weekly + validación de drift | ~60s | Manual mensual para auditar el modelo. |
+
+La justificación de tener modos separados es **costo computacional**. El MBA es el paso más caro del pipeline (FP-Growth sobre miles de canastas por segmento). Recalcularlo todos los días no agrega valor — las reglas de asociación no cambian materialmente en 24 horas. En cambio, los segmentos de clientes sí cambian (alguien puede pasar de Alto Valor a En Riesgo en un día), así que la segmentación corre diaria.
+
+### 3.4 Ingest incremental con watermark
+
+La fuente de datos es MongoDB. La primera corrida hace **backfill completo** (~780K pedidos). Las corridas posteriores usan un **watermark** (timestamp del último pedido procesado) para extraer solo los nuevos:
+
+```python
+watermark = leer_watermark()
+# watermark: 2026-05-30T22:34:18Z
+
+nuevos = mongo.find({"fecha": {"$gt": watermark}})
+# Típicamente: 500-2000 pedidos por día
+
+df_nuevos = transform.build_both_dfs(nuevos)
+df_orders = pd.concat([df_orders_historico, df_nuevos_orders])
+df_orders.to_parquet(ORDERS_HIST)
+escribir_watermark(df_orders["fecha"].max())
+```
+
+Este patrón evita re-extraer el universo completo en cada corrida, lo cual sería catastrófico para la BD de origen y absurdamente lento.
+
+::: {.callout-warning}
+**Bug histórico**: una versión preliminar del dedup usaba solo `order_id` como clave. Esto eliminaba millones de items porque un mismo pedido tiene muchos items con el mismo `order_id`. El fix fue usar la **clave compuesta** `(order_id, clave_producto)` para deduplicación de items. El quality check de "el conteo de items no debe disminuir más de 1%" detectó el bug antes de llegar a producción.
+:::
+
+### 3.5 Quality checks: el sistema de defensa
+
+En cada paso del runner se ejecutan validaciones automáticas que disparan si algo se ve raro:
+
+```python
+# pipeline/validacion.py — extracto
+def validar_ingest(df_antes, df_despues):
+    pct_cambio = (len(df_despues) - len(df_antes)) / len(df_antes) * 100
+    if pct_cambio < -1.0:
+        raise QualityError(f"Pedidos disminuyeron {pct_cambio:.1f}% — anómalo")
+    log.info(f"✅ Ingest OK: cambio {pct_cambio:+.1f}%")
+
+def validar_segmentacion(df_clientes):
+    if df_clientes['cluster_id'].isna().any():
+        raise QualityError("Hay clientes con cluster_id nulo")
+    max_pct = df_clientes['segmento_cluster'].value_counts(normalize=True).max()
+    if max_pct > 0.50:
+        raise QualityError(f"Un cluster absorbe {max_pct:.0%} — modelo roto")
+    log.info(f"✅ Distribución OK (máximo: {max_pct:.1%})")
+
+def cross_check_temporalidad_rfm(df_temp, df_rfm):
+    by_seg_temp = df_temp.groupby('segmento')['pedidos'].sum()
+    by_seg_rfm = df_rfm.groupby('segmento_cluster')['frequency'].sum()
+    diff_pct = ((by_seg_temp - by_seg_rfm) / by_seg_rfm).abs().max()
+    if diff_pct > 0.001:
+        raise QualityError(f"Cross-check falló: divergencia {diff_pct:.2%}")
+    log.info(f"✅ Cross-check OK (divergencia {diff_pct:.4%})")
+```
+
+**El sistema actual reporta 0.00% en el cross-check** en cada corrida. Esto significa que cualquier número de la vista de Estacionalidad es perfectamente consistente con la vista de Overview — invariante validado automáticamente.
+
+## 4. El dashboard Pulse
+
+### 4.1 Diseño general
+
+El dashboard es una aplicación web construida con un stack ligero:
+
+| Capa | Componente | Justificación |
+|---|---|---|
+| Backend | **FastAPI** | Endpoints async, validación automática de inputs, soporte nativo de OpenAPI. |
+| Motor SQL | **DuckDB** | Lee parquets directamente sin cargar todo en memoria; SQL completo; embebido (cero ops). |
+| Frontend | **Jinja2 + Plotly.js** | Templates HTML server-side; gráficas interactivas client-side. |
+| Servidor | **Uvicorn** | ASGI estándar para FastAPI. |
+
+No usamos React, Vue ni un frontend SPA porque la complejidad no se justifica. Cada vista es una página HTML con un payload `initial_data` embebido para evitar fetches en la primera pintura. Cuando el usuario interactúa con filtros, JavaScript hace fetch a endpoints `/api/*` y Plotly actualiza las gráficas.
+
+### 4.2 Siete vistas, una para cada pregunta
+
+```{python}
+#| label: tbl-vistas
+#| tbl-cap: "Las siete vistas del dashboard y su pregunta de negocio."
+
+import pandas as pd
+
+vistas = pd.DataFrame({
+    'Vista': ['Overview', 'Bundles', 'Estacionalidad', 'Comparador',
+              'Heatmap Bundles', 'Alertas', 'Cliente'],
+    'Pregunta de negocio': [
+        '¿Cómo está distribuida nuestra base de clientes?',
+        '¿Qué productos puedo agrupar y a quién?',
+        '¿Cuándo lanzar campañas?',
+        '¿Cómo se diferencian dos segmentos?',
+        '¿Cuándo se venden los bundles principales?',
+        '¿Qué clientes valiosos están en riesgo?',
+        '¿Quién es este cliente específico?',
+    ],
+    'Output del pipeline consumido': [
+        'clientes_segmentados',
+        'mba_accionables + mba_por_segmento',
+        'temp_hora_dia + temp_mensual',
+        'clientes_segmentados + mba_accionables',
+        'temp_bundles',
+        'clientes_segmentados',
+        'clientes_segmentados + orders + items',
+    ],
+})
+vistas
+```
+
+Cada vista responde a **una pregunta concreta de negocio**. Esto es intencional: pulse no es un "dashboard de exploración" donde marketing tiene que armar sus propios filtros. Es un conjunto de herramientas operativas con propósito definido.
+
+### 4.3 Tres decisiones de UX que valieron la pena
+
+**(a) Vista marketing vs vista exploratoria en Bundles**
+
+En la vista de Bundles, ofrecemos un toggle entre "Vista marketing" (solo reglas 1→1 y 1→2 con revenue) y "Vista exploratoria" (todas las reglas, sin revenue). Esto resuelve un trade-off real:
+
+- Marketing necesita reglas **operativas** (fáciles de comunicar) con **impacto monetario** estimado.
+- Analistas necesitan ver **todas las reglas**, incluyendo multi-producto complejas.
+
+Antes de este toggle, teníamos una sola tabla que mezclaba ambos casos. Marketing se confundía con reglas tipo `{A, B, C} → {D, E}`, y los analistas no podían explorar a profundidad. El toggle separó las dos audiencias sin duplicar código.
+
+**(b) Cuadrantes con mediana dinámica**
+
+El Market Basket Opportunity Map (sección 5 de MBA) divide el plano en cuatro cuadrantes usando la mediana de confidence y lift. Esta decisión es preferible a usar **umbrales fijos** porque:
+
+- Las medianas se recalculan al cambiar filtro, garantizando división balanceada visualmente.
+- Marketing no tiene que "saber qué umbral usar" — los cuadrantes siempre tienen un volumen razonable de reglas.
+
+**(c) Ratio de urgencia defendido contra cadencia cero**
+
+Documentado en la sección de RFM, pero vale repetir: el query de alertas usa `GREATEST(dias_entre_compras, 1)` y excluye `dias_entre_compras < 1`. Esto evita que un cliente B2B automatizado aparezca con ratio infinito. Es un caso edge real que vivimos.
+
+### 4.4 Pipeline → dashboard: el contrato de los 7 parquets
+
+El dashboard **no se conecta a MongoDB**. Solo lee Parquets. Esto es deliberado:
+
+- **Latencia**: las queries SQL sobre Parquet con DuckDB tardan milisegundos. Conectarse a MongoDB introduciría latencia variable.
+- **Aislamiento**: si MongoDB se cae, el dashboard sigue funcionando con los últimos parquets generados.
+- **Reproducibilidad**: el dashboard de hoy muestra exactamente lo que el pipeline generó la última vez. No hay deriva entre datos vistos en el dashboard y datos analizados.
+
+El contrato entre pipeline y dashboard son los **siete parquets** generados en `datos/processed/`:
+
+```text
+datos/processed/
+├── clientes_segmentados.parquet     # 18,638 filas, 1 por cliente
+├── mba_accionables.parquet          # 141 reglas, 1→1 y 1→2 con revenue
+├── mba_por_segmento.parquet         # 3,860 reglas, todas
+├── mba_exclusivas.parquet           # 1,516 reglas, exclusivas por segmento
+├── temp_hora_dia.parquet            # 827 filas (24h × 7d × 5 segmentos aprox)
+├── temp_mensual.parquet             # 150 filas (30 meses × 5 segmentos)
+└── temp_bundles.parquet             # 2,849 filas (top bundles × meses)
+```
+
+DuckDB los registra como vistas SQL con nombres estables (`segmentos`, `orders`, `mba_accionables`, etc.). Las queries en `queries.py` consultan estas vistas usando parámetros (nunca interpolación de strings, para evitar SQL injection).
+
+## 5. El deployment final
+
+El dashboard corre como un servicio supervisado en un servidor on-premise AlmaLinux 9. Los detalles operativos completos están en la sección de **Documentación Técnica**, pero el resumen es:
+
+| Componente | Configuración |
+|---|---|
+| Sistema operativo | AlmaLinux 9.4 |
+| Modo SELinux | Permissive |
+| Firewall | firewalld con puerto custom abierto |
+| Supervisión | systemd con `Restart=always` |
+| Ingest | Cron a las 3am todos los días |
+| Acceso | URL interna de la intranet, sin HTTPS (intranet) |
+| Tests | 60+ pytest, ejecución manual antes de merge |
+
+El test de robustez crítico fue **reboot del servidor**: después de reiniciar, ¿el dashboard vuelve solo? La respuesta es sí — systemd lo levanta automáticamente cuando la red está disponible. Marketing puede entrar al dashboard sin que un desarrollador haya intervenido.
+
+## 6. La métrica final: ¿se usa?
+
+La pregunta de oro para cualquier proyecto de productización es **¿se usa?**. Las métricas técnicas (uptime, latencia, accuracy) son condiciones necesarias pero no suficientes.
+
+A la fecha de este escrito:
+
+- El pipeline corre exitosamente todos los días sin intervención.
+- El dashboard está disponible en la intranet con uptime alto.
+- La fase de validación con marketing está en curso (siguiente paso documentado en "Visión y futuro").
+
+Cuando marketing reporte que **abandonan una reunión de planeación abriendo Pulse** en lugar de pedir reportes ad-hoc, sabremos que la productización tuvo éxito real.
+
+:::

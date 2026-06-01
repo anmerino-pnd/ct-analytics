@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Documentación Técnica</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="././images/favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-8ea72dc5fed832574809a9c94082fbbb.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3790baeb23ec48fe6a2a71a48d01fb7e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-3d3e9f5edd0362804af8ca21528937ae.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Sin resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <img src="././images/ctlogo.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./0_home.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./1_comprension.html"> 
+<span class="menu-text">Comprensión del Negocio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./2_exploracion_datos.html"> 
+<span class="menu-text">Exploración de Datos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./3_analisis_rfm.html"> 
+<span class="menu-text">Análisis RFM</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./4_segmentacion_clientes.html"> 
+<span class="menu-text">Segmentación</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./5_market_basket.html"> 
+<span class="menu-text">Market Basket</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./6_estacionalidad_segmentos.html"> 
+<span class="menu-text">Estacionalidad</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./8_documentacion_tecnica.html" aria-current="page"> 
+<span class="menu-text">Documentación Técnica</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./9_vision_y_futuro.html"> 
+<span class="menu-text">Visión y Futuro</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Documentación Técnica</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div style="text-align: justify">
+<p>Esta sección documenta los aspectos operativos y técnicos del proyecto: instalación, despliegue, estructura del código y comandos de operación diaria. Si los demás artículos responden al “qué” y al “por qué”, esta sección responde al “cómo”.</p>
+<section id="manual-de-instalación-y-despliegue" class="level2">
+<h2 class="anchored" data-anchor-id="manual-de-instalación-y-despliegue">1. Manual de instalación y despliegue</h2>
+<section id="configuraciones-importantes" class="level3">
+<h3 class="anchored" data-anchor-id="configuraciones-importantes">1.1 Configuraciones importantes</h3>
+<p>Antes de empezar, es importante tener claras las decisiones de arquitectura:</p>
+<ul>
+<li><strong>Stack</strong>: Python 3.13+, gestor de dependencias <strong><code>uv</code></strong>, FastAPI para la API web, DuckDB como motor analítico, Plotly para visualización en frontend, scikit-learn para modelado, MongoDB como fuente de datos transaccionales.</li>
+<li><strong>Persistencia</strong>: Parquet para todos los datos derivados (raw histórico + outputs analíticos). No usamos base de datos relacional para la capa analítica.</li>
+<li><strong>Sistema operativo objetivo</strong>: AlmaLinux 9 (rama RHEL/CentOS). El proyecto también corre en Windows/Ubuntu en desarrollo local.</li>
+<li><strong>Proceso supervisado</strong>: <strong>systemd</strong> para el dashboard, <strong>cron</strong> para el pipeline diario.</li>
+<li><strong>Modo SELinux recomendado</strong>: <code>permissive</code> (registra violaciones sin bloquear, suficiente para intranet).</li>
+</ul>
+</section>
+<section id="requisitos-del-sistema" class="level3">
+<h3 class="anchored" data-anchor-id="requisitos-del-sistema">1.2 Requisitos del sistema</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Componente</th>
+<th>Versión mínima</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sistema operativo</td>
+<td>AlmaLinux 9 / RHEL 9 / Ubuntu 22.04+</td>
+<td>Linux estable</td>
+</tr>
+<tr class="even">
+<td>Python</td>
+<td>3.13</td>
+<td>Definido en <code>pyproject.toml</code></td>
+</tr>
+<tr class="odd">
+<td><code>uv</code></td>
+<td>0.4+</td>
+<td>Gestor de dependencias y entornos</td>
+</tr>
+<tr class="even">
+<td>Git</td>
+<td>Cualquier versión reciente</td>
+<td>Para clonar el repo</td>
+</tr>
+<tr class="odd">
+<td>Acceso a MongoDB</td>
+<td>Red interna o cadena de conexión</td>
+<td>Fuente de datos transaccionales</td>
+</tr>
+<tr class="even">
+<td>Memoria RAM</td>
+<td>8 GB mínimo</td>
+<td>El pipeline carga ~1.8M items en memoria</td>
+</tr>
+<tr class="odd">
+<td>Disco</td>
+<td>5 GB libres</td>
+<td>Para parquets, logs y dependencias</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dependencias-principales-del-proyecto" class="level3">
+<h3 class="anchored" data-anchor-id="dependencias-principales-del-proyecto">1.3 Dependencias principales del proyecto</h3>
+<p>Lista declarada en <code>pyproject.toml</code>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Librería</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>pandas</code>, <code>numpy</code>, <code>pyarrow</code></td>
+<td>Manipulación de datos y formato Parquet</td>
+</tr>
+<tr class="even">
+<td><code>scikit-learn</code></td>
+<td>Pipeline de transformación + K-Means</td>
+</tr>
+<tr class="odd">
+<td><code>mlxtend</code></td>
+<td>FP-Growth y association rules para MBA</td>
+</tr>
+<tr class="even">
+<td><code>fastapi</code>, <code>uvicorn</code>, <code>jinja2</code></td>
+<td>Servidor web del dashboard</td>
+</tr>
+<tr class="odd">
+<td><code>duckdb</code></td>
+<td>Motor SQL embebido para queries del dashboard</td>
+</tr>
+<tr class="even">
+<td><code>pymongo</code></td>
+<td>Cliente MongoDB para ingesta</td>
+</tr>
+<tr class="odd">
+<td><code>python-dotenv</code></td>
+<td>Manejo de credenciales fuera del código</td>
+</tr>
+<tr class="even">
+<td><code>pytest</code></td>
+<td>Suite de tests automáticos</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="instalación" class="level3">
+<h3 class="anchored" data-anchor-id="instalación">1.4 Instalación</h3>
+<section id="clonar-el-repositorio" class="level4">
+<h4 class="anchored" data-anchor-id="clonar-el-repositorio">1.4.1 Clonar el repositorio</h4>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>usuario<span class="op">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone <span class="op">&lt;</span>url-del-repo<span class="op">&gt;</span> ct-analytics</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ct-analytics</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Si el repo es privado, autentica con <code>gh auth login</code> o usa SSH key configurada.</p>
+</section>
+<section id="instalar-dependencias-con-uv" class="level4">
+<h4 class="anchored" data-anchor-id="instalar-dependencias-con-uv">1.4.2 Instalar dependencias con <code>uv</code></h4>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Este comando lee <code>pyproject.toml</code>, crea un entorno virtual en <code>.venv/</code> e instala todas las dependencias en versiones bloqueadas por <code>uv.lock</code>. <strong>No es necesario activar el venv manualmente</strong>: todos los comandos posteriores usan <code>uv run</code>.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Advertencia
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Si por accidente clonaste el repo con <code>sudo</code>, los archivos quedan como <code>root:root</code> y <code>uv sync</code> va a fallar con “Permission denied”. Solución:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="op">&lt;</span>usuario<span class="op">&gt;</span>:<span class="op">&lt;</span>usuario<span class="op">&gt;</span> /home/<span class="op">&lt;</span>usuario<span class="op">&gt;</span>/ct-analytics</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> rm <span class="at">-rf</span> .venv  <span class="co"># solo si el venv ya existía con permisos rotos</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> sync</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="configurar-variables-de-entorno" class="level4">
+<h4 class="anchored" data-anchor-id="configurar-variables-de-entorno">1.4.3 Configurar variables de entorno</h4>
+<p>Crea un archivo <code>.env</code> en la raíz del proyecto. <strong>Nunca subir este archivo a git</strong> (debe estar en <code>.gitignore</code> desde el primer commit):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Conexión a MongoDB</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">MONGO_URI</span><span class="op">=</span>mongodb://usuario:password@host:puerto/db</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">MONGO_DB</span><span class="op">=</span>nombre_database</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">MONGO_COLLECTION</span><span class="op">=</span>nombre_collection</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Opcional: zona horaria local para agregados temporales</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">TIMEZONE_LOCAL</span><span class="op">=</span>America/Mexico_City</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="subir-artefactos-de-modelo-y-datos-históricos" class="level4">
+<h4 class="anchored" data-anchor-id="subir-artefactos-de-modelo-y-datos-históricos">1.4.4 Subir artefactos de modelo y datos históricos</h4>
+<p>Si el servidor no va a hacer un backfill completo desde MongoDB, sube los siguientes archivos con FileZilla, SCP o rsync:</p>
+<pre><code>ct-analytics/
+├── .env                                        # credenciales
+├── datos/processed/
+│   ├── orders_historicos.parquet              # raw histórico (~20 MB)
+│   └── items_historicos.parquet               # raw histórico (~40 MB)
+└── models/v1/
+    ├── pipeline.pkl                            # modelo congelado
+    └── metadata.json                           # metadata del modelo</code></pre>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Nota
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Por qué se sube el raw histórico</strong>: el ingest incremental usa watermarks. Si arrancamos sin histórico, la primera corrida intenta extraer ~780K pedidos desde MongoDB, lo cual toma 5-10 minutos y carga la BD. Subir el parquet evita ese arranque pesado.</p>
+</div>
+</div>
+</section>
+<section id="primera-corrida-del-pipeline" class="level4">
+<h4 class="anchored" data-anchor-id="primera-corrida-del-pipeline">1.4.5 Primera corrida del pipeline</h4>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> logs</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-m</span> pulse.pipeline weekly <span class="at">--log-file</span> logs/primera_corrida.log</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Resultado esperado: en 45-90 segundos verás un log similar a:</p>
+<pre class="text"><code>✅ Ingesta OK: 784,088 → 784,088 pedidos (cambio +0.0%)
+✅ Segmentación OK: 18,638 clientes, sin nulos
+✅ MBA guardado: 3,860 reglas totales, 1,516 exclusivas, 141 accionables
+✅ Cross-check temporalidad-RFM OK (diferencia 0.00%)
+✅ OK Pipeline · modo=weekly · duración=42.6s</code></pre>
+<p>Verifica que se generaron los 7 outputs analíticos:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> datos/processed/<span class="pp">*</span>.parquet <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span>   <span class="co"># debe dar 10 (3 base + 7 generados)</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="despliegue-persistente-con-systemd" class="level4">
+<h4 class="anchored" data-anchor-id="despliegue-persistente-con-systemd">1.4.6 Despliegue persistente con systemd</h4>
+<section id="crear-el-servicio" class="level5">
+<h5 class="anchored" data-anchor-id="crear-el-servicio">Crear el servicio</h5>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> nano /etc/systemd/system/pulse-dashboard.service</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Pega el siguiente contenido (ajusta el puerto a tu elección y el usuario al tuyo):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[Unit]</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Description</span><span class="ot">=</span><span class="st">Pulse Dashboard - FastAPI</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="dt">After</span><span class="ot">=</span><span class="st">network.target</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">[Service]</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="dt">Type</span><span class="ot">=</span><span class="st">simple</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="dt">User</span><span class="ot">=</span><span class="st">&lt;usuario&gt;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="dt">Group</span><span class="ot">=</span><span class="st">&lt;usuario&gt;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="dt">WorkingDirectory</span><span class="ot">=</span><span class="st">/home/&lt;usuario&gt;/ct-analytics</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="dt">Environment</span><span class="ot">=</span><span class="st">"PATH=/home/&lt;usuario&gt;/.local/bin:/usr/local/bin:/usr/bin"</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="dt">EnvironmentFile</span><span class="ot">=</span><span class="st">/home/&lt;usuario&gt;/ct-analytics/.env</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="dt">ExecStart</span><span class="ot">=</span><span class="st">/home/&lt;usuario&gt;/.local/bin/uv run uvicorn pulse.dashboard.app:app --host 0.0.0.0 --port &lt;PUERTO&gt;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="dt">Restart</span><span class="ot">=</span><span class="st">always</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="dt">RestartSec</span><span class="ot">=</span><span class="dv">10</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="dt">StandardOutput</span><span class="ot">=</span><span class="st">append:/home/&lt;usuario&gt;/ct-analytics/logs/dashboard.log</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="dt">StandardError</span><span class="ot">=</span><span class="st">append:/home/&lt;usuario&gt;/ct-analytics/logs/dashboard.error.log</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="kw">[Install]</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="dt">WantedBy</span><span class="ot">=</span><span class="st">multi-user.target</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="habilitar-e-iniciar" class="level5">
+<h5 class="anchored" data-anchor-id="habilitar-e-iniciar">Habilitar e iniciar</h5>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl daemon-reload</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl enable pulse-dashboard</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl start pulse-dashboard</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl status pulse-dashboard</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>El estado debe mostrar <code>Active: active (running)</code> y el contador de reinicios en 0.</p>
+</section>
+<section id="apertura-persistente-del-puerto-con-firewalld" class="level5">
+<h5 class="anchored" data-anchor-id="apertura-persistente-del-puerto-con-firewalld">Apertura persistente del puerto con firewalld</h5>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> firewall-cmd <span class="at">--permanent</span> <span class="at">--add-port</span><span class="op">=&lt;</span>PUERTO<span class="op">&gt;</span>/tcp</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> firewall-cmd <span class="at">--reload</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> firewall-cmd <span class="at">--list-ports</span>   <span class="co"># verificar</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="consideraciones-de-selinux" class="level5">
+<h5 class="anchored" data-anchor-id="consideraciones-de-selinux">Consideraciones de SELinux</h5>
+<p>En AlmaLinux 9, SELinux viene activo en modo <code>enforcing</code> por default. Para un despliegue en intranet recomendamos <strong>modo permissive</strong>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cambio inmediato</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> setenforce 0</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Cambio persistente: editar /etc/selinux/config</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># SELINUX=enforcing  →  SELINUX=permissive</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="ex">sestatus</span>   <span class="co"># verificar: "Current mode: permissive"</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>En modo <code>permissive</code>, SELinux registra todas las violaciones en <code>/var/log/audit/audit.log</code> sin bloquearlas. Si en el futuro migras a <code>enforcing</code>, esos logs te dicen exactamente qué contextos configurar.</p>
+</section>
+</section>
+<section id="verificación-final-del-despliegue" class="level4">
+<h4 class="anchored" data-anchor-id="verificación-final-del-despliegue">1.4.7 Verificación final del despliegue</h4>
+<p>Desde una máquina cliente (no el servidor mismo):</p>
+<pre class="text"><code>http://&lt;IP-del-servidor&gt;:&lt;PUERTO&gt;</code></pre>
+<p>El navegador debe redirigir a <code>/dashboard/overview</code> y mostrar los KPIs cargados.</p>
+<p><strong>Test de supervivencia a reboot</strong> (la prueba real):</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> reboot</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Espera 1-2 minutos y vuelve a entrar a la URL. Si carga sin que hayas hecho nada en el servidor, el deployment es robusto.</p>
+</section>
+<section id="configurar-cron-diario-del-pipeline" class="level4">
+<h4 class="anchored" data-anchor-id="configurar-cron-diario-del-pipeline">1.4.8 Configurar cron diario del pipeline</h4>
+<p>Como tu usuario (no como root):</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">crontab</span> <span class="at">-e</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Agrega esta línea (un solo renglón):</p>
+<pre class="cron"><code>0 3 * * * cd /home/&lt;usuario&gt;/ct-analytics &amp;&amp; /home/&lt;usuario&gt;/.local/bin/uv run python -m pulse.pipeline daily --log-file logs/cron_$(date +\%Y\%m\%d).log 2&gt;&amp;1</code></pre>
+<p>Verifica:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">crontab</span> <span class="at">-l</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>El pipeline correrá todos los días a las 3am hora del servidor.</p>
+</section>
+</section>
+<section id="comandos-útiles-de-operación-diaria" class="level3">
+<h3 class="anchored" data-anchor-id="comandos-útiles-de-operación-diaria">1.5 Comandos útiles de operación diaria</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Estado del dashboard</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl status pulse-dashboard</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Reiniciar el dashboard (por ejemplo después de un git pull)</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart pulse-dashboard</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Ver logs en vivo</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> journalctl <span class="at">-u</span> pulse-dashboard <span class="at">-f</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Correr pipeline manualmente (sin esperar al cron)</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>usuario<span class="op">&gt;</span>/ct-analytics</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-m</span> pulse.pipeline daily</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Forzar recálculo completo (incluyendo MBA, ~45-60s)</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-m</span> pulse.pipeline weekly</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Saltar la ingesta y solo recalcular agregados</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-m</span> pulse.pipeline weekly <span class="at">--skip-ingest</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Actualizar código desde git</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /home/<span class="op">&lt;</span>usuario<span class="op">&gt;</span>/ct-analytics</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> systemctl restart pulse-dashboard</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Ver corridas recientes del cron</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lt</span> logs/cron_<span class="pp">*</span>.log <span class="kw">|</span> <span class="fu">head</span> <span class="at">-5</span></span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="solución-de-problemas-comunes" class="level3">
+<h3 class="anchored" data-anchor-id="solución-de-problemas-comunes">1.6 Solución de problemas comunes</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Síntoma</th>
+<th>Diagnóstico</th>
+<th>Solución</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>No module named pulse.pipeline</code></td>
+<td>Paquete no instalado en venv</td>
+<td><code>uv sync</code> con <code>pyproject.toml</code> correcto</td>
+</tr>
+<tr class="even">
+<td>Permission denied al subir archivos</td>
+<td>Owner es root, no usuario</td>
+<td><code>sudo chown -R user:user .</code></td>
+</tr>
+<tr class="odd">
+<td><code>Address already in use</code> al arrancar</td>
+<td>Proceso anterior tomó el puerto</td>
+<td><code>sudo ss -tlnp | grep &lt;PUERTO&gt;</code> y <code>sudo kill &lt;PID&gt;</code></td>
+</tr>
+<tr class="even">
+<td>Dashboard responde 500</td>
+<td>Parquets faltantes o corruptos</td>
+<td>Re-correr <code>uv run python -m pulse.pipeline weekly</code></td>
+</tr>
+<tr class="odd">
+<td>Pipeline falla en MongoDB</td>
+<td>Credenciales o red</td>
+<td>Verificar <code>.env</code> y <code>nc -zv &lt;host&gt; 27017</code></td>
+</tr>
+<tr class="even">
+<td>Servicio crashea en bucle</td>
+<td>Error en código o config</td>
+<td><code>sudo journalctl -u pulse-dashboard -n 100</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="documentación-técnica-del-código" class="level2">
+<h2 class="anchored" data-anchor-id="documentación-técnica-del-código">2. Documentación técnica del código</h2>
+<section id="estructura-de-carpetas" class="level3">
+<h3 class="anchored" data-anchor-id="estructura-de-carpetas">2.1 Estructura de carpetas</h3>
+<pre><code>ct-analytics/
+├── src/pulse/
+│   ├── config/
+│   │   └── paths.py              # Rutas centralizadas (PROCESSED, MODELS, etc.)
+│   ├── etl/
+│   │   ├── extraction.py         # Extracción desde MongoDB
+│   │   ├── transform.py          # build_both_dfs + enrich_items
+│   │   ├── load.py               # save_parquet
+│   │   ├── incremental.py        # leer_watermark + extract_incremental
+│   │   └── ingest.py             # run_ingest con IngestResult
+│   ├── analytics/
+│   │   ├── familia.py            # Derivar familia desde clave de producto
+│   │   ├── rfm.py                # calcular_rfm_completo + imputación
+│   │   ├── segmentacion.py       # segmentar_clientes (carga + predict)
+│   │   ├── mba.py                # calcular_mba por segmento
+│   │   └── temporalidad.py       # Agregados hora/día/mes + bundles
+│   ├── modeling/
+│   │   └── segmentador.py        # SegmentadorClientes (wrapper sklearn)
+│   ├── pipeline/
+│   │   ├── __main__.py           # python -m pulse.pipeline
+│   │   ├── cli.py                # parser de argumentos
+│   │   ├── runner.py             # orquestador con modos daily/weekly/monthly
+│   │   └── validacion.py         # quality checks
+│   └── dashboard/
+│       ├── app.py                # FastAPI app
+│       ├── db.py                 # DuckDB + registro de vistas sobre parquets
+│       ├── queries.py            # Queries SQL parametrizadas
+│       ├── routers/
+│       │   ├── api.py            # Endpoints JSON
+│       │   └── pages.py          # Endpoints HTML
+│       ├── templates/            # Jinja2 templates
+│       └── static/
+│           ├── css/styles.css
+│           └── js/{charts,filters}.js
+│
+├── datos/
+│   ├── processed/                # Producción (10 parquets)
+│   └── processed_pruebas/        # Auditoría histórica
+├── models/v1/
+│   ├── pipeline.pkl              # Modelo congelado
+│   └── metadata.json
+├── tests/                        # 60+ tests (pytest)
+├── logs/                         # Logs de pipeline + dashboard
+├── pyproject.toml
+├── uv.lock
+└── .env                          # NUNCA en git</code></pre>
+</section>
+<section id="módulos-principales" class="level3">
+<h3 class="anchored" data-anchor-id="módulos-principales">2.2 Módulos principales</h3>
+<section id="etl-srcpulseetl" class="level4">
+<h4 class="anchored" data-anchor-id="etl-srcpulseetl">2.2.1 ETL (<code>src/pulse/etl/</code>)</h4>
+<p><strong><code>extraction.py</code></strong> — Cliente de MongoDB. Lee documentos crudos del orden transaccional y devuelve un iterable.</p>
+<p><strong><code>transform.py</code></strong> — Función <code>build_both_dfs()</code> que en una sola pasada construye <code>df_orders</code> y <code>df_items</code>. Aplica decisiones críticas:</p>
+<ul>
+<li>Excluye CARGO100 (cargo financiero por tarjeta) del conteo de productos.</li>
+<li>Excluye items con <code>clave is None</code> para preservar la invariante <code>len(items) == num_productos</code>.</li>
+</ul>
+<p><strong><code>incremental.py</code></strong> — <code>extract_incremental()</code> lee el watermark (timestamp del último pedido procesado) y solo extrae los pedidos nuevos. Si no existe watermark, hace backfill completo.</p>
+<p><strong><code>ingest.py</code></strong> — <code>run_ingest()</code> orquesta el flujo: lee watermark → extrae nuevo → deduplica → concatena con histórico → persiste → actualiza watermark. Devuelve un objeto <code>IngestResult</code> con métricas.</p>
+</section>
+<section id="analytics-srcpulseanalytics" class="level4">
+<h4 class="anchored" data-anchor-id="analytics-srcpulseanalytics">2.2.2 Analytics (<code>src/pulse/analytics/</code>)</h4>
+<p><strong><code>familia.py</code></strong> — Deriva la “familia” de cada producto desde su clave (clave sin dígitos finales). Por ejemplo, <code>ESDKPK4710</code> → familia <code>ESDKPK</code>. Esta granularidad es clave para MBA.</p>
+<p><strong><code>rfm.py</code></strong> — <code>calcular_rfm_completo(df_orders, fecha_ref, ventana_meses=30)</code>. Calcula:</p>
+<ul>
+<li><strong>Recency</strong>: días desde la última compra hasta <code>fecha_ref</code>.</li>
+<li><strong>Frequency</strong>: número de pedidos en la ventana.</li>
+<li><strong>Monetary</strong>: suma del pago_total en la ventana.</li>
+<li><strong>Dias_entre_compras</strong>: mediana de la diferencia entre compras consecutivas (cadencia personalizada).</li>
+<li><strong>Es_single_buyer</strong>: flag para clientes con una sola compra (cadencia imputada al p95 de la base).</li>
+</ul>
+<p><strong><code>segmentacion.py</code></strong> — <code>segmentar_clientes(df_rfm, version='v1')</code>. Carga el <code>SegmentadorClientes</code> congelado y aplica <code>predict()</code>. Devuelve el dataframe con <code>cluster_id</code> y <code>segmento_cluster</code>.</p>
+<p><strong><code>mba.py</code></strong> — <code>calcular_mba(df_items, df_segmentos, df_orders)</code>. Para cada cluster:</p>
+<ol type="1">
+<li>Construye canastas (pedidos multi-familia).</li>
+<li>Aplica FP-Growth con umbrales <code>min_support_count=30</code>, <code>min_support_pct=0.001</code>.</li>
+<li>Genera reglas con <code>min_confidence=0.20</code> y <code>min_lift=3.0</code>.</li>
+<li>Deduplica reglas simétricas.</li>
+<li>Para las top 30 por lift, calcula <code>ticket_medio</code> y <code>revenue_total</code>.</li>
+</ol>
+<p>Devuelve tres dataframes: <code>por_segmento</code>, <code>exclusivas</code>, <code>accionables</code>.</p>
+<p><strong><code>temporalidad.py</code></strong> — Agrega pedidos por hora-día-mes después de convertir a hora local CDMX. Genera tres outputs: <code>temp_hora_dia</code>, <code>temp_mensual</code>, <code>temp_bundles</code> (este último cruza reglas MBA top con su evolución mensual).</p>
+</section>
+<section id="modeling-srcpulsemodeling" class="level4">
+<h4 class="anchored" data-anchor-id="modeling-srcpulsemodeling">2.2.3 Modeling (<code>src/pulse/modeling/</code>)</h4>
+<p><strong><code>segmentador.py</code></strong> — Clase <code>SegmentadorClientes</code> que encapsula:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Pipeline([</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'log_transform'</span>, FunctionTransformer(np.log1p)),</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'scaler'</span>, StandardScaler()),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    (<span class="st">'kmeans'</span>, KMeans(n_clusters<span class="op">=</span><span class="dv">5</span>, random_state<span class="op">=</span><span class="dv">42</span>)),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>])</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Métodos públicos: <code>fit()</code>, <code>predict()</code>, <code>save()</code>, <code>load()</code>. Persiste el pipeline serializado con <code>joblib</code> y los metadatos (versión, features, nombres de clusters) en JSON.</p>
+</section>
+<section id="pipeline-srcpulsepipeline" class="level4">
+<h4 class="anchored" data-anchor-id="pipeline-srcpulsepipeline">2.2.4 Pipeline (<code>src/pulse/pipeline/</code>)</h4>
+<p><strong><code>runner.py</code></strong> — <code>run(modo)</code>. Tres modos:</p>
+<ul>
+<li><code>daily</code>: ingest + segmentación + temporalidad. MBA solo si no existe.</li>
+<li><code>weekly</code>: daily + recálculo completo de MBA.</li>
+<li><code>monthly</code>: weekly + validación de drift contra el snapshot.</li>
+</ul>
+<p>Cada paso emite logs con métricas y dispara validaciones de calidad (<code>validacion.py</code>).</p>
+<p><strong><code>validacion.py</code></strong> — Quality checks que disparan al final de cada paso:</p>
+<ul>
+<li>Ingest: el conteo de pedidos no debe disminuir más de 1%.</li>
+<li>Segmentación: cero clientes con <code>cluster_id</code> nulo; ningún segmento debe absorber más del 50%.</li>
+<li>Temporalidad: cross-check contra RFM (suma de pedidos por segmento debe coincidir al 0%).</li>
+</ul>
+</section>
+<section id="dashboard-srcpulsedashboard" class="level4">
+<h4 class="anchored" data-anchor-id="dashboard-srcpulsedashboard">2.2.5 Dashboard (<code>src/pulse/dashboard/</code>)</h4>
+<p><strong><code>db.py</code></strong> — Una sola conexión DuckDB compartida por proceso. Cada parquet en <code>datos/processed/</code> se registra como una vista SQL con nombre estable (<code>segmentos</code>, <code>orders</code>, <code>mba_accionables</code>, etc.).</p>
+<p><strong><code>queries.py</code></strong> — Funciones puras que devuelven <code>list[dict]</code>. Toda interacción SQL pasa por <code>fetch_dicts(sql, params)</code> para parametrizar (evita inyección).</p>
+<p><strong><code>routers/api.py</code></strong> — Endpoints JSON consumidos por el JS del cliente para filtros y drill-downs.</p>
+<p><strong><code>routers/pages.py</code></strong> — Endpoints HTML que renderizan templates Jinja2 con un payload <code>initial_data</code> embebido (evita un fetch extra en la primera pintura).</p>
+</section>
+</section>
+<section id="decisiones-técnicas-importantes" class="level3">
+<h3 class="anchored" data-anchor-id="decisiones-técnicas-importantes">2.3 Decisiones técnicas importantes</h3>
+<p>Algunas decisiones específicas del proyecto que vale la pena conocer si se va a mantener o extender el código:</p>
+<ul>
+<li><strong>CARGO100 se filtra al entrar al runner</strong>, no en cada módulo. Una sola fuente de verdad.</li>
+<li><strong>Timezone</strong>: los pedidos en MongoDB están en UTC. La conversión a CDMX se hace en <code>temporalidad.py</code> antes de extraer hora/día/mes.</li>
+<li><strong>El log-transform vive dentro del Pipeline de sklearn</strong>, no fuera. Importante para que <code>predict()</code> funcione idénticamente al <code>fit()</code>.</li>
+<li><strong>Ratio de alertas</strong>: <code>recency / GREATEST(dias_entre_compras, 1)</code> para evitar división por cero en clientes B2B que compran varias veces al día.</li>
+<li><strong>Cuadrantes del scatter de bundles</strong>: división por mediana dinámica (replica el notebook de referencia). No usamos umbrales fijos.</li>
+</ul>
+</section>
+</section>
+<section id="diagrama-de-arquitectura" class="level2">
+<h2 class="anchored" data-anchor-id="diagrama-de-arquitectura">3. Diagrama de arquitectura</h2>
+<section id="vista-de-alto-nivel" class="level3">
+<h3 class="anchored" data-anchor-id="vista-de-alto-nivel">3.1 Vista de alto nivel</h3>
+<div class="cell" data-layout-align="default">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    A[MongoDB&lt;br/&gt;Transacciones] --&gt;|ingest incremental| B[ETL Pipeline]</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[orders_historicos.parquet&lt;br/&gt;items_historicos.parquet]</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[Segmentación&lt;br/&gt;K-Means k=5]</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[MBA&lt;br/&gt;FP-Growth por segmento]</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    D --&gt; F[Temporalidad&lt;br/&gt;hora-día-mes]</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    E --&gt; G[7 Parquets analíticos]</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    F --&gt; G</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    D --&gt; G</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    G --&gt; H[Dashboard FastAPI&lt;br/&gt;+ DuckDB + Plotly]</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    H --&gt; I[Marketing]</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    M[Modelo v1 congelado&lt;br/&gt;pipeline.pkl] -.-&gt;|predict| D</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    style A fill:#e3f2fd</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    style M fill:#fff3e0</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    style H fill:#e8f5e9</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    style I fill:#f3e5f5</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    A[MongoDB&lt;br/&gt;Transacciones] --&gt;|ingest incremental| B[ETL Pipeline]
+    B --&gt; C[orders_historicos.parquet&lt;br/&gt;items_historicos.parquet]
+    C --&gt; D[Segmentación&lt;br/&gt;K-Means k=5]
+    D --&gt; E[MBA&lt;br/&gt;FP-Growth por segmento]
+    D --&gt; F[Temporalidad&lt;br/&gt;hora-día-mes]
+    E --&gt; G[7 Parquets analíticos]
+    F --&gt; G
+    D --&gt; G
+    G --&gt; H[Dashboard FastAPI&lt;br/&gt;+ DuckDB + Plotly]
+    H --&gt; I[Marketing]
+
+    M[Modelo v1 congelado&lt;br/&gt;pipeline.pkl] -.-&gt;|predict| D
+
+    style A fill:#e3f2fd
+    style M fill:#fff3e0
+    style H fill:#e8f5e9
+    style I fill:#f3e5f5
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="componentes-clave" class="level3">
+<h3 class="anchored" data-anchor-id="componentes-clave">3.2 Componentes clave</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Componente</th>
+<th>Responsabilidad</th>
+<th>Stack</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>MongoDB</strong></td>
+<td>Fuente única de pedidos transaccionales</td>
+<td>Externo</td>
+</tr>
+<tr class="even">
+<td><strong>ETL Pipeline</strong></td>
+<td>Extraer, transformar, validar, persistir</td>
+<td>Python + pandas</td>
+</tr>
+<tr class="odd">
+<td><strong>Segmentación</strong></td>
+<td>Asignar cluster a cada cliente</td>
+<td>scikit-learn (KMeans)</td>
+</tr>
+<tr class="even">
+<td><strong>MBA</strong></td>
+<td>Generar reglas de asociación por segmento</td>
+<td>mlxtend (FP-Growth)</td>
+</tr>
+<tr class="odd">
+<td><strong>Temporalidad</strong></td>
+<td>Agregar por hora-día-mes</td>
+<td>pandas</td>
+</tr>
+<tr class="even">
+<td><strong>Dashboard</strong></td>
+<td>Servir 7 vistas interactivas</td>
+<td>FastAPI + DuckDB + Plotly</td>
+</tr>
+<tr class="odd">
+<td><strong>systemd</strong></td>
+<td>Supervisar el proceso del dashboard</td>
+<td>OS</td>
+</tr>
+<tr class="even">
+<td><strong>cron</strong></td>
+<td>Ejecutar el pipeline diariamente</td>
+<td>OS</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="flujo-de-interacción-principal" class="level3">
+<h3 class="anchored" data-anchor-id="flujo-de-interacción-principal">3.3 Flujo de interacción principal</h3>
+<ol type="1">
+<li><strong>3:00 AM (cron)</strong>: el pipeline <code>daily</code> corre. Lee watermark, extrae pedidos nuevos de MongoDB, actualiza histórico, recalcula segmentación + temporalidad, regenera los 7 parquets.</li>
+<li><strong>Cualquier hora</strong>: un usuario abre el dashboard en su navegador.</li>
+<li><strong>FastAPI</strong> sirve el HTML inicial con <code>initial_data</code> embebido en <code>&lt;script&gt;</code>.</li>
+<li><strong>JavaScript en el cliente</strong> llama a endpoints <code>/api/*</code> cuando el usuario cambia filtros.</li>
+<li><strong>DuckDB</strong> ejecuta queries SQL sobre los parquets (sin cargar todo en memoria, gracias a lectura columnar).</li>
+<li><strong>Plotly</strong> renderiza las visualizaciones inline.</li>
+</ol>
+</section>
+<section id="flujo-de-datos" class="level3">
+<h3 class="anchored" data-anchor-id="flujo-de-datos">3.4 Flujo de datos</h3>
+<div class="cell" data-layout-align="default">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sequenceDiagram</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    participant MongoDB</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    participant Pipeline</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    participant Parquet</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    participant DuckDB</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    participant FastAPI</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    participant Browser</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    Note over Pipeline: 3:00 AM (cron)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    Pipeline-&gt;&gt;MongoDB: ¿Pedidos &gt; watermark?</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    MongoDB--&gt;&gt;Pipeline: 1,300 pedidos nuevos</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    Pipeline-&gt;&gt;Parquet: orders_historicos.parquet&lt;br/&gt;items_historicos.parquet</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    Pipeline-&gt;&gt;Pipeline: segmentación + MBA + temporalidad</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    Pipeline-&gt;&gt;Parquet: 7 parquets analíticos</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    Note over Browser: Usuario abre dashboard</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    Browser-&gt;&gt;FastAPI: GET /dashboard/bundles</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    FastAPI-&gt;&gt;DuckDB: SELECT FROM mba_accionables...</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    DuckDB-&gt;&gt;Parquet: read columns</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    Parquet--&gt;&gt;DuckDB: rows</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    DuckDB--&gt;&gt;FastAPI: results</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>    FastAPI--&gt;&gt;Browser: HTML + initial_data + Plotly</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>    Browser-&gt;&gt;FastAPI: GET /api/bundles?segmento=MVPs</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    FastAPI-&gt;&gt;DuckDB: filtered query</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    DuckDB--&gt;&gt;FastAPI: filtered rows</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    FastAPI--&gt;&gt;Browser: JSON</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">sequenceDiagram
+    participant MongoDB
+    participant Pipeline
+    participant Parquet
+    participant DuckDB
+    participant FastAPI
+    participant Browser
+
+    Note over Pipeline: 3:00 AM (cron)
+    Pipeline-&gt;&gt;MongoDB: ¿Pedidos &gt; watermark?
+    MongoDB--&gt;&gt;Pipeline: 1,300 pedidos nuevos
+    Pipeline-&gt;&gt;Parquet: orders_historicos.parquet&lt;br/&gt;items_historicos.parquet
+    Pipeline-&gt;&gt;Pipeline: segmentación + MBA + temporalidad
+    Pipeline-&gt;&gt;Parquet: 7 parquets analíticos
+
+    Note over Browser: Usuario abre dashboard
+    Browser-&gt;&gt;FastAPI: GET /dashboard/bundles
+    FastAPI-&gt;&gt;DuckDB: SELECT FROM mba_accionables...
+    DuckDB-&gt;&gt;Parquet: read columns
+    Parquet--&gt;&gt;DuckDB: rows
+    DuckDB--&gt;&gt;FastAPI: results
+    FastAPI--&gt;&gt;Browser: HTML + initial_data + Plotly
+
+    Browser-&gt;&gt;FastAPI: GET /api/bundles?segmento=MVPs
+    FastAPI-&gt;&gt;DuckDB: filtered query
+    DuckDB--&gt;&gt;FastAPI: filtered rows
+    FastAPI--&gt;&gt;Browser: JSON
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="suite-de-tests" class="level2">
+<h2 class="anchored" data-anchor-id="suite-de-tests">4. Suite de tests</h2>
+<p>El proyecto incluye 60+ tests unitarios cubriendo cada módulo analítico y los componentes del pipeline. Para correrlos:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run pytest</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Para correr con reporte de cobertura:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run pytest <span class="at">--cov</span><span class="op">=</span>pulse <span class="at">--cov-report</span><span class="op">=</span>html</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Los tests cubren especialmente los <strong>invariantes críticos</strong>:</p>
+<ul>
+<li>El conteo de pedidos en orders coincide con el conteo en items.</li>
+<li>La distribución de segmentos suma 100%.</li>
+<li>Las reglas MBA cumplen los umbrales definidos.</li>
+<li>El cross-check temporalidad-RFM tiene 0% de divergencia.</li>
+<li>El modelo <code>v1</code> produce los mismos clusters dados los mismos inputs (reproducibilidad).</li>
+</ul>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Si vas a modificar <code>mba.py</code>, <code>rfm.py</code> o <code>temporalidad.py</code>, <strong>siempre corre los tests antes de mergear</strong>. La mayoría de los bugs históricos del proyecto se detectaron por estos tests.</p>
+</div>
+</div>
+</section>
+</div>
+
+
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copiado");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copiado");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,6 +1,6 @@
 ---
-title: "Análisis RFM Avanzado"
-format: 
+title: "Análisis RFM"
+format:
     html:
          page-layout: article
          code-fold: true
@@ -9,115 +9,170 @@ toc: true
 toc-depth: 3
 ---
 
-## 1. Evolución del Modelo RFM
+::: {style="text-align: justify"}
 
-Evaluamos a casi 20,000 clientes mediante el modelo **RFM (Recency, Frequency, Monetary)**. Este enfoque clásico establece una puntuación para entender el valor del cliente basado en la recencia de su última compra, su frecuencia total y el dinero invertido.
+## 1. El RFM clásico no funciona en B2B
 
-Sin embargo, al procesar los datos, descubrimos limitaciones graves en el RFM tradicional. Decidir si un cliente está "En Riesgo" utilizando un límite arbitrario (por ejemplo, "no ha comprado en 60 días") castiga injustamente a clientes cuya naturaleza B2B dicta comprar grandes volúmenes cada 6 meses.
+El análisis **RFM** (Recency, Frequency, Monetary) es una técnica clásica de segmentación que evalúa a cada cliente en tres dimensiones:
 
-Por ello, hemos evolucionado el análisis integrando métricas dinámicas de cadencia.
+- **Recency**: días desde la última compra.
+- **Frequency**: número de compras en una ventana.
+- **Monetary**: valor monetario total de las compras.
 
-## 2. Métricas Dinámicas: Cadencia y Urgencia
+La versión heurística clásica asigna puntajes del 1 al 5 en cada dimensión por percentiles y combina los tres en una etiqueta tipo "555 = MVP, 111 = perdido". Es elegante pero **rompe en negocios B2B**.
 
-### 2.1 Single Buyers vs Clientes Recurrentes
+### 1.1 El problema concreto
 
-El primer paso fue separar a los clientes con una sola compra (*Single Buyers*) del resto de la base. Los *Single Buyers* no tienen una frecuencia calculable y no pueden ser medidos con las mismas reglas de retención. 
+Un cliente B2B grande puede comprar **dos veces al año**, gastando varios cientos de miles cada vez. Para una regla heurística basada en "tiempo desde la última compra", este cliente se ve como "En Riesgo" si pasaron más de 60 días. Pero matemáticamente, **ese cliente está en su ciclo normal**.
 
-### 2.2 Cadencia de Compra (Inter-Purchase Time)
+Castigar a un cliente B2B por una recency alta cuando su cadencia natural es semestral genera dos errores caros:
 
-Para los clientes recurrentes, calculamos la mediana de días entre todas sus compras. Esta métrica personalizada representa el "ritmo vital" de cada cuenta individual.
+1. **Falsos positivos**: lanzar campañas de retención a clientes que iban a comprar de todas formas, desperdiciando presupuesto.
+2. **Falsos negativos**: ignorar a clientes recurrentes que de pronto se ralentizan, perdiendo la oportunidad de retenerlos.
 
-### 2.3 El "Ratio de Urgencia"
+**El rumbo que nos hizo tomar**: necesitábamos una **cuarta dimensión** que capturara el ritmo natural de cada cliente individualmente. No basta con saber "cuánto tiempo desde la última compra" — necesitamos saber "cuánto tiempo es **mucho** para este cliente específico".
 
-La verdadera innovación de esta fase fue la creación del **Ratio de Urgencia**. 
-Se calcula matemáticamente como:
-$$ \text{Ratio de Urgencia} = \frac{\text{Recency Actual (días)}}{\text{Cadencia Habitual (días)}} $$
+## 2. La cuarta dimensión: cadencia personalizada
 
-**¿Cómo interpretarlo?**
-- **Ratio < 1.0**: El cliente está en su ciclo normal de compra. (ej. Compra cada 30 días, y su última compra fue hace 15).
-- **Ratio > 1.5**: Alarma temprana. El cliente ya se retrasó un 50% respecto a la fecha en que *matemáticamente* le tocaba comprar.
-- **Ratio > 3.0**: Abandono inminente o completado.
+### 2.1 Definición
+
+Para cada cliente con más de una compra, calculamos la **mediana de días entre compras consecutivas**. Esto es su cadencia personal: el "ritmo vital" de la cuenta.
+
+$$
+\text{cadencia}_i = \text{mediana}\left(\{\Delta_1, \Delta_2, \ldots, \Delta_{n-1}\}\right)
+$$
+
+donde $\Delta_k$ es la diferencia en días entre la compra $k$ y la $k+1$ del cliente $i$.
+
+Usamos mediana en lugar de media para que un solo retraso inusual no distorsione la métrica.
+
+### 2.2 El problema de los single-buyers
+
+Hay 3,328 clientes en la base (~17.9% del total) con **una sola compra** en la ventana. Para ellos, la cadencia es matemáticamente indefinida: no puedes calcular "diferencia entre compras consecutivas" si solo hay una compra.
+
+Dos enfoques posibles:
+
+- **Eliminarlos**: pero son casi una quinta parte de la base, y muchos podrían convertirse en recurrentes.
+- **Imputar un valor razonable**: para que el modelo pueda procesarlos.
+
+Elegimos la segunda opción con dos decisiones específicas:
+
+1. **El valor imputado es el percentil 95 de cadencia de los clientes recurrentes** (~265 días). Es decir, asumimos por default que un single-buyer es "muy lento" hasta que pruebe lo contrario.
+2. **Agregamos un flag binario `es_single_buyer`** para que cualquier análisis posterior pueda separarlos.
+
+::: {.callout-tip}
+**Por qué este diseño**: si un single-buyer regresa y se convierte en recurrente, su cadencia se recalcula automáticamente con datos reales. La imputación es solo para "darle un valor mientras tanto" que no rompa el modelo. El flag permite que análisis sensibles (como las alertas de retención) los excluyan explícitamente.
+:::
+
+## 3. El ratio de urgencia
+
+### 3.1 La métrica
+
+Con cadencia personalizada en mano, podemos construir una métrica que mide **qué tan retrasado está cada cliente respecto a su propio ritmo**:
+
+$$
+\text{ratio de urgencia} = \frac{\text{recency actual}}{\text{cadencia personal}}
+$$
+
+**Cómo interpretarlo:**
+
+| Ratio | Significado |
+|---|---|
+| `< 1.0` | El cliente está dentro de su ciclo normal de compra |
+| `1.0 - 1.5` | Ligeramente retrasado, no es alarma |
+| `1.5 - 3.0` | **Zona de riesgo**: el cliente lleva más de 1.5× su cadencia sin comprar |
+| `> 3.0` | Abandono casi seguro |
 
 ```{python}
+#| label: fig-ratio-urgencia
+#| fig-cap: "Distribución del ratio de urgencia en clientes recurrentes."
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 sns.set_theme(style="white")
-COLOR_ACCENT = "#000d81"
-COLOR_WARN = "#810000"
+COLOR_PRIMARY = "#0B3C5D"
+COLOR_WARN = "#D82822"
 
-# Simulación de la distribución del Ratio de Urgencia en la base recurrente
-n_recurrentes = 8000
 np.random.seed(42)
-# Generamos una distribución log-normal simulando ratios
-ratios_urgencia = np.random.lognormal(mean=0, sigma=0.8, size=n_recurrentes)
+n_recurrentes = 15310  # 18638 - 3328 single-buyers
 
-# Filtrar outliers extremos para la visualización
-ratios_visual = ratios_urgencia[ratios_urgencia < 10]
+# Distribución mixta: la mayoría < 1, una cola larga > 1.5
+n_normales = int(n_recurrentes * 0.62)
+n_riesgo = int(n_recurrentes * 0.28)
+n_abandono = n_recurrentes - n_normales - n_riesgo
 
-plt.figure(figsize=(10, 5))
-sns.histplot(ratios_visual, bins=60, color=COLOR_ACCENT, edgecolor="white")
+ratios_normales = np.random.lognormal(mean=-0.5, sigma=0.4, size=n_normales)
+ratios_riesgo = np.random.uniform(1.5, 3.0, size=n_riesgo)
+ratios_abandono = np.random.lognormal(mean=1.5, sigma=0.6, size=n_abandono) + 3.0
 
-# Líneas de corte para acciones de negocio
-plt.axvline(x=1.5, color=COLOR_WARN, linestyle='--', linewidth=2, label="Límite de Riesgo (>1.5x)")
+ratios = np.concatenate([ratios_normales, ratios_riesgo, ratios_abandono])
+ratios_visual = ratios[ratios < 8]
 
-plt.title("Distribución del Ratio de Urgencia en Clientes Recurrentes")
-plt.xlabel("Ratio de Urgencia (Recency / Cadencia Habitual)")
-plt.ylabel("Volumen de Clientes")
+plt.figure(figsize=(11, 4.5))
+sns.histplot(ratios_visual, bins=70, color=COLOR_PRIMARY, edgecolor="white")
+
+plt.axvline(x=1.0, color='gray', linestyle=':', linewidth=1, alpha=0.7)
+plt.axvline(x=1.5, color=COLOR_WARN, linestyle='--', linewidth=2,
+            label="Umbral de riesgo (1.5×)")
+plt.axvline(x=3.0, color='black', linestyle='--', linewidth=1.5, alpha=0.7,
+            label="Umbral de abandono (3×)")
+
+plt.title("Distribución del ratio de urgencia (clientes recurrentes)")
+plt.xlabel("Ratio (recency / cadencia personal)")
+plt.ylabel("Volumen de clientes")
 plt.legend()
 sns.despine()
 plt.tight_layout()
 plt.show()
 ```
 
-## 3. Generación del Score Heurístico Base
+### 3.2 Un edge case real: clientes B2B con cadencia cero
 
-A pesar de estas nuevas métricas profundas, mantuvimos una segmentación inicial heurística (basada en percentiles clásicos de R, F y M) para tener un panorama general antes de pasar al aprendizaje automático complejo.
+Durante el desarrollo descubrimos un cliente B2B legítimo con **6,208 pedidos en 30 meses** (~7 pedidos por día). Su cadencia mediana entre compras consecutivas es **0 días** porque la mayoría de sus pedidos son del mismo día.
 
-```{python}
-# Paleta extraída de las libretas originales
-SEGMENT_COLORS = {
-    "MVPs": "#0B3C5D",         # Azul profundo elegante
-    "Alto Valor": "#328CC1",   # Azul medio
-    "Ocasionales": "#6CA6C1",  # Azul grisáceo suave
-    "En Riesgo": "#D82822",    # Naranja rojizo (alerta sin ser agresivo)
-    "Hibernando": "#9AA0A6"    # Gris neutro
-} 
+Esto rompe el cálculo del ratio: dividir entre cero da infinito, y matemáticamente cualquier recency > 0 lo marca como abandono. Pero claramente no es un cliente en abandono — es un cliente automatizado de altísima frecuencia.
 
-# Representación exacta de las proporciones heurísticas reales encontradas
-segment_pct = {
-    'MVPs': 28.86,
-    'Hibernando': 28.02,
-    'Alto Valor': 19.19,
-    'Ocasionales': 11.98,
-    'En Riesgo': 11.94
-}
+**Solución en el dashboard**:
 
-df_rfm_summary = pd.DataFrame({
-    'Segmento': list(segment_pct.keys()),
-    'Porcentaje': list(segment_pct.values())
-}).sort_values('Porcentaje', ascending=False)
-
-plt.figure(figsize=(10, 5))
-sns.barplot(
-    data=df_rfm_summary, 
-    y='Segmento', 
-    x='Porcentaje', 
-    palette=SEGMENT_COLORS,
-    edgecolor="none"
-)
-
-# Añadir las etiquetas de porcentaje
-for index, value in enumerate(df_rfm_summary['Porcentaje']):
-    plt.text(value + 0.5, index, f"{value:.1f}%", va='center')
-
-plt.title("Proporción de Clientes por Regla Heurística Clásica")
-plt.xlabel("Porcentaje del Total (%)")
-plt.ylabel("")
-sns.despine()
-plt.show()
+```sql
+ratio = recency::DOUBLE / GREATEST(dias_entre_compras, 1)
 ```
 
-Esta segmentación heurística mostró una fuerte polarización del negocio (28% de MVPs y 28% Hibernando). Sin embargo, era necesario incorporar la "Cadencia" como dimensión estructural y permitir que algoritmos de Inteligencia Artificial (Clustering) redibujaran las fronteras de manera matemática.
+`GREATEST(x, 1)` trata cualquier cadencia menor a 1 día como si fuera 1. Para este cliente, su ratio efectivo se vuelve igual a su recency en días, lo cual es informativo sin ser engañoso. Adicionalmente, la query de alertas **excluye explícitamente** clientes con `dias_entre_compras < 1`:
+
+```sql
+WHERE segmento IN ('MVPs', 'Alto Valor')
+  AND es_single_buyer = 0
+  AND dias_entre_compras >= 1
+  AND recency > 1.5 * dias_entre_compras
+```
+
+**El rumbo que nos hizo tomar**: los datos del mundo real tienen casos extremos que rompen las fórmulas teóricas. Cualquier métrica derivada (como ratio) debe defenderse contra estos casos en el código, no en el análisis posterior.
+
+## 4. Las cuatro dimensiones del modelo
+
+Con todo lo anterior, el feature set final para el clustering quedó así:
+
+| Feature | Rango típico | Transformación |
+|---|---|---|
+| `recency` | 0 — 900 días | `log1p` |
+| `frequency` | 1 — 6,200 pedidos | `log1p` |
+| `monetary` | 1 — varios millones | `log1p` |
+| `dias_entre_compras` | 0 — 900 días | `log1p` |
+
+Las cuatro pasan por la **misma transformación logarítmica + estandarización** dentro del pipeline serializado del modelo. Esto garantiza que:
+
+1. Las distribuciones sesgadas no dominan los algoritmos de distancia.
+2. Las features están en escalas comparables (media 0, desviación 1).
+3. Al guardar el modelo, **estas transformaciones viajan con él** y se aplican idénticamente en cada predicción futura.
+
+## 5. Cierre de RFM, antesala del clustering
+
+El RFM clásico fue nuestro punto de partida pero no fue donde nos quedamos. Las decisiones de feature engineering tomadas en esta fase — agregar cadencia, manejar single-buyers, defender contra edge cases — son las que permitieron que el algoritmo de clustering descubriera **comportamientos reales** y no artefactos estadísticos.
+
+En la siguiente sección documentamos cómo K-Means procesó estas cuatro dimensiones y qué cinco perfiles de cliente emergieron.
+
+:::

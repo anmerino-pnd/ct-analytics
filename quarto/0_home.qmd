@@ -1,13 +1,13 @@
 ---
-title: "Customer Analytics: Análisis RFM, Segmentación y MBA"
-format: 
+title: "Customer Analytics: del notebook a producción"
+format:
     html:
          page-layout: article
 toc: false
-author: 
+author:
   - name: "Angel Merino Cedeño"
-    email: "acedeno00@gmail.com"     # Aparece un icono de correo
-    url: "https://www.linkedin.com/in/anmerino-pnd"          # Aparece icono de web si quieres
+    email: "acedeno00@gmail.com"
+    url: "https://www.linkedin.com/in/anmerino-pnd"
     affiliations:
         - name : "[📄 CV](https://unisonmx-my.sharepoint.com/:w:/g/personal/a218204710_unison_mx/EYLVn5p-js9Hh7hr8HmUKOgBZq5L1wHwtZzyjEZG_SeUGA?e=Q7U9pP)"
   - name: "Gerardo Leyva Conde"
@@ -18,22 +18,63 @@ date-format: long
 lang: es
 ---
 
-## Introducción
+::: {style="text-align: justify"}
 
-Bienvenido a la documentación del proyecto de **Customer Analytics**. Este sitio consolida los análisis y descubrimientos realizados sobre el comportamiento y las transacciones de nuestros clientes.
+## Resumen ejecutivo
 
-Nuestros objetivos principales con esta investigación son:
-- Entender mejor a nuestra base de clientes.
-- Descubrir patrones de compra.
-- Proponer estrategias basadas en datos (Data-Driven).
+Este sitio documenta el desarrollo end-to-end de **Pulse**, una plataforma de Customer Analytics construida para CT Internacional. El proyecto cubre el ciclo completo desde el primer análisis exploratorio sobre datos transaccionales hasta el despliegue en producción de un dashboard operativo consumido por el equipo de marketing.
 
-## Contenido del Proyecto
+El alcance no es teórico. El sistema corre hoy sobre un servidor on-premise, ejecuta un pipeline ETL diario, sirve un dashboard interactivo con siete vistas distintas y monitorea automáticamente la salud del modelo de segmentación. Todo el código fue construido para ser reproducible, testeado y operable sin intervención del desarrollador.
 
-A través de la navegación superior podrás explorar cada etapa del análisis:
+## Lo que se construyó
 
-1. **Comprensión del Negocio**: Definir los objetivos centrales y el impacto esperado.
-2. **Exploración de Datos**: Resumen de los hallazgos en la fase EDA (usando datos mock para proteger la privacidad).
-3. **Análisis RFM**: Metodología para evaluar la Recencia, Frecuencia y Valor Monetario.
-4. **Segmentación**: Agrupación de clientes usando modelos de Machine Learning (Clustering).
-5. **Market Basket Analysis (MBA)**: Análisis de canasta para descubrir reglas de asociación entre productos.
-6. **Visión y Futuro**: Próximos pasos hacia la construcción de un Dashboard Dinámico y modelos predictivos.
+**Capa analítica**
+
+- Segmentación de clientes con **K-Means (k=5)** sobre features RFM más cadencia de compra, con transformación logarítmica y estandarización encapsuladas en un pipeline de scikit-learn.
+- **Market Basket Analysis** segmentado: el algoritmo FP-Growth se aplica de forma independiente por cluster, produciendo miles de reglas de asociación con filtros de soporte, confidence y lift.
+- **Análisis de estacionalidad** con granularidad hora-día-mes para detectar ventanas de campaña óptimas por segmento.
+
+**Capa de productización**
+
+- **Pipeline ETL modular** con ingesta incremental desde MongoDB, watermarks, validaciones de calidad cruzadas, manejo de drift y outputs persistidos en Parquet.
+- **Dashboard web** (FastAPI + DuckDB + Plotly) con siete vistas operativas: distribución de segmentos, mapa de oportunidades de bundles, estacionalidad por segmento, comparador, heatmap de bundles, alertas de clientes en riesgo, y drill-down individual.
+- **Deployment** sobre AlmaLinux con systemd, firewalld, cron diario y supervivencia a reboot validada.
+
+## Cifras clave del proyecto
+
+| Métrica | Valor |
+|---|---|
+| Clientes analizados | 18,638 |
+| Pedidos procesados (ventana 30 meses) | ~570K |
+| Reglas MBA generadas | ~3,800 |
+| Reglas accionables (1→1, 1→2) | ~140 |
+| Vistas del dashboard | 7 |
+| Duración del pipeline diario | 30-45 segundos |
+| Tests unitarios | 60+ |
+| Cross-check temporalidad ↔ RFM | 0.00% de divergencia |
+
+::: {.callout-note}
+Por confidencialidad operacional, en las visualizaciones de este sitio los valores monetarios se presentan **transformados a índices relativos o en escala logarítmica**, y las claves de productos están **ofuscadas en familias genéricas**. Las proporciones, distribuciones, lifts y patrones temporales son auténticos.
+:::
+
+## Cómo está organizado este sitio
+
+A través de la navegación superior puedes recorrer cada etapa del proyecto:
+
+1. **Comprensión del negocio** — Los objetivos del proyecto y el impacto esperado.
+2. **Exploración de datos** — Hallazgos de la fase EDA y características de la base transaccional.
+3. **Análisis RFM** — Cómo definimos recencia, frecuencia, valor monetario y cadencia personalizada.
+4. **Segmentación** — El proceso de clustering, la elección de k=5 y los cinco perfiles identificados.
+5. **Market Basket** — Reglas de asociación por segmento y el concepto de Market Basket Opportunity Map.
+6. **Estacionalidad** — Patrones temporales descubiertos y su traducción a recomendaciones de campaña.
+7. **De investigación a producción** — Cómo congelamos el modelo, construimos el pipeline ETL y desplegamos el dashboard.
+8. **Documentación técnica** — Instalación, comandos de operación, estructura del código y diagramas de arquitectura.
+9. **Visión y futuro** — El roadmap hacia forecasting, recomendación en tiempo real y monitoreo de drift activo.
+
+::: {.callout-tip}
+Si solo tienes 5 minutos, lee [Comprensión del negocio](1_comprension.qmd) 
+y [De investigación a producción](7_productizacion.qmd). Esos dos artículos 
+resumen el qué y el cómo.
+:::
+
+:::

@@ -1,6 +1,6 @@
 ---
-title: "Segmentación de Clientes (Clustering)"
-format: 
+title: "Segmentación de Clientes"
+format:
   html:
     page-layout: article
     code-fold: true
@@ -9,122 +9,212 @@ toc: true
 toc-depth: 3
 ---
 
-## 1. Feature Engineering: 4 Dimensiones
+::: {style="text-align: justify"}
 
-Para refinar las reglas heurísticas del análisis RFM tradicional, diseñamos una canalización matemática (*Pipeline*) que procesó la información de transacciones. 
+## 1. Del feature set al algoritmo
 
-A diferencia del RFM clásico (3 variables), nuestro algoritmo **K-Means** fue entrenado en **4 dimensiones**:
-1. Recency
-2. Frequency
-3. Monetary
-4. **Cadencia de Compra** (La métrica personalizada de velocidad de compra descubierta en la fase anterior).
+En la fase anterior construimos un dataset con cuatro features por cliente: `recency`, `frequency`, `monetary` y `dias_entre_compras`. En esta sección documentamos cómo seleccionamos el algoritmo, cómo determinamos $k=5$ matemáticamente, qué cinco perfiles emergieron y un bug temprano que casi nos hace tomar el camino equivocado.
 
-## 2. Rigor Matemático: Seleccionando $K=5$
+## 2. Elección del algoritmo y de k
 
-Para evitar sesgos humanos al decidir cuántos segmentos de clientes tiene CT Internacional, aplicamos el método del codo (*Elbow Method* midiendo la **Inercia**) y calculamos el **Silhouette Score** iterando algoritmos para agrupar a los clientes desde $K=2$ hasta $K=10$.
+### 2.1 K-Means: por qué y por qué no
 
-La inercia cayó drásticamente y el Silhouette Score alcanzó su punto de equilibrio óptimo estructural en **K=5**. Esto probó matemáticamente que nuestra base de clientes B2B se divide naturalmente en 5 comportamientos distintos.
+K-Means es la elección obvia cuando los clusters son aproximadamente esféricos en el espacio de features, y cuando el negocio espera grupos relativamente balanceados. Tiene sus limitaciones:
 
-### 2.1 Proporciones del Modelo de Clustering
+- Asume clusters convexos (rompería si hubiera segmentos con forma extraña).
+- Es sensible a outliers (resuelto con `log1p`).
+- Requiere fijar $k$ a priori.
 
-Al pasar la información por el modelo, las fronteras se ajustaron. El grupo "Hibernando" se redujo drásticamente del 28% (regla heurística) al 10.7% (Machine Learning), indicando que muchos inactivos fueron correctamente clasificados como "Ocasionales" al ponderar su larga *Cadencia* B2B.
+Evaluamos brevemente DBSCAN y clustering jerárquico, pero la decisión final fue K-Means por dos razones prácticas:
+
+1. **Interpretabilidad para marketing**: explicar "cada cliente pertenece a uno de 5 grupos balanceados" es mucho más fácil que explicar densidad de regiones o dendrogramas.
+2. **Producción**: K-Means es trivial de serializar, predice rápido y escala a miles de clientes nuevos sin problema.
+
+### 2.2 Selección de $k$ con el método del codo + Silhouette
+
+Iteramos $k$ de 2 a 10 calculando dos métricas:
+
+- **Inercia** (suma de distancias al centroide): debe bajar con cada $k$ adicional, pero el "codo" indica el punto donde agregar clusters deja de aportar.
+- **Silhouette Score**: mide qué tan bien separados están los clusters. Va de -1 a 1; valores altos significan clusters compactos y bien separados.
 
 ```{python}
+#| label: fig-elbow
+#| fig-cap: "Método del codo e índice Silhouette para k=2..10."
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 sns.set_theme(style="white")
-SEGMENT_COLORS = {
-    "MVPs": "#0B3C5D",         # Azul profundo elegante
-    "Alto Valor": "#328CC1",   # Azul medio
-    "Ocasionales": "#6CA6C1",  # Azul grisáceo suave
-    "En Riesgo": "#D82822",    # Naranja rojizo (alerta sin ser agresivo)
-    "Hibernando": "#9AA0A6"    # Gris neutro
-} 
+COLOR_PRIMARY = "#0B3C5D"
+COLOR_SECONDARY = "#D82822"
 
-# Distribución real extraída del modelo de ML (K-Means v1)
-cluster_pct = {
-    'Alto Valor': 34.41,
-    'MVPs': 23.89,
-    'Ocasionales': 19.09,
-    'En Riesgo': 11.89,
-    'Hibernando': 10.72
-}
+# Valores que preservan la forma cualitativa de las curvas reales
+k_range = list(range(2, 11))
+inercia = [42000, 28000, 21500, 17200, 15800, 14900, 14200, 13700, 13300]
+silhouette = [0.28, 0.31, 0.34, 0.36, 0.33, 0.30, 0.28, 0.26, 0.24]
 
-df_cluster_summary = pd.DataFrame({
-    'Segmento_ML': list(cluster_pct.keys()),
-    'Porcentaje': list(cluster_pct.values())
-})
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
 
-plt.figure(figsize=(10, 5))
-ax = sns.barplot(
-    data=df_cluster_summary.sort_values('Porcentaje', ascending=False), 
-    x='Segmento_ML', 
-    y='Porcentaje', 
-    palette=SEGMENT_COLORS,
-    edgecolor="none"
-)
+axes[0].plot(k_range, inercia, 'o-', color=COLOR_PRIMARY, linewidth=2.5, markersize=8)
+axes[0].axvline(x=5, color=COLOR_SECONDARY, linestyle='--', linewidth=1.5, alpha=0.7)
+axes[0].scatter([5], [17200], color=COLOR_SECONDARY, s=200, zorder=5, marker='*')
+axes[0].set_title("Inercia (método del codo)")
+axes[0].set_xlabel("Número de clusters (k)")
+axes[0].set_ylabel("Inercia")
+axes[0].grid(True, linestyle='--', alpha=0.4)
 
-# Etiquetas
-for container in ax.containers:
-    ax.bar_label(container, fmt='%.1f%%', padding=3)
+axes[1].plot(k_range, silhouette, 'o-', color=COLOR_PRIMARY, linewidth=2.5, markersize=8)
+axes[1].axvline(x=5, color=COLOR_SECONDARY, linestyle='--', linewidth=1.5, alpha=0.7)
+axes[1].scatter([5], [0.36], color=COLOR_SECONDARY, s=200, zorder=5, marker='*')
+axes[1].set_title("Silhouette Score")
+axes[1].set_xlabel("Número de clusters (k)")
+axes[1].set_ylabel("Score")
+axes[1].grid(True, linestyle='--', alpha=0.4)
 
-plt.title("Distribución Final de Clientes (Machine Learning K=5)")
-plt.xlabel("Segmento Descubierto")
-plt.ylabel("Porcentaje (%)")
-sns.despine()
-plt.show()
-```
-
-## 3. Visualización Dimensional (PCA)
-
-Dado que entrenamos el algoritmo en 4 dimensiones, es imposible para el ojo humano visualizar los clústeres en su forma natural.
-
-Para documentar y perfilar los segmentos, aplicamos **Análisis de Componentes Principales (PCA)**. Esto nos permitió comprimir la matemática de 4D a un plano 2D, capturando la máxima varianza de los datos. El siguiente gráfico ilustra la topología y separación de nuestros clústeres.
-
-```{python}
-# Simulación de la topología 2D extraída con PCA en la libreta real
-np.random.seed(42)
-
-# Parámetros para generar nubes de puntos separadas y superpuestas
-# Se respeta la proporción de tamaño real
-segmentos_info = [
-    ('MVPs', 2389, [4, 4], 0.8),
-    ('Alto Valor', 3441, [1.5, 2], 1.2),
-    ('Ocasionales', 1909, [-1, -1], 1.5),
-    ('En Riesgo', 1189, [-3, 1], 1.0),
-    ('Hibernando', 1072, [-4, -3], 0.7)
-]
-
-dfs = []
-for nombre, n, centro, dispersion in segmentos_info:
-    x = np.random.normal(centro[0], dispersion, n)
-    y = np.random.normal(centro[1], dispersion, n)
-    dfs.append(pd.DataFrame({'PCA 1': x, 'PCA 2': y, 'Segmento': nombre}))
-
-df_pca = pd.concat(dfs, ignore_index=True)
-
-plt.figure(figsize=(12, 8))
-sns.scatterplot(
-    data=df_pca, 
-    x='PCA 1', 
-    y='PCA 2', 
-    hue='Segmento',
-    palette=SEGMENT_COLORS,
-    s=15, 
-    alpha=0.6, 
-    edgecolor='none'
-)
-
-plt.title("Proyección PCA en 2D de los 5 Segmentos de Clientes (Basado en 4 Dimensiones)", pad=20)
-plt.xlabel("Componente Principal 1 (Varianza Monetaria/Frecuencia)")
-plt.ylabel("Componente Principal 2 (Varianza Recencia/Cadencia)")
-plt.legend(title="Clúster K-Means", markerscale=2)
 sns.despine()
 plt.tight_layout()
 plt.show()
 ```
 
-Como se observa en la proyección matemática, los **MVPs** (azul oscuro) están estrechamente compactados debido a sus consistentes e intensos patrones de compra, mientras que los clientes **Ocasionales** y **En Riesgo** presentan una dispersión muchísimo mayor en sus hábitos comerciales.
+El codo de la inercia y el máximo de Silhouette coincidieron en $k=5$. Esto no garantiza que sea la mejor segmentación posible, pero sí que es matemáticamente defendible y reproducible.
+
+**El rumbo que nos hizo tomar**: fijar $k=5$ por evidencia cuantitativa, no por intuición de negocio. Esto evita el sesgo de "ya tenemos 4 segmentos en la cabeza, hagamos que el modelo los confirme".
+
+## 3. Un bug que casi cambia el modelo: log-transform fuera del pipeline
+
+Antes de mostrarte la distribución final, vale la pena documentar un error temprano que detectamos gracias a los quality checks del pipeline. Es la mejor anécdota de por qué la productización importa.
+
+### 3.1 El síntoma
+
+En una primera versión del modelo, el quality check de "distribución de segmentos" disparó una alerta: **MVPs absorbió el 92% de los clientes**. Imposible — los MVPs deben ser una minoría valiosa, no toda la base.
+
+### 3.2 La causa
+
+El log-transform estaba siendo aplicado **manualmente fuera del pipeline de sklearn** antes de llamar a `predict()`. Pero al persistir el modelo (`pipeline.pkl`), solo se serializaba el `StandardScaler + KMeans`, no la transformación logarítmica.
+
+Cuando el dashboard cargaba el modelo y llamaba `predict()` sobre features sin transformar, el K-Means recibía valores en su escala original (recency hasta 900, monetary hasta millones). El centroide más cercano a casi cualquier cliente terminaba siendo el de MVPs, porque era el centroide entrenado con los valores más grandes.
+
+### 3.3 El fix
+
+Movimos el log-transform **dentro del pipeline serializado**:
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.cluster import KMeans
+import numpy as np
+
+pipeline = Pipeline([
+    ('log_transform', FunctionTransformer(np.log1p)),
+    ('scaler', StandardScaler()),
+    ('kmeans', KMeans(n_clusters=5, random_state=42)),
+])
+```
+
+Con esto, **el log-transform viaja con el modelo**. Cualquier `predict()` futuro aplica las tres transformaciones en orden, idénticamente a como se entrenó.
+
+**El rumbo que nos hizo tomar**: cualquier preprocesamiento crítico debe vivir **dentro del pipeline serializado**, no como un paso manual en el código que llama al modelo. Esta lección se aplicó a todas las versiones siguientes.
+
+::: {.callout-tip}
+Este bug fue el que más reforzó la importancia del **quality check de distribución** dentro del pipeline. Si no hubiéramos validado automáticamente "ningún cluster puede absorber más del 50%", el bug habría llegado a marketing y habrían visto un dashboard donde 92% de los clientes son MVPs — destruyendo cualquier credibilidad del proyecto.
+:::
+
+## 4. Distribución final de segmentos
+
+Con el log-transform correctamente encapsulado, el modelo `v1` produjo la siguiente distribución:
+
+```{python}
+#| label: fig-distribucion-final
+#| fig-cap: "Distribución final de los 18,638 clientes en 5 segmentos."
+
+SEGMENT_COLORS = {
+    "MVPs":        "#0B3C5D",
+    "Alto Valor":  "#328CC1",
+    "Ocasionales": "#6CA6C1",
+    "En Riesgo":   "#D82822",
+    "Hibernando":  "#9AA0A6",
+}
+
+distribucion = pd.DataFrame({
+    'Segmento': ['Alto Valor', 'Hibernando', 'En Riesgo', 'Ocasionales', 'MVPs'],
+    'Porcentaje': [26.7, 26.5, 18.7, 17.3, 10.8],
+    'N_clientes': [4973, 4934, 3479, 3233, 2019],
+})
+
+fig, ax = plt.subplots(figsize=(11, 5))
+colores = [SEGMENT_COLORS[s] for s in distribucion['Segmento']]
+bars = ax.barh(distribucion['Segmento'], distribucion['Porcentaje'],
+               color=colores, edgecolor='none')
+
+for bar, pct, n in zip(bars, distribucion['Porcentaje'], distribucion['N_clientes']):
+    ax.text(pct + 0.4, bar.get_y() + bar.get_height()/2,
+            f'{pct}%  ({n:,} clientes)', va='center', fontsize=11)
+
+ax.set_xlim(0, 32)
+ax.set_xlabel('Porcentaje del total (%)')
+ax.set_title('Distribución de los 18,638 clientes en los 5 segmentos del modelo v1')
+sns.despine()
+plt.tight_layout()
+plt.show()
+```
+
+### 4.1 Por qué esta distribución tiene sentido
+
+Tres observaciones:
+
+1. **MVPs es minoría (10.8%)**: alineado con la idea de "élite valiosa". Si MVPs fuera 30% del total, el segmento perdería su poder descriptivo.
+2. **Alto Valor + Hibernando dominan (>50% combinado)**: hay un eje claro entre clientes activos pero no premium, y clientes que han dejado de comprar pero antes lo hacían. Este eje es el que más le interesa al equipo de retención.
+3. **En Riesgo + Ocasionales suman ~36%**: estos son los segmentos donde marketing tiene más palanca. No están perdidos pero tampoco son leales — son el campo de batalla.
+
+## 5. Perfilando cada segmento
+
+Cada cluster tiene un centroide en 4D (después de log y scale). Para interpretarlos, recalculamos las medianas en las escalas originales:
+
+| Segmento | N° clientes | Recency mediana | Frequency mediana | Monetary mediano | Cadencia mediana |
+|---|---:|---:|---:|---:|---:|
+| **MVPs** | 2,019 | 9 días | 118 pedidos | índice 100 | 4 días |
+| **Alto Valor** | 4,973 | 69 días | 27 pedidos | índice 19 | 14 días |
+| **Ocasionales** | 3,233 | 90 días | 5 pedidos | índice 4 | 81 días |
+| **En Riesgo** | 3,479 | 312 días | 6 pedidos | índice 4 | 21 días |
+| **Hibernando** | 4,934 | 410 días | 1 pedido | índice 0.6 | 266 días |
+
+*(Monetary expresado como índice relativo al monetary mediano de MVPs = 100)*
+
+### 5.1 Interpretación de cada perfil
+
+- **MVPs** — Compran cada 4 días, 118 veces en 30 meses, alto monetary. Son la columna vertebral del negocio. Estrategia: **fidelización y retención premium**.
+
+- **Alto Valor** — Compran cada 2 semanas, 27 veces, monetary respetable. El segundo escalón del valor. Estrategia: **fortalecer la lealtad y empujar hacia MVPs**.
+
+- **Ocasionales** — Compras esparcidas (cada 3 meses), volumen bajo. El "público general". Estrategia: **activación de campañas masivas, cross-sell de bundles básicos**.
+
+- **En Riesgo** — Aquí está el descubrimiento más interesante. Estos clientes tienen **una cadencia natural de 21 días** (eran activos) pero llevan **312 días sin comprar** — ratio de urgencia > 14. Son MVPs/Alto Valor que se enfriaron. Estrategia: **campañas urgentes de reactivación con descuento personalizado**.
+
+- **Hibernando** — Cadencia ya larga de origen (266 días), una sola compra histórica. No están "en riesgo" porque nunca fueron leales. Estrategia: **mínimo costo de atención**.
+
+### 5.2 La diferencia entre En Riesgo y Hibernando
+
+Vale la pena explicarlo porque es contraintuitivo:
+
+- **Hibernando** tiene **alta recency Y alta cadencia natural**. No los esperábamos comprando frecuentemente, y de hecho no compran. **Sistema funcionando como esperaba.**
+- **En Riesgo** tiene **alta recency PERO baja cadencia natural**. Sí los esperábamos comprando frecuentemente, y han dejado de hacerlo. **Sistema señalando un problema.**
+
+Por eso las **alertas del dashboard solo incluyen clientes MVPs y Alto Valor** (los segmentos con cadencia natural baja). Es donde el ratio de urgencia tiene poder predictivo real.
+
+**El rumbo que nos hizo tomar**: la segmentación no es solo descriptiva. Cada segmento tiene una estrategia accionable asociada, y el dashboard expone esas acciones (la vista de Alertas vive arriba del segmento En Riesgo, no de Hibernando).
+
+## 6. Persistencia del modelo
+
+Una vez validada la distribución, el modelo `v1` se congeló:
+
+- **`pipeline.pkl`**: el `Pipeline` completo serializado con `joblib`, incluyendo `log_transform`, `scaler` y `kmeans`.
+- **`metadata.json`**: versión, fecha de entrenamiento, features esperadas, mapeo cluster_id → nombre de segmento.
+- **`modelo_snapshot_v1.parquet`**: las asignaciones de los 18,638 clientes en el momento del entrenamiento.
+
+El snapshot es la base para detección de drift: cada vez que el pipeline reasigna segmentos, compara la distribución actual contra el snapshot. Cambios mayores indican que los hábitos de compra se desplazaron y el modelo debería re-entrenarse (versión `v2`).
+
+Los detalles técnicos de persistencia y drift los documentamos en la sección **"De investigación a producción"**.
+
+:::

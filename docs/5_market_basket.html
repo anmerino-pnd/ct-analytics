@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Market Basket Analysis por Segmento</title>
+<title>Market Basket Analysis</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -57,7 +57,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -103,7 +103,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Buscar"
   }
 }</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
 
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -154,12 +186,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Estacionalidad</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./7_persistencia_mlops.html"> 
-<span class="menu-text">MLOps</span></a>
+    <a class="nav-link" href="./7_productizacion.html"> 
+<span class="menu-text">De Investigación a Producción</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./8_dashboard_pulse.html"> 
-<span class="menu-text">Dashboard</span></a>
+    <a class="nav-link" href="./8_documentacion_tecnica.html"> 
+<span class="menu-text">Documentación Técnica</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./9_vision_y_futuro.html"> 
@@ -177,26 +209,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Tabla de Contenidos</h2>
-   
-  <ul>
-  <li><a href="#reglas-de-asociación-contextuales" id="toc-reglas-de-asociación-contextuales" class="nav-link active" data-scroll-target="#reglas-de-asociación-contextuales">1. Reglas de Asociación Contextuales</a>
-  <ul class="collapse">
-  <li><a href="#descubrimientos-de-canasta-por-segmento" id="toc-descubrimientos-de-canasta-por-segmento" class="nav-link" data-scroll-target="#descubrimientos-de-canasta-por-segmento">1.1 Descubrimientos de Canasta por Segmento</a></li>
-  <li><a href="#hiper-asociación-en-segmentos-premium" id="toc-hiper-asociación-en-segmentos-premium" class="nav-link" data-scroll-target="#hiper-asociación-en-segmentos-premium">1.2 Hiper-Asociación en Segmentos Premium</a></li>
-  </ul></li>
-  <li><a href="#accionabilidad-estratégica-bundles-exclusivos" id="toc-accionabilidad-estratégica-bundles-exclusivos" class="nav-link" data-scroll-target="#accionabilidad-estratégica-bundles-exclusivos">2. Accionabilidad Estratégica (Bundles Exclusivos)</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Market Basket Analysis por Segmento</h1>
+<h1 class="title">Market Basket Analysis</h1>
 </div>
 
 
@@ -213,84 +234,385 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="reglas-de-asociación-contextuales" class="level2">
-<h2 class="anchored" data-anchor-id="reglas-de-asociación-contextuales">1. Reglas de Asociación Contextuales</h2>
-<p>El <strong>Market Basket Analysis (MBA)</strong> clásico asume que todos los clientes tienen las mismas intenciones de compra. Sin embargo, al integrar nuestro modelo de segmentación (K-Means) con las reglas de asociación, logramos descubrir <strong>Bundles</strong> (paquetes) de productos que son altamente específicos para cada perfil.</p>
-<p>Aplicamos el algoritmo de reglas de asociación con un soporte mínimo absoluto, lo que nos permite descubrir que lo que es popular para un “Ocasional” no necesariamente le interesa a un “MVP”.</p>
-<section id="descubrimientos-de-canasta-por-segmento" class="level3">
-<h3 class="anchored" data-anchor-id="descubrimientos-de-canasta-por-segmento">1.1 Descubrimientos de Canasta por Segmento</h3>
-<p>Para proteger el catálogo real, los nombres de las familias de productos han sido ofuscados, pero mantenemos las proporciones métricas reales (Soporte, Confianza y Lift) descubiertas en nuestros datos procesados.</p>
-<div id="b96e24ee" class="cell" data-execution_count="1">
+<div style="text-align: justify">
+<section id="reglas-de-asociación-por-segmento" class="level2">
+<h2 class="anchored" data-anchor-id="reglas-de-asociación-por-segmento">1. Reglas de asociación por segmento</h2>
+<p>El <strong>Market Basket Analysis (MBA)</strong> descubre qué productos se compran juntos en una misma orden. La técnica clásica produce reglas del tipo “quien compró A también compró B” con tres métricas asociadas: support, confidence y lift.</p>
+<p>En este proyecto aplicamos MBA con una variante importante: <strong>lo corremos por segmento, no sobre todo el universo combinado</strong>. Esta decisión cambió radicalmente el tipo de reglas que emergen.</p>
+<section id="por-qué-segmentado-y-no-global" class="level3">
+<h3 class="anchored" data-anchor-id="por-qué-segmentado-y-no-global">1.1 Por qué segmentado y no global</h3>
+<p>Si calculas MBA sobre todos los clientes juntos, las reglas resultantes son <strong>promedio de todos los comportamientos</strong>. Eso produce reglas obvias del tipo “memorias junto con discos” — porque ambos productos son populares en general.</p>
+<p>Pero los hábitos de compra de un MVP son muy distintos a los de un cliente Ocasional. Las reglas que sirven para activar a uno no son las mismas que para el otro. Al correr el algoritmo <strong>dentro de cada segmento de forma independiente</strong>, descubrimos:</p>
+<ul>
+<li>Reglas con <strong>lifts hasta 160×</strong> dentro de un segmento (muy específicas y accionables).</li>
+<li>Reglas <strong>exclusivas</strong> que solo aparecen en un cluster, no en otros.</li>
+<li>Bundles diferenciados por perfil de cliente.</li>
+</ul>
+<div class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Paleta basada en nuestros segmentos</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>: <span class="st">"#0B3C5D"</span>,         <span class="co"># Azul profundo elegante</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>: <span class="st">"#328CC1"</span>,   <span class="co"># Azul medio</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,  <span class="co"># Azul grisáceo suave</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>: <span class="st">"#D82822"</span>,    <span class="co"># Naranja rojizo (alerta sin ser agresivo)</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>: <span class="st">"#9AA0A6"</span>    <span class="co"># Gris neutro</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>} </span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación de las reglas de asociación reales por segmento</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>mock_rules_segment <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'MVPs'</span>, <span class="st">'MVPs'</span>, <span class="st">'Alto Valor'</span>, <span class="st">'Ocasionales'</span>, <span class="st">'En Riesgo'</span>],</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Antecedente'</span>: [<span class="st">'Software Corporativo'</span>, <span class="st">'Servidores E.'</span>, <span class="st">'Periféricos C.'</span>, <span class="st">'Accesorio Móvil'</span>, <span class="st">'Consumibles'</span>],</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Consecuente'</span>: [<span class="st">'Licencia Extendida'</span>, <span class="st">'Redes Avanzadas'</span>, <span class="st">'Garantía Estándar'</span>, <span class="st">'Audio Básico'</span>, <span class="st">'Servicio Técnico'</span>],</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Support (%)'</span>: [<span class="fl">8.5</span>, <span class="fl">4.2</span>, <span class="fl">12.1</span>, <span class="fl">15.3</span>, <span class="fl">6.4</span>],</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Confidence (%)'</span>: [<span class="fl">85.0</span>, <span class="fl">78.5</span>, <span class="fl">62.0</span>, <span class="fl">45.0</span>, <span class="fl">30.0</span>],</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Lift'</span>: [<span class="fl">145.2</span>, <span class="fl">120.1</span>, <span class="fl">42.5</span>, <span class="fl">5.8</span>, <span class="fl">2.1</span>]</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}).sort_values(<span class="st">'Lift'</span>, ascending<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>mba_cifras <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>:     [<span class="st">'MVPs'</span>, <span class="st">'Alto Valor'</span>, <span class="st">'En Riesgo'</span>, <span class="st">'Ocasionales'</span>, <span class="st">'Hibernando'</span>],</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Pedidos multi-familia'</span>: [<span class="dv">165_973</span>, <span class="dv">84_198</span>, <span class="dv">16_304</span>, <span class="dv">9_331</span>, <span class="dv">4_489</span>],</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Reglas generadas'</span>:      [<span class="dv">2_004</span>, <span class="dv">1_269</span>, <span class="dv">364</span>, <span class="dv">188</span>, <span class="dv">35</span>],</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Umbral support'</span>:        [<span class="st">'0.10%'</span>, <span class="st">'0.10%'</span>, <span class="st">'0.18%'</span>, <span class="st">'0.32%'</span>, <span class="st">'0.67%'</span>],</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>mba_cifras</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div id="tbl-mba-cifras" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="1">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mba-cifras-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla&nbsp;1: Reglas generadas por segmento (pipeline weekly)
+</figcaption>
+<div aria-describedby="tbl-mba-cifras-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="1">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Segmento</th>
+<th data-quarto-table-cell-role="th">Pedidos multi-familia</th>
+<th data-quarto-table-cell-role="th">Reglas generadas</th>
+<th data-quarto-table-cell-role="th">Umbral support</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>MVPs</td>
+<td>165973</td>
+<td>2004</td>
+<td>0.10%</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Alto Valor</td>
+<td>84198</td>
+<td>1269</td>
+<td>0.10%</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>En Riesgo</td>
+<td>16304</td>
+<td>364</td>
+<td>0.18%</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Ocasionales</td>
+<td>9331</td>
+<td>188</td>
+<td>0.32%</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Hibernando</td>
+<td>4489</td>
+<td>35</td>
+<td>0.67%</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
 </div>
 </section>
-<section id="hiper-asociación-en-segmentos-premium" class="level3">
-<h3 class="anchored" data-anchor-id="hiper-asociación-en-segmentos-premium">1.2 Hiper-Asociación en Segmentos Premium</h3>
-<p>Una de las revelaciones más grandes fue la enorme fuerza de asociación (Lift) en los segmentos VIP. Mientras que los clientes “Ocasionales” compran de manera más caótica (Lifts de ~5x), los “MVPs” tienen compras altamente predecibles y acopladas, alcanzando multiplicadores de propensión de hasta <strong>140x a 150x</strong>.</p>
-<div id="e05430f1" class="cell" data-execution_count="2">
+<section id="umbral-adaptativo-de-support" class="level3">
+<h3 class="anchored" data-anchor-id="umbral-adaptativo-de-support">1.2 Umbral adaptativo de support</h3>
+<p>El support es el porcentaje de canastas donde aparece una regla. Si ponemos el mismo umbral para todos los segmentos, los chicos (Hibernando: 4,489 canastas) producen cero reglas, y los grandes (MVPs: 165,973) producen ruido.</p>
+<p>Nuestra solución es un <strong>umbral híbrido</strong> que toma el máximo entre dos criterios:</p>
+<p><span class="math display">\[
+\text{umbral} = \max(\text{support absoluto}, \text{support relativo} \times N)
+\]</span></p>
+<p>Con <code>support absoluto = 30 pedidos</code> y <code>support relativo = 0.1%</code>, en MVPs prevalece el relativo (166 pedidos mínimo) y en Hibernando prevalece el absoluto (30 pedidos mínimo). Esto garantiza significancia estadística en segmentos grandes y posibilidad de descubrir patrones en segmentos chicos.</p>
+<p><strong>El rumbo que nos hizo tomar</strong>: este umbral adaptativo permitió que el segmento Hibernando produjera 35 reglas. Sin él, hubiera producido cero. Ahora marketing tiene reglas accionables incluso para clientes en hibernación.</p>
+</section>
+</section>
+<section id="el-market-basket-opportunity-map" class="level2">
+<h2 class="anchored" data-anchor-id="el-market-basket-opportunity-map">2. El Market Basket Opportunity Map</h2>
+<section id="cuatro-cuadrantes-de-oportunidad" class="level3">
+<h3 class="anchored" data-anchor-id="cuatro-cuadrantes-de-oportunidad">2.1 Cuatro cuadrantes de oportunidad</h3>
+<p>Una tabla de 3,860 reglas no es útil para nadie. Necesitábamos una visualización que permita identificar de un vistazo cuáles son las reglas accionables.</p>
+<p>Adoptamos un <strong>scatter plot con cuatro cuadrantes</strong> (técnica común en business analytics) donde el eje X es confidence, el eje Y es lift y el tamaño de cada burbuja representa el support. Los cuadrantes se definen por la <strong>mediana</strong> de cada eje en el conjunto mostrado, generando una división balanceada visualmente.</p>
+<div id="cell-fig-opportunity-map" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [SEGMENT_COLORS[seg] <span class="cf">for</span> seg <span class="kw">in</span> mock_rules_segment[<span class="st">'Segmento'</span>]]</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>y_labels <span class="op">=</span> mock_rules_segment[<span class="st">'Antecedente'</span>] <span class="op">+</span> <span class="st">" -&gt; "</span> <span class="op">+</span> mock_rules_segment[<span class="st">'Consecuente'</span>] <span class="op">+</span> <span class="st">" ("</span> <span class="op">+</span> mock_rules_segment[<span class="st">'Segmento'</span>] <span class="op">+</span> <span class="st">")"</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ax.barh(y_labels, mock_rules_segment[<span class="st">'Lift'</span>], color<span class="op">=</span>colors, edgecolor<span class="op">=</span><span class="st">"none"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Fuerza de Asociación (Lift) Comparativa entre Segmentos"</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Multiplicador de Probabilidad (Lift)"</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>plt.axvline(x<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Colores de cuadrantes (replican el dashboard)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>QUADRANT_COLORS <span class="op">=</span> {</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Oportunidades fuertes"</span>:  <span class="st">"#0B3C5D"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Co-compras frecuentes"</span>:  <span class="st">"#328CC1"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Nichos interesantes"</span>:    <span class="st">"#D82822"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ruido"</span>:                  <span class="st">"#9AA0A6"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulación con la forma cualitativa de la distribución real</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_quad(n, conf_range, lift_range):</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    conf <span class="op">=</span> np.random.uniform(<span class="op">*</span>conf_range, n)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    lift <span class="op">=</span> np.random.uniform(<span class="op">*</span>lift_range, n)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    sup <span class="op">=</span> np.random.uniform(<span class="dv">50</span>, <span class="dv">3000</span>, n)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> conf, lift, sup</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>quads <span class="op">=</span> {</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Oportunidades fuertes"</span>:  gen_quad(<span class="dv">45</span>, (<span class="fl">0.55</span>, <span class="fl">0.92</span>), (<span class="dv">15</span>, <span class="dv">160</span>)),</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Co-compras frecuentes"</span>:  gen_quad(<span class="dv">60</span>, (<span class="fl">0.55</span>, <span class="fl">0.92</span>), (<span class="dv">2</span>, <span class="dv">14</span>)),</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Nichos interesantes"</span>:    gen_quad(<span class="dv">35</span>, (<span class="fl">0.25</span>, <span class="fl">0.55</span>), (<span class="dv">15</span>, <span class="dv">90</span>)),</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ruido"</span>:                  gen_quad(<span class="dv">50</span>, (<span class="fl">0.25</span>, <span class="fl">0.55</span>), (<span class="dv">2</span>, <span class="dv">14</span>)),</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">6.5</span>))</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nombre, (conf, lift, sup) <span class="kw">in</span> quads.items():</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    ax.scatter(conf, lift, s<span class="op">=</span>sup<span class="op">/</span><span class="dv">3</span>, c<span class="op">=</span>QUADRANT_COLORS[nombre],</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>               alpha<span class="op">=</span><span class="fl">0.65</span>, edgecolor<span class="op">=</span><span class="st">'white'</span>, linewidth<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>               label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>nombre<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span><span class="bu">len</span>(conf)<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Líneas divisorias en la mediana</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>ax.axvline(x<span class="op">=</span><span class="fl">0.55</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>ax.axhline(y<span class="op">=</span><span class="dv">14</span>, color<span class="op">=</span><span class="st">'gray'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, linewidth<span class="op">=</span><span class="dv">1</span>, alpha<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">0.56</span>, <span class="dv">155</span>, <span class="st">'conf=55%'</span>, fontsize<span class="op">=</span><span class="dv">9</span>, color<span class="op">=</span><span class="st">'gray'</span>)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">0.91</span>, <span class="fl">14.5</span>, <span class="st">'lift=14'</span>, fontsize<span class="op">=</span><span class="dv">9</span>, color<span class="op">=</span><span class="st">'gray'</span>, ha<span class="op">=</span><span class="st">'right'</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'Confidence (qué tan seguro es el patrón)'</span>, fontsize<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'Lift (qué tan fuerte es la asociación)'</span>, fontsize<span class="op">=</span><span class="dv">11</span>)</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">'Market Basket Opportunity Map'</span>)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">'upper right'</span>, framealpha<span class="op">=</span><span class="fl">0.95</span>)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="fl">0.20</span>, <span class="fl">0.95</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">0</span>, <span class="dv">170</span>)</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="5_market_basket_files/figure-html/cell-3-output-1.png" class="img-fluid figure-img"></p>
+<div id="fig-opportunity-map" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-opportunity-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="5_market_basket_files/figure-html/fig-opportunity-map-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-opportunity-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1: Market Basket Opportunity Map: distribución de reglas en los 4 cuadrantes.
+</figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
+<section id="cómo-se-lee-el-mapa" class="level3">
+<h3 class="anchored" data-anchor-id="cómo-se-lee-el-mapa">2.2 Cómo se lee el mapa</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Cuadrante</th>
+<th>Confidence</th>
+<th>Lift</th>
+<th>Interpretación de negocio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Oportunidades fuertes</strong></td>
+<td>Alta (&gt;med)</td>
+<td>Alto (&gt;med)</td>
+<td>Cross-sell directo. <strong>Lo que marketing debe activar primero.</strong></td>
+</tr>
+<tr class="even">
+<td><strong>Co-compras frecuentes</strong></td>
+<td>Alta (&gt;med)</td>
+<td>Bajo (&lt;med)</td>
+<td>Bundles muy comunes. Útiles pero no diferenciadores.</td>
+</tr>
+<tr class="odd">
+<td><strong>Nichos interesantes</strong></td>
+<td>Baja (&lt;med)</td>
+<td>Alto (&gt;med)</td>
+<td>Patrones únicos para audiencias pequeñas pero específicas.</td>
+</tr>
+<tr class="even">
+<td><strong>Ruido</strong></td>
+<td>Baja (&lt;med)</td>
+<td>Bajo (&lt;med)</td>
+<td>Probablemente ignorar.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>El rumbo que nos hizo tomar</strong>: este mapa cambió la forma en que marketing consume el MBA. En lugar de “aquí tienes 3,860 reglas, suerte”, la conversación se vuelve “concéntrate en las 22 reglas del cuadrante Oportunidades fuertes”. El cuadrante reduce la complejidad de tres órdenes de magnitud sin perder información.</p>
 </section>
-<section id="accionabilidad-estratégica-bundles-exclusivos" class="level2">
-<h2 class="anchored" data-anchor-id="accionabilidad-estratégica-bundles-exclusivos">2. Accionabilidad Estratégica (Bundles Exclusivos)</h2>
-<p>En base a esto, hemos generado tablas de <strong>Reglas Exclusivas</strong> y <strong>Reglas con Valor</strong>. Esto alimenta directamente a los equipos de Marketing:</p>
+<section id="la-tabla-detallada" class="level3">
+<h3 class="anchored" data-anchor-id="la-tabla-detallada">2.3 La tabla detallada</h3>
+<p>Debajo del mapa, el dashboard expone una tabla con todas las reglas filtradas por <code>confidence &gt; 30%</code> y <code>lift &gt; 1.5</code>. La ordenamos por <strong>lift descendente</strong>, no por confidence. La razón es que confidence alta puede ser engañosa: si un producto se vende en el 90% de los pedidos, cualquier regla que lo incluya tendrá confidence alta. Lift, en cambio, te dice qué tan inusual es la asociación vs el azar — esa es la información accionable.</p>
+</section>
+</section>
+<section id="tres-tipos-de-reglas-que-producimos" class="level2">
+<h2 class="anchored" data-anchor-id="tres-tipos-de-reglas-que-producimos">3. Tres tipos de reglas que producimos</h2>
+<p>El pipeline genera tres parquets distintos con diferentes propósitos:</p>
+<section id="mba_por_segmento.parquet-vista-exploratoria" class="level3">
+<h3 class="anchored" data-anchor-id="mba_por_segmento.parquet-vista-exploratoria">3.1 <code>mba_por_segmento.parquet</code> — Vista exploratoria</h3>
+<p>Todas las reglas que pasan los umbrales mínimos, sin importar el tamaño del antecedente o consecuente. Una sola regla del tipo <code>{A, B, C} → {D, E}</code> (3 antecedentes, 2 consecuentes) cuenta. Para el segmento MVPs, esto da más de 2,000 reglas.</p>
+<p><strong>Cuándo usarlo</strong>: análisis exploratorio, investigación de comportamientos complejos, generación de hipótesis.</p>
+</section>
+<section id="mba_accionables.parquet-vista-marketing" class="level3">
+<h3 class="anchored" data-anchor-id="mba_accionables.parquet-vista-marketing">3.2 <code>mba_accionables.parquet</code> — Vista marketing</h3>
+<p>Solo reglas <strong>simples</strong> (1→1 o 1→2). Estas son las que marketing puede operativizar en una campaña porque son fáciles de comunicar: “compraste X, te recomendamos Y”.</p>
+<p>Adicionalmente, para estas reglas calculamos métricas monetarias específicas:</p>
 <ul>
-<li><strong>Campañas B2B para “MVPs”</strong>: Los algoritmos detectaron reglas donde las compras de Servidores van acompañadas casi exclusivamente de Licenciamientos Extendidos específicos. Estos <em>bundles</em> no se ofrecen a clientes Ocasionales.</li>
-<li><strong>Recuperación de “En Riesgo”</strong>: A este segmento se le asocian reglas de bajo Lift pero de alto soporte en Consumibles y Servicios. Una campaña ofreciendo un descuento en su consumible habitual es la forma óptima de reactivarlos.</li>
+<li><code>ticket_medio</code>: ticket promedio de los pedidos que materializan la regla.</li>
+<li><code>revenue_total</code>: suma de revenue de los pedidos que materializan la regla.</li>
+<li><code>n_pedidos</code>: cuántos pedidos en concreto cumplen la regla.</li>
 </ul>
-
-
+<p>Esto permite priorizar reglas no solo por lift, sino por <strong>impacto monetario potencial</strong>. Una regla con lift 50× pero solo 60 pedidos detrás puede ser menos importante que una con lift 8× pero 3,000 pedidos detrás.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Nota
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Por qué solo se calculan métricas monetarias para accionables</strong>: el cálculo es costoso (requiere cruzar items con orders por cada regla). Hacerlo para las 3,860 reglas tomaría minutos extra en cada corrida. Lo limitamos a las accionables (top 30 por lift por segmento) y obtenemos un balance entre velocidad y completitud.</p>
+</div>
+</div>
 </section>
+<section id="mba_exclusivas.parquet-reglas-únicas-por-segmento" class="level3">
+<h3 class="anchored" data-anchor-id="mba_exclusivas.parquet-reglas-únicas-por-segmento">3.3 <code>mba_exclusivas.parquet</code> — Reglas únicas por segmento</h3>
+<p>Una regla es “exclusiva” si solo aparece en un segmento. Por ejemplo, la regla <code>{Familia_X} → {Familia_Y}</code> puede aparecer en MVPs con lift 40× <strong>y al mismo tiempo</strong> en Alto Valor con lift 15×. No es exclusiva. Pero si solo aparece en Hibernando, sí lo es.</p>
+<p><strong>Cuándo usarlo</strong>: identificar bundles diferenciadores para campañas hiper-segmentadas. Si una regla aparece solo en En Riesgo, es un patrón que distingue a ese segmento de los demás — útil para diseñar mensajes de retención específicos.</p>
+<div class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Código</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>resumen <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Tipo'</span>:       [<span class="st">'Por segmento (todas)'</span>, <span class="st">'Exclusivas'</span>, <span class="st">'Accionables (1→1, 1→2)'</span>],</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Cantidad'</span>:   [<span class="st">'3,860 reglas'</span>, <span class="st">'1,516 reglas'</span>, <span class="st">'141 reglas'</span>],</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Uso típico'</span>: [</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Análisis exploratorio'</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Campañas diferenciadas'</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Cross-sell operativo'</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>resumen</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="tbl-mba-tipos" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="3">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-mba-tipos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla&nbsp;2: Inventario de reglas según tipo (pipeline weekly)
+</figcaption>
+<div aria-describedby="tbl-mba-tipos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe do-not-create-environment cell caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Tipo</th>
+<th data-quarto-table-cell-role="th">Cantidad</th>
+<th data-quarto-table-cell-role="th">Uso típico</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Por segmento (todas)</td>
+<td>3,860 reglas</td>
+<td>Análisis exploratorio</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Exclusivas</td>
+<td>1,516 reglas</td>
+<td>Campañas diferenciadas</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Accionables (1→1, 1→2)</td>
+<td>141 reglas</td>
+<td>Cross-sell operativo</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+</section>
+<section id="ejemplos-ilustrativos-del-mapa" class="level2">
+<h2 class="anchored" data-anchor-id="ejemplos-ilustrativos-del-mapa">4. Ejemplos ilustrativos del mapa</h2>
+<p>Para no exponer claves reales del catálogo, los siguientes ejemplos usan familias ofuscadas. La estructura, los lifts y las confidences son auténticos de las reglas que produjo el pipeline.</p>
+<section id="oportunidad-fuerte-en-mvps" class="level3">
+<h3 class="anchored" data-anchor-id="oportunidad-fuerte-en-mvps">4.1 Oportunidad fuerte en MVPs</h3>
+<pre><code>Familia_PK → Familia_MSF
+Segmento: MVPs
+Confidence: 91.4%
+Lift: 134.65
+Support: 721 pedidos</code></pre>
+<p><strong>Interpretación</strong>: 9 de cada 10 MVPs que compraron <code>Familia_PK</code> también compraron <code>Familia_MSF</code>. La asociación es 134× más fuerte que el azar. Con 721 pedidos detrás, hay volumen significativo para diseñar una campaña.</p>
+<p><strong>Acción de marketing</strong>: cuando un MVP entra al portal y agrega <code>Familia_PK</code> al carrito, mostrar <code>Familia_MSF</code> como recomendación destacada. Probabilidad alta de conversión.</p>
+</section>
+<section id="nicho-interesante-en-en-riesgo" class="level3">
+<h3 class="anchored" data-anchor-id="nicho-interesante-en-en-riesgo">4.2 Nicho interesante en En Riesgo</h3>
+<pre><code>Familia_CC → Familia_RP
+Segmento: En Riesgo
+Confidence: 44.3%
+Lift: 92.0
+Support: 62 pedidos</code></pre>
+<p><strong>Interpretación</strong>: la asociación es muy fuerte (92×), pero ocurre en menos de la mitad de los casos. Aplica solo a un subgrupo del segmento En Riesgo.</p>
+<p><strong>Acción de marketing</strong>: campaña de retención hiper-segmentada. No para todos los clientes En Riesgo, sino para los que históricamente compraron <code>Familia_CC</code> o <code>Familia_RP</code>. Mensaje: “Recuperá tu combo favorito con 15% de descuento”.</p>
+</section>
+<section id="co-compra-frecuente-en-alto-valor" class="level3">
+<h3 class="anchored" data-anchor-id="co-compra-frecuente-en-alto-valor">4.3 Co-compra frecuente en Alto Valor</h3>
+<pre><code>Familia_DH → Familia_DH (variantes diferentes de la misma familia)
+Segmento: Alto Valor
+Confidence: 67%
+Lift: 11.3
+Support: 1,752 pedidos</code></pre>
+<p><strong>Interpretación</strong>: confidence muy alta y volumen masivo, pero lift moderado. Es un patrón obvio (clientes de Alto Valor compran múltiples variantes de la misma familia juntos).</p>
+<p><strong>Acción de marketing</strong>: no requiere campaña activa. Es información para optimizar el catálogo (mostrar variantes juntas en la página de producto) y para forecasting de inventario (pedir variantes en proporciones consistentes).</p>
+</section>
+</section>
+<section id="lo-que-el-mba-segmentado-nos-enseñó" class="level2">
+<h2 class="anchored" data-anchor-id="lo-que-el-mba-segmentado-nos-enseñó">5. Lo que el MBA segmentado nos enseñó</h2>
+<p>Tres conclusiones que orientaron el resto del proyecto:</p>
+<ol type="1">
+<li><p><strong>Las reglas son específicas por segmento</strong>: las reglas top de MVPs son distintas a las de Hibernando, y eso es información, no ruido. Marketing no debe usar las mismas reglas para todos.</p></li>
+<li><p><strong>El cuadrante importa más que el ranking</strong>: una regla en el cuadrante Oportunidades fuertes vale más que una regla con lift alto pero confidence baja, independientemente del orden de la tabla. Esto se debe enseñar a marketing.</p></li>
+<li><p><strong>El support es información operativa</strong>: una regla matemáticamente fuerte pero con 30 pedidos detrás no soporta una campaña. La columna de support en el dashboard sirve precisamente para filtrar reglas “lindas en papel pero sin volumen real”.</p></li>
+</ol>
+<p>En la siguiente sección documentamos cómo cruzamos estas reglas con el <strong>eje temporal</strong> para descubrir cuándo se materializa cada bundle.</p>
+</section>
+</div>
+
+
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Volver arriba</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
