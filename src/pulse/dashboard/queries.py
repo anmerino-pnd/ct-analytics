@@ -334,12 +334,13 @@ def clientes_en_riesgo() -> list[dict]:
           segmento_cluster                                       AS segmento,
           recency,
           dias_entre_compras                                     AS cadencia,
-          recency * 1.0 / NULLIF(dias_entre_compras, 0)          AS ratio,
+          recency::DOUBLE / GREATEST(dias_entre_compras, 1) AS ratio,
           monetary,
           frequency
         FROM segmentos
         WHERE segmento_cluster IN ('MVPs', 'Alto Valor')
           AND es_single_buyer = 0
+          AND dias_entre_compras >= 1
           AND recency > 1.5 * dias_entre_compras
         ORDER BY monetary DESC
         """
