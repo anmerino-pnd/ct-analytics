@@ -76,21 +76,21 @@ Pulse responde esas preguntas en **menos de un segundo** por consulta, con datos
 
 ## Stack tecnológico
 
-| Capa | Componente | Justificación |
-|---|---|---|
-| **Lenguaje** | Python 3.13+ | Estándar de facto para data science y data engineering |
-| **Gestor de paquetes** | `uv` | Resolución de dependencias 10-100x más rápida que pip |
-| **Análisis** | pandas, numpy, scikit-learn | Stack maduro y bien documentado |
-| **ML específico** | mlxtend (FP-Growth) | Implementación estable de market basket analysis |
-| **Web framework** | FastAPI + Uvicorn | Endpoints async, validación automática, soporte OpenAPI |
-| **Motor SQL** | DuckDB | Lee Parquets sin cargar a memoria, SQL completo, embebido |
-| **Frontend** | Jinja2 + Plotly.js | Server-side rendering con visualizaciones interactivas |
-| **Persistencia** | Parquet | Formato columnar, compresión, lecturas selectivas |
-| **Fuente de datos** | MongoDB | Cliente existente en el ecosistema de CT |
-| **Sistema operativo** | AlmaLinux 9 | RHEL-compatible, soporte hasta 2032 |
-| **Supervisión** | systemd + cron | Native de Linux, sin dependencias adicionales |
-| **Firewall** | firewalld | Estándar en RHEL/AlmaLinux |
-| **Testing** | pytest | Estándar en Python, 60+ tests en el proyecto |
+| Capa                         | Componente                  | Justificación                                            |
+| ---------------------------- | --------------------------- | --------------------------------------------------------- |
+| **Lenguaje**           | Python 3.13+                | Estándar de facto para data science y data engineering   |
+| **Gestor de paquetes** | `uv`                      | Resolución de dependencias 10-100x más rápida que pip  |
+| **Análisis**          | pandas, numpy, scikit-learn | Stack maduro y bien documentado                           |
+| **ML específico**     | mlxtend (FP-Growth)         | Implementación estable de market basket analysis         |
+| **Web framework**      | FastAPI + Uvicorn           | Endpoints async, validación automática, soporte OpenAPI |
+| **Motor SQL**          | DuckDB                      | Lee Parquets sin cargar a memoria, SQL completo, embebido |
+| **Frontend**           | Jinja2 + Plotly.js          | Server-side rendering con visualizaciones interactivas    |
+| **Persistencia**       | Parquet                     | Formato columnar, compresión, lecturas selectivas        |
+| **Fuente de datos**    | MongoDB                     | Cliente existente en el ecosistema de CT                  |
+| **Sistema operativo**  | AlmaLinux 9                 | RHEL-compatible, soporte hasta 2032                       |
+| **Supervisión**       | systemd + cron              | Native de Linux, sin dependencias adicionales             |
+| **Firewall**           | firewalld                   | Estándar en RHEL/AlmaLinux                               |
+| **Testing**            | pytest                      | Estándar en Python, 60+ tests en el proyecto             |
 
 ---
 
@@ -209,7 +209,7 @@ ct-analytics/
 
 ```bash
 # 1. Clonar
-git clone <url-del-repo> ct-analytics
+git clone https://github.com/anmerino-pnd/ct-analytics ct-analytics
 cd ct-analytics
 
 # 2. Instalar dependencias
@@ -276,45 +276,45 @@ Abre en el navegador: `http://localhost:8765`
 
 ### Las 7 vistas del dashboard
 
-| Vista | URL | Responde |
-|---|---|---|
-| Overview | `/dashboard/overview` | ¿Cómo está distribuida nuestra base de clientes? |
-| Bundles | `/dashboard/bundles` | ¿Qué productos puedo agrupar y a quién? |
-| Estacionalidad | `/dashboard/estacionalidad` | ¿Cuándo lanzar campañas? |
-| Comparador | `/dashboard/comparador` | ¿Cómo se diferencian dos segmentos? |
-| Heatmap Bundles | `/dashboard/heatmap-bundles` | ¿Cuándo se venden los bundles principales? |
-| Alertas | `/dashboard/alertas` | ¿Qué clientes valiosos están en riesgo? |
-| Cliente | `/dashboard/cliente?id=<cliente_id>` | ¿Quién es este cliente específico? |
+| Vista           | URL                                    | Responde                                            |
+| --------------- | -------------------------------------- | --------------------------------------------------- |
+| Overview        | `/dashboard/overview`                | ¿Cómo está distribuida nuestra base de clientes? |
+| Bundles         | `/dashboard/bundles`                 | ¿Qué productos puedo agrupar y a quién?          |
+| Estacionalidad  | `/dashboard/estacionalidad`          | ¿Cuándo lanzar campañas?                         |
+| Comparador      | `/dashboard/comparador`              | ¿Cómo se diferencian dos segmentos?               |
+| Heatmap Bundles | `/dashboard/heatmap-bundles`         | ¿Cuándo se venden los bundles principales?        |
+| Alertas         | `/dashboard/alertas`                 | ¿Qué clientes valiosos están en riesgo?          |
+| Cliente         | `/dashboard/cliente?id=<cliente_id>` | ¿Quién es este cliente específico?               |
 
 ---
 
 ## Cifras clave
 
-| Métrica | Valor |
-|---|---|
-| Clientes únicos analizados | 18,638 |
-| Pedidos en histórico | ~780K |
-| Pedidos en ventana de análisis (30 meses) | ~570K |
-| Items transaccionales | ~1.8M |
-| Familias de producto | 908 |
-| Reglas MBA generadas (todas) | ~3,860 |
-| Reglas exclusivas por segmento | ~1,516 |
-| Reglas accionables (1→1, 1→2) | ~141 |
-| Vistas del dashboard | 7 |
-| Tests unitarios | 60+ |
-| Duración pipeline daily | ~30s |
-| Duración pipeline weekly | ~45s |
-| Cross-check temporalidad ↔ RFM | **0.00% divergencia** |
+| Métrica                                   | Valor                       |
+| ------------------------------------------ | --------------------------- |
+| Clientes únicos analizados                | 18,638                      |
+| Pedidos en histórico                      | ~780K                       |
+| Pedidos en ventana de análisis (30 meses) | ~570K                       |
+| Items transaccionales                      | ~1.8M                       |
+| Familias de producto                       | 908                         |
+| Reglas MBA generadas (todas)               | ~3,860                      |
+| Reglas exclusivas por segmento             | ~1,516                      |
+| Reglas accionables (1→1, 1→2)            | ~141                        |
+| Vistas del dashboard                       | 7                           |
+| Tests unitarios                            | 60+                         |
+| Duración pipeline daily                   | ~30s                        |
+| Duración pipeline weekly                  | ~45s                        |
+| Cross-check temporalidad ↔ RFM            | **0.00% divergencia** |
 
 ### Distribución de segmentos (modelo v1)
 
-| Segmento | % | Clientes | Descripción |
-|---|---:|---:|---|
-| Alto Valor | 26.7% | 4,973 | Compras cada ~2 semanas, monetary moderado |
-| Hibernando | 26.5% | 4,934 | Una compra histórica, cadencia >9 meses |
-| En Riesgo | 18.7% | 3,479 | Eran activos, ahora con ratio >14 sin comprar |
-| Ocasionales | 17.3% | 3,233 | Compras esparcidas, volumen bajo |
-| MVPs | 10.8% | 2,019 | Compran cada ~4 días, alto monetary |
+| Segmento    |     % | Clientes | Descripción                                  |
+| ----------- | ----: | -------: | --------------------------------------------- |
+| Alto Valor  | 26.7% |    4,973 | Compras cada ~2 semanas, monetary moderado    |
+| Hibernando  | 26.5% |    4,934 | Una compra histórica, cadencia >9 meses      |
+| En Riesgo   | 18.7% |    3,479 | Eran activos, ahora con ratio >14 sin comprar |
+| Ocasionales | 17.3% |    3,233 | Compras esparcidas, volumen bajo              |
+| MVPs        | 10.8% |    2,019 | Compran cada ~4 días, alto monetary          |
 
 ---
 
@@ -361,6 +361,7 @@ La primera corrida hace backfill completo. Las posteriores solo extraen pedidos 
 ### 7. Quality checks automáticos
 
 Validaciones en cada paso del runner. Ejemplos:
+
 - Pedidos no pueden disminuir más de 1% entre corridas.
 - Ningún cluster puede absorber más del 50% de la base.
 - La suma de pedidos por segmento debe coincidir entre RFM y temporalidad (0% divergencia).
@@ -483,14 +484,14 @@ ls -lt logs/cron_*.log | head -5
 
 ### Troubleshooting
 
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| `No module named pulse.pipeline` | Paquete no instalado en venv | `uv sync` con `pyproject.toml` correcto |
-| Permission denied al subir archivos | Owner es root, no usuario | `sudo chown -R user:user .` |
+| Síntoma                               | Causa probable                   | Solución                                               |
+| -------------------------------------- | -------------------------------- | ------------------------------------------------------- |
+| `No module named pulse.pipeline`     | Paquete no instalado en venv     | `uv sync` con `pyproject.toml` correcto             |
+| Permission denied al subir archivos    | Owner es root, no usuario        | `sudo chown -R user:user .`                           |
 | `Address already in use` al arrancar | Proceso anterior tomó el puerto | `sudo ss -tlnp \| grep <PUERTO>` y `sudo kill <PID>` |
-| Dashboard responde 500 | Parquets faltantes o corruptos | Re-correr `uv run python -m pulse.pipeline weekly` |
-| Pipeline falla en MongoDB | Credenciales o red | Verificar `.env` y `nc -zv <host> 27017` |
-| Servicio crashea en bucle | Error en código o config | `sudo journalctl -u pulse-dashboard -n 100` |
+| Dashboard responde 500                 | Parquets faltantes o corruptos   | Re-correr `uv run python -m pulse.pipeline weekly`    |
+| Pipeline falla en MongoDB              | Credenciales o red               | Verificar `.env` y `nc -zv <host> 27017`            |
+| Servicio crashea en bucle              | Error en código o config        | `sudo journalctl -u pulse-dashboard -n 100`           |
 
 ---
 
@@ -530,12 +531,12 @@ El portfolio público en [anmerino-pnd.github.io/ct-analytics](https://anmerino-
 
 ## Autores
 
-| Nombre | Rol | Contacto |
-|---|---|---|
+| Nombre                         | Rol                              | Contacto                                                                 |
+| ------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
 | **Angel Merino Cedeño** | Data Scientist / Líder técnico | [LinkedIn](https://www.linkedin.com/in/anmerino-pnd) · acedeno00@gmail.com |
-| Gerardo Leyva Conde | Colaborador | — |
-| Roberto Navarro Bartolini | Colaborador | — |
-| Abraham Rojo Salazar | Colaborador | — |
+| Gerardo Leyva Conde            | Colaborador                      | —                                                                       |
+| Roberto Navarro Bartolini      | Colaborador                      | —                                                                       |
+| Abraham Rojo Salazar           | Colaborador                      | —                                                                       |
 
 ---
 
