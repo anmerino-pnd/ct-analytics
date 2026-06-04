@@ -18,6 +18,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from pulse.analytics.rfm import calcular_rfm_completo
@@ -48,6 +49,8 @@ def segmentar_clientes(
         - es_single_buyer
         - cluster_id (0-4)
         - segmento_cluster (nombre de negocio: "MVPs", "Hibernando", etc.)
+        - distancia_propia, distancia_segunda, razon_distancias, segmento_secundario
+          (señales de "frontera" entre clusters, ver _agregar_distancias_frontera)
     """
     # 1. Calcular features RFM (incluye imputación de single-buyers)
     df_rfm = calcular_rfm_completo(
@@ -64,6 +67,9 @@ def segmentar_clientes(
     # 3. Aplicar la segmentación
     df_segmentado = seg.predict(df_rfm)
 
+    # 3b. Distancias a centroides (señales de transición para la vista Movimientos)
+    _agregar_distancias_frontera(df_segmentado, seg)
+
     # 4. Reporte de distribución
     log.info("Distribución de segmentos:")
     for segmento, n in df_segmentado["segmento_cluster"].value_counts().items():
@@ -71,3 +77,43 @@ def segmentar_clientes(
         log.info("  %-12s %s (%.1f%%)", segmento, f"{n:,}", pct)
 
     return df_segmentado
+
+
+def _agregar_distancias_frontera(
+    df_segmentado: pd.DataFrame,
+    seg: SegmentadorClientes,
+) -> None:
+    """Anexa in-place las señales de frontera entre clusters.
+
+    Replica los pasos del pipeline previos a K-Means (log1p → scaler) sobre las
+    features en escala original para obtener el espacio escalado donde viven los
+    centroides, y calcula la distancia de cada cliente a TODOS los centroides.
+
+    Columnas agregadas:
+        - distancia_propia    : distancia al centroide más cercano (= el asignado).
+        - distancia_segunda   : distancia al segundo centroide más cercano.
+        - razon_distancias    : distancia_propia / distancia_segunda ∈ [0, 1].
+                                Cerca de 1 ⇒ cliente "en frontera" (ambiguo).
+        - segmento_secundario : nombre del segundo cluster más cercano.
+    """
+    # Features en el espacio escalado donde viven los centroides (el segmentador
+    # es dueño del pipeline; no replicamos sus pasos internos aquí).
+    X_transformed = seg.transform_features(df_segmentado)
+
+    centroides = seg.pipeline.named_steps["kmeans"].cluster_centers_
+    distancias = np.linalg.norm(
+        X_transformed[:, np.newaxis, :] - centroides[np.newaxis, :, :],
+        axis=2,
+    )  # (n_clientes, k)
+
+    orden = np.argsort(distancias, axis=1)
+    filas = np.arange(len(distancias))
+    dist_propia = distancias[filas, orden[:, 0]]
+    dist_segunda = distancias[filas, orden[:, 1]]
+    seg_secundario_idx = orden[:, 1]
+
+    nombres = seg.cluster_names_ordered
+    df_segmentado["distancia_propia"] = dist_propia
+    df_segmentado["distancia_segunda"] = dist_segunda
+    df_segmentado["razon_distancias"] = dist_propia / dist_segunda
+    df_segmentado["segmento_secundario"] = [nombres[i] for i in seg_secundario_idx]

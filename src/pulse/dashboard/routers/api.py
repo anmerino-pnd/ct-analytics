@@ -90,7 +90,7 @@ async def buscar_cliente(
 
 @router.get("/cliente/{cliente_id}")
 async def cliente_drilldown(cliente_id: str) -> dict:
-    """Payload completo del cliente: perfil, pedidos, posición en su segmento."""
+    """Payload completo del cliente: perfil, pedidos, posición, productos, bundles, oportunidades."""
     perfil = q.cliente_perfil(cliente_id)
     if perfil is None:
         raise HTTPException(
@@ -101,4 +101,45 @@ async def cliente_drilldown(cliente_id: str) -> dict:
         "perfil": perfil,
         "pedidos": q.cliente_pedidos(cliente_id, limit=50),
         "posicion": q.cliente_posicion_segmento(cliente_id),
+        "productos_top": q.cliente_productos_top(cliente_id, limit=10),
+        "bundles_propios": q.cliente_bundles_propios(cliente_id, limit=10),
+        "oportunidades": q.cliente_oportunidades(cliente_id, limit=10),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# /api/alertas/* — tabs Urgentes y Reactivación masiva
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/alertas/urgentes")
+async def alertas_urgentes() -> dict:
+    """MVPs / Alto Valor en riesgo individual (acción de cuenta key)."""
+    return {
+        "kpis": q.kpis_urgentes(),
+        "clientes": q.clientes_urgentes(),
+    }
+
+
+@router.get("/alertas/reactivacion")
+async def alertas_reactivacion() -> dict:
+    """Segmento En Riesgo completo (campaña masiva de reactivación)."""
+    return {
+        "kpis": q.kpis_reactivacion(),
+        "clientes": q.clientes_reactivacion(),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# /api/movimientos — clientes en transición entre segmentos
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/movimientos")
+async def movimientos() -> dict:
+    """Clientes en frontera (espacial) y cambios de segmento (temporal)."""
+    frontera = q.clientes_en_frontera(threshold=0.7)
+    cambios = q.clientes_cambio_segmento(meses_atras=1)
+    return {
+        "kpis":     q.kpis_movimientos(frontera, cambios),
+        "frontera": frontera,
+        "cambios":  cambios,
     }

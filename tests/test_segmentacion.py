@@ -134,3 +134,18 @@ class TestSegmentarClientes:
         df1 = df1.sort_values("cliente_id").reset_index(drop=True)
         df2 = df2.sort_values("cliente_id").reset_index(drop=True)
         pd.testing.assert_series_equal(df1["cluster_id"], df2["cluster_id"])
+
+    def test_agrega_columnas_de_distancia(
+        self, df_orders_sinteticos, fecha_ref, segmentador_apuntando_a_dummy
+    ):
+        """segmentar_clientes() debe anexar las 4 señales de frontera."""
+        df_seg = segmentar_clientes(df_orders_sinteticos, fecha_ref=fecha_ref)
+        for col in ["distancia_propia", "distancia_segunda",
+                    "razon_distancias", "segmento_secundario"]:
+            assert col in df_seg.columns
+        # razon = propia/segunda, y propia <= segunda ⇒ razón ∈ [0, 1].
+        assert (df_seg["razon_distancias"] >= 0).all()
+        assert (df_seg["razon_distancias"] <= 1.0001).all()
+        # El segmento secundario es uno de los nombres de cluster válidos.
+        nombres = set(df_seg["segmento_cluster"].unique())
+        assert set(df_seg["segmento_secundario"].unique()).issubset(nombres)

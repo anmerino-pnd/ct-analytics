@@ -4,59 +4,107 @@
 {% block content %}
 <header class="page-header">
   <h1>Clientes valiosos en riesgo</h1>
-  <p class="subtitle">MVPs y Alto Valor que llevan más de 1.5× su cadencia mediana sin comprar.</p>
+  <p class="subtitle">Acciones de retención y reactivación priorizadas por valor del cliente.</p>
 </header>
 
-<section class="kpi-grid" id="kpi-grid-alertas">
-  <div class="kpi-card">
-    <span class="kpi-label">Total en riesgo</span>
-    <span class="kpi-value" id="kpi-total">—</span>
-  </div>
-  <div class="kpi-card">
-    <span class="kpi-label">MVPs en riesgo</span>
-    <span class="kpi-value" id="kpi-mvps">—</span>
-  </div>
-  <div class="kpi-card">
-    <span class="kpi-label">Alto Valor en riesgo</span>
-    <span class="kpi-value" id="kpi-alto">—</span>
-  </div>
-  <div class="kpi-card">
-    <span class="kpi-label">Revenue acumulado en riesgo</span>
-    <span class="kpi-value" id="kpi-revenue">—</span>
+<section class="filters">
+  <div class="filter-group">
+    <label>Vista</label>
+    <div class="toggle-group" id="f-tab" role="tablist">
+      <button data-tab="urgentes" class="active" type="button">Urgentes (acción individual)</button>
+      <button data-tab="reactivacion" type="button">Reactivación masiva (En Riesgo)</button>
+    </div>
   </div>
 </section>
 
-<section class="chart-card">
-  <h2>Ratio de urgencia × monetary</h2>
-  <div id="scatter-alertas" class="chart"></div>
-</section>
+<!-- TAB: URGENTES -->
+<div id="tab-urgentes" class="tab-content">
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-label">Total en riesgo</span>
+      <span class="kpi-value" id="kpi-urg-total">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">MVPs en riesgo</span>
+      <span class="kpi-value" id="kpi-urg-mvps">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Alto Valor en riesgo</span>
+      <span class="kpi-value" id="kpi-urg-alto">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Revenue en riesgo</span>
+      <span class="kpi-value" id="kpi-urg-revenue">—</span>
+    </div>
+  </section>
 
-<section class="chart-card">
-  <h2>Top clientes en riesgo (por monetary)</h2>
-  <table class="data-table" id="tabla-alertas">
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Segmento</th>
-        <th>Recency (d)</th>
-        <th>Cadencia mediana</th>
-        <th>Ratio</th>
-        <th>Monetary</th>
-        <th>Frequency</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
+  <section class="chart-card">
+    <h2>Ratio de urgencia × monetary</h2>
+    <div id="scatter-urgentes" class="chart"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Top clientes en riesgo (por monetary)</h2>
+    <table class="data-table" id="tabla-urgentes">
+      <thead>
+        <tr>
+          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
+          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
+          <th>Frequency</th><th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</div>
+
+<!-- TAB: REACTIVACIÓN -->
+<div id="tab-reactivacion" class="tab-content hidden">
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-label">Total en En Riesgo</span>
+      <span class="kpi-value" id="kpi-rea-total">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Revenue potencial recuperable</span>
+      <span class="kpi-value" id="kpi-rea-revenue">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Recency mediana (días)</span>
+      <span class="kpi-value" id="kpi-rea-recency">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Cadencia mediana original (días)</span>
+      <span class="kpi-value" id="kpi-rea-cadencia">—</span>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Distribución de monetary × ratio</h2>
+    <div id="scatter-reactivacion" class="chart"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Top clientes En Riesgo (por monetary histórico)</h2>
+    <table class="data-table" id="tabla-reactivacion">
+      <thead>
+        <tr>
+          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
+          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
+          <th>Frequency</th><th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</div>
 
 <details class="explainer">
   <summary>¿Qué estoy viendo?</summary>
   <div class="explainer-content">
-    <p><strong>Pregunta de negocio:</strong> ¿Qué clientes valiosos están a punto de perderse?</p>
-    <p><strong>Cómo leer esto:</strong> Cada cliente listado pertenece a <em>MVPs</em> o <em>Alto Valor</em>, no es single-buyer, y su recency actual supera 1.5× su cadencia mediana (lleva más de una cadencia y media sin comprar). El ratio te dice cuántas cadencias acumula sin comprar. El scatter muestra a todos los clientes en riesgo: ratio en X, monetary en Y (log).</p>
-    <p><strong>Acciones sugeridas:</strong> Prioriza el top de la tabla — ahí está concentrado el revenue en riesgo. Para clientes con ratio &gt; 3 considera una intervención fuerte (descuento personalizado, contacto directo). Los clientes con ratio ∞ son extremos: su cadencia base es 0 (compraban varias veces al día) y ahora no compran — probablemente cambio operativo del cliente.</p>
-    <p><strong>Notas técnicas:</strong> Single-buyers se excluyen porque su cadencia es imputada (p95) y el riesgo no se calcula igual. Filas con cadencia 0 muestran ratio ∞ en la tabla y se omiten del scatter.</p>
+    <p><strong>Urgentes</strong>: clientes MVPs y Alto Valor cuyo último pedido excede 1.5× su cadencia mediana habitual. Acción: contacto directo, descuento personalizado, intervención de cuenta key.</p>
+    <p><strong>Reactivación masiva</strong>: clientes del segmento En Riesgo (todos llevan tiempo sin comprar respecto a su patrón histórico). Acción: campaña de reactivación masiva, email marketing con incentivos genéricos.</p>
+    <p>El ratio representa cuántas cadencias acumula sin comprar. Ratio > 1.5 = riesgo, > 3 = abandono casi seguro.</p>
   </div>
 </details>
 
@@ -64,38 +112,72 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+  .tab-content.hidden { display: none; }
+</style>
 <script>
   (function () {
-    const data = JSON.parse(document.getElementById('initial-data').textContent);
+    const initial = JSON.parse(document.getElementById('initial-data').textContent);
     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
     const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
 
-    // KPI cards
-    document.getElementById('kpi-total').textContent   = fmtNum(data.kpis.n_total);
-    document.getElementById('kpi-mvps').textContent    = fmtNum(data.kpis.n_mvps);
-    document.getElementById('kpi-alto').textContent    = fmtNum(data.kpis.n_alto);
-    document.getElementById('kpi-revenue').textContent = fmtMoneda(data.kpis.revenue_en_riesgo);
+    function renderTab(tabName, data) {
+      if (tabName === 'urgentes') {
+        document.getElementById('kpi-urg-total').textContent   = fmtNum(data.kpis.n_total);
+        document.getElementById('kpi-urg-mvps').textContent    = fmtNum(data.kpis.n_mvps);
+        document.getElementById('kpi-urg-alto').textContent    = fmtNum(data.kpis.n_alto);
+        document.getElementById('kpi-urg-revenue').textContent = fmtMoneda(data.kpis.revenue_en_riesgo);
 
-    // Scatter (excluye ratio nulo / no finito)
-    const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
-    PulseCharts.renderScatterAlertas('scatter-alertas', conRatio);
+        const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
+        PulseCharts.renderScatterAlertas('scatter-urgentes', conRatio);
 
-    // Tabla (incluye todos, ratio nulo = "∞")
-    const tbody = document.querySelector('#tabla-alertas tbody');
-    data.clientes.forEach(c => {
-      const color = window.SEGMENT_COLORS[c.segmento] || '#888';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${c.cliente_id}</td>
-        <td><span class="seg-chip" style="background:${color}"></span>${c.segmento}</td>
-        <td>${fmtNum(c.recency)}</td>
-        <td>${fmtNum(c.cadencia, 1)}</td>
-        <td>${c.ratio != null && isFinite(c.ratio) ? fmtNum(c.ratio, 2) : '∞'}</td>
-        <td>${fmtMoneda(c.monetary)}</td>
-        <td>${fmtNum(c.frequency)}</td>
-        <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
-      `;
-      tbody.appendChild(tr);
+        renderTabla('tabla-urgentes', data.clientes);
+      } else {
+        document.getElementById('kpi-rea-total').textContent    = fmtNum(data.kpis.n_total);
+        document.getElementById('kpi-rea-revenue').textContent  = fmtMoneda(data.kpis.revenue_potencial);
+        document.getElementById('kpi-rea-recency').textContent  = fmtNum(data.kpis.recency_mediana);
+        document.getElementById('kpi-rea-cadencia').textContent = fmtNum(data.kpis.cadencia_mediana);
+
+        const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
+        PulseCharts.renderScatterAlertas('scatter-reactivacion', conRatio);
+
+        renderTabla('tabla-reactivacion', data.clientes);
+      }
+    }
+
+    function renderTabla(tablaId, clientes) {
+      const tbody = document.querySelector('#' + tablaId + ' tbody');
+      tbody.innerHTML = '';
+      clientes.forEach(c => {
+        const color = window.SEGMENT_COLORS[c.segmento] || '#888';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.cliente_id}</td>
+          <td><span class="seg-chip" style="background:${color}"></span>${c.segmento}</td>
+          <td>${fmtNum(c.recency)}</td>
+          <td>${fmtNum(c.cadencia, 1)}</td>
+          <td>${c.ratio != null && isFinite(c.ratio) ? fmtNum(c.ratio, 2) : '∞'}</td>
+          <td>${fmtMoneda(c.monetary)}</td>
+          <td>${fmtNum(c.frequency)}</td>
+          <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Primera pintura: ambas tabs precargadas
+    renderTab('urgentes', initial.urgentes);
+    renderTab('reactivacion', initial.reactivacion);
+
+    // Switch entre tabs
+    document.querySelectorAll('#f-tab button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#f-tab button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('tab-urgentes').classList.toggle('hidden', tab !== 'urgentes');
+        document.getElementById('tab-reactivacion').classList.toggle('hidden', tab !== 'reactivacion');
+      });
     });
   })();
 </script>

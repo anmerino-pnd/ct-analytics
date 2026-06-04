@@ -320,12 +320,188 @@ def cliente_posicion_segmento(cliente_id: str) -> list[dict]:
     )
 
 
+def cliente_productos_top(cliente_id: str, limit: int = 10) -> list[dict]:
+    """Top N familias compradas por un cliente, ordenadas por revenue total.
+
+    Excluye CARGO100 (cargo financiero, no producto).
+    Lee desde la vista 'items' que apunta a items_historicos.parquet.
+    """
+    return fetch_dicts(
+        """
+        SELECT
+            familia,
+            COUNT(DISTINCT order_id)                          AS n_pedidos,
+            SUM(cantidad)                                     AS unidades_totales,
+            SUM(cantidad * precio_final)                      AS revenue_total,
+            strftime(MAX(fecha), '%Y-%m-%d')                  AS ultima_compra
+        FROM items
+        WHERE cliente_id = ?
+          AND clave != 'CARGO100'
+          AND familia IS NOT NULL
+        GROUP BY familia
+        ORDER BY revenue_total DESC
+        LIMIT ?
+        """,
+        [cliente_id, limit],
+    )
+
+
+def cliente_bundles_propios(cliente_id: str, limit: int = 10) -> list[dict]:
+    """Pares de familias que el cliente compra juntas en la misma orden.
+
+    Cruza con mba_accionables del segmento para anexar lift y confidence
+    cuando la regla también es válida a nivel de segmento.
+    """
+    # 1. Pares de familias en las mismas órdenes del cliente
+    pares = fetch_dicts(
+        """
+        WITH items_cliente AS (
+            SELECT DISTINCT order_id, familia
+            FROM items
+            WHERE cliente_id = ?
+              AND clave != 'CARGO100'
+              AND familia IS NOT NULL
+        )
+        SELECT
+            a.familia                AS familia_a,
+            b.familia                AS familia_b,
+            COUNT(DISTINCT a.order_id) AS n_ordenes
+        FROM items_cliente a
+        JOIN items_cliente b USING (order_id)
+        WHERE a.familia < b.familia
+        GROUP BY a.familia, b.familia
+        HAVING COUNT(DISTINCT a.order_id) >= 2
+        ORDER BY n_ordenes DESC
+        LIMIT ?
+        """,
+        [cliente_id, limit],
+    )
+    if not pares:
+        return []
+
+    # 2. Total de órdenes del cliente
+    total_row = fetch_dicts(
+        "SELECT COUNT(DISTINCT order_id) AS total FROM items WHERE cliente_id = ? AND clave != 'CARGO100'",
+        [cliente_id],
+    )
+    total_ordenes = total_row[0]["total"] if total_row else 0
+
+    # 3. Segmento del cliente
+    seg_row = fetch_dicts(
+        "SELECT segmento_cluster FROM segmentos WHERE cliente_id = ?",
+        [cliente_id],
+    )
+    segmento = seg_row[0]["segmento_cluster"] if seg_row else None
+
+    # 4. Reglas MBA accionables del segmento (mapa par → {confidence, lift})
+    reglas_map = {}
+    if segmento:
+        reglas = fetch_dicts(
+            "SELECT antecedents, consequents, confidence, lift FROM mba_accionables WHERE segmento = ?",
+            [segmento],
+        )
+        for r in reglas:
+            if "," not in r["consequents"]:  # solo bundles 1→1
+                par_norm = tuple(sorted([r["antecedents"], r["consequents"]]))
+                reglas_map[par_norm] = {"confidence": r["confidence"], "lift": r["lift"]}
+
+    # 5. Anexar info al par
+    for p in pares:
+        par_norm = tuple(sorted([p["familia_a"], p["familia_b"]]))
+        regla = reglas_map.get(par_norm)
+        p["confidence_segmento"] = regla["confidence"] if regla else None
+        p["lift_segmento"] = regla["lift"] if regla else None
+        p["pct_aparicion"] = (p["n_ordenes"] / total_ordenes) if total_ordenes else 0.0
+
+    return pares
+
+
+def cliente_oportunidades(cliente_id: str, limit: int = 10) -> list[dict]:
+    """Órdenes donde compró parte de un bundle propio pero no completo.
+
+    Define 'bundle fuerte' como pares con co-ocurrencia >= 30% respecto a la
+    familia menos frecuente del par. Devuelve las órdenes con la oportunidad
+    (las que contienen exactamente una de las dos familias del bundle).
+
+    Una sola query set-based: cruza cada bundle fuerte con las órdenes del
+    cliente y marca presencia de cada familia; la oportunidad existe cuando solo
+    una de las dos está presente (has_a + has_b = 1).
+    """
+    return fetch_dicts(
+        """
+        WITH items_cliente AS (
+            SELECT DISTINCT order_id, familia
+            FROM items
+            WHERE cliente_id = ?
+              AND clave != 'CARGO100'
+              AND familia IS NOT NULL
+        ),
+        pares AS (
+            SELECT
+                a.familia                       AS familia_a,
+                b.familia                       AS familia_b,
+                COUNT(DISTINCT a.order_id)      AS n_juntas
+            FROM items_cliente a
+            JOIN items_cliente b USING (order_id)
+            WHERE a.familia < b.familia
+            GROUP BY a.familia, b.familia
+        ),
+        apariciones AS (
+            SELECT familia, COUNT(DISTINCT order_id) AS n_total
+            FROM items_cliente
+            GROUP BY familia
+        ),
+        bundles_fuertes AS (
+            SELECT
+                p.familia_a,
+                p.familia_b,
+                p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) AS co_occurrence
+            FROM pares p
+            JOIN apariciones ap_a ON ap_a.familia = p.familia_a
+            JOIN apariciones ap_b ON ap_b.familia = p.familia_b
+            WHERE p.n_juntas >= 2
+              AND p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) >= 0.30
+        ),
+        orden_bundle AS (
+            SELECT
+                bf.familia_a,
+                bf.familia_b,
+                bf.co_occurrence,
+                ic.order_id,
+                MAX(CASE WHEN ic.familia = bf.familia_a THEN 1 ELSE 0 END) AS has_a,
+                MAX(CASE WHEN ic.familia = bf.familia_b THEN 1 ELSE 0 END) AS has_b
+            FROM bundles_fuertes bf
+            CROSS JOIN items_cliente ic
+            GROUP BY bf.familia_a, bf.familia_b, bf.co_occurrence, ic.order_id
+        )
+        SELECT
+            o.order_id,
+            strftime(o.fecha, '%Y-%m-%d %H:%M:%S')                         AS fecha,
+            o.pago_total,
+            CASE WHEN ob.has_a = 1 THEN ob.familia_a ELSE ob.familia_b END AS compro,
+            CASE WHEN ob.has_a = 1 THEN ob.familia_b ELSE ob.familia_a END AS le_falto,
+            ob.co_occurrence
+        FROM orden_bundle ob
+        JOIN orders o ON o.order_id = ob.order_id AND o.cliente_id = ?
+        WHERE ob.has_a + ob.has_b = 1
+        ORDER BY o.pago_total DESC
+        LIMIT ?
+        """,
+        [cliente_id, cliente_id, limit],
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 6.5 Alertas: clientes valiosos en riesgo
 # ─────────────────────────────────────────────────────────────────────────────
 
-def clientes_en_riesgo() -> list[dict]:
-    """MVPs / Alto Valor no single-buyers cuyo recency excede 1.5× su cadencia mediana."""
+def clientes_urgentes() -> list[dict]:
+    """MVPs / Alto Valor no single-buyers cuyo recency excede 1.5× su cadencia mediana.
+
+    Renombrado desde clientes_en_riesgo() para diferenciar del segmento En Riesgo.
+    El ratio usa GREATEST(dias_entre_compras, 1) para evitar división por cero en
+    clientes B2B automatizados (cadencia 0 por compras múltiples diarias).
+    """
     return fetch_dicts(
         """
         SELECT
@@ -333,7 +509,7 @@ def clientes_en_riesgo() -> list[dict]:
           segmento_cluster                                       AS segmento,
           recency,
           dias_entre_compras                                     AS cadencia,
-          recency::DOUBLE / GREATEST(dias_entre_compras, 1) AS ratio,
+          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
           monetary,
           frequency
         FROM segmentos
@@ -346,22 +522,73 @@ def clientes_en_riesgo() -> list[dict]:
     )
 
 
-def kpis_alertas() -> dict:
-    """Conteos y revenue acumulado de los clientes en riesgo (para las KPI cards)."""
+def kpis_urgentes() -> dict:
+    """KPIs de la tab Urgentes (MVPs + Alto Valor en riesgo individual)."""
     rows = fetch_dicts(
         """
         SELECT
-          COUNT(*)                                                                    AS n_total,
-          SUM(CASE WHEN segmento_cluster = 'MVPs' THEN 1 ELSE 0 END)                  AS n_mvps,
-          SUM(CASE WHEN segmento_cluster = 'Alto Valor' THEN 1 ELSE 0 END)            AS n_alto,
-          SUM(monetary)                                                               AS revenue_en_riesgo
+          COUNT(*)                                                          AS n_total,
+          SUM(CASE WHEN segmento_cluster = 'MVPs' THEN 1 ELSE 0 END)        AS n_mvps,
+          SUM(CASE WHEN segmento_cluster = 'Alto Valor' THEN 1 ELSE 0 END)  AS n_alto,
+          SUM(monetary)                                                     AS revenue_en_riesgo
         FROM segmentos
         WHERE segmento_cluster IN ('MVPs', 'Alto Valor')
           AND es_single_buyer = 0
+          AND dias_entre_compras >= 1
           AND recency > 1.5 * dias_entre_compras
         """
     )
     return rows[0]
+
+
+def clientes_reactivacion() -> list[dict]:
+    """Clientes del segmento En Riesgo (no single-buyers), ordenados por monetary.
+
+    A diferencia de clientes_urgentes(), aquí incluimos a todos los del segmento.
+    El ratio sigue siendo útil para priorizar dentro del grupo (cuanto más alto,
+    más tiempo lleva el cliente sin comprar respecto a su patrón histórico).
+    """
+    return fetch_dicts(
+        """
+        SELECT
+          cliente_id,
+          segmento_cluster                                       AS segmento,
+          recency,
+          dias_entre_compras                                     AS cadencia,
+          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
+          monetary,
+          frequency
+        FROM segmentos
+        WHERE segmento_cluster = 'En Riesgo'
+          AND es_single_buyer = 0
+          AND dias_entre_compras >= 1
+        ORDER BY monetary DESC
+        """
+    )
+
+
+def kpis_reactivacion() -> dict:
+    """KPIs de la tab Reactivación masiva (segmento En Riesgo)."""
+    rows = fetch_dicts(
+        """
+        SELECT
+          COUNT(*)                                AS n_total,
+          SUM(monetary)                           AS revenue_potencial,
+          MEDIAN(recency)                         AS recency_mediana,
+          MEDIAN(dias_entre_compras)              AS cadencia_mediana
+        FROM segmentos
+        WHERE segmento_cluster = 'En Riesgo'
+          AND es_single_buyer = 0
+          AND dias_entre_compras >= 1
+        """
+    )
+    return rows[0]
+
+
+# Compatibilidad hacia atrás: nombres previos al SPEC de tabs en /alertas.
+# Mantenidos como alias por si algún notebook o script externo los importa.
+clientes_en_riesgo = clientes_urgentes
+kpis_alertas = kpis_urgentes
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -516,3 +743,100 @@ def mes_pico_por_bundle(segmento: str) -> list[dict]:
         """,
         [segmento],
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6.8 Movimientos: clientes en transición entre segmentos
+# ─────────────────────────────────────────────────────────────────────────────
+
+def clientes_en_frontera(threshold: float = 0.7) -> list[dict]:
+    """Clientes cuya razón de distancias supera el threshold (cerca de la frontera)."""
+    return fetch_dicts(
+        """
+        SELECT
+          cliente_id,
+          segmento_cluster                  AS segmento_actual,
+          segmento_secundario,
+          razon_distancias,
+          recency,
+          frequency,
+          monetary,
+          dias_entre_compras                AS cadencia,
+          es_single_buyer
+        FROM segmentos
+        WHERE razon_distancias >= ?
+          AND es_single_buyer = 0
+        ORDER BY monetary DESC
+        """,
+        [threshold],
+    )
+
+
+def clientes_cambio_segmento(meses_atras: int = 1) -> list[dict]:
+    """Clientes que cambiaron de segmento respecto al snapshot de N meses atrás."""
+    from datetime import datetime
+
+    from dateutil.relativedelta import relativedelta
+
+    from pulse.config.paths import SNAPSHOTS_DIR
+
+    fecha_target = datetime.now() - relativedelta(months=meses_atras)
+    target_mes = fecha_target.strftime("%Y-%m")
+    snapshot_path = SNAPSHOTS_DIR / f"snapshot_{target_mes}.parquet"
+
+    if not snapshot_path.exists():
+        return []
+
+    from pulse.dashboard.db import get_connection
+    con = get_connection()
+    con.execute(
+        f"CREATE OR REPLACE VIEW snapshot_anterior AS "
+        f"SELECT * FROM read_parquet('{snapshot_path.as_posix()}')"
+    )
+
+    return fetch_dicts(
+        """
+        SELECT
+          s.cliente_id,
+          sa.segmento_cluster                AS segmento_anterior,
+          s.segmento_cluster                 AS segmento_actual,
+          s.recency,
+          s.frequency,
+          s.monetary,
+          s.dias_entre_compras               AS cadencia,
+          CASE
+            WHEN sa.segmento_cluster = 'Hibernando' AND s.segmento_cluster IN ('Ocasionales', 'En Riesgo', 'Alto Valor', 'MVPs') THEN 'subida'
+            WHEN sa.segmento_cluster = 'En Riesgo' AND s.segmento_cluster IN ('Ocasionales', 'Alto Valor', 'MVPs') THEN 'subida'
+            WHEN sa.segmento_cluster = 'Ocasionales' AND s.segmento_cluster IN ('Alto Valor', 'MVPs') THEN 'subida'
+            WHEN sa.segmento_cluster = 'Alto Valor' AND s.segmento_cluster = 'MVPs' THEN 'subida'
+            ELSE 'bajada'
+          END                                AS direccion
+        FROM segmentos s
+        JOIN snapshot_anterior sa USING (cliente_id)
+        WHERE s.segmento_cluster != sa.segmento_cluster
+          AND s.es_single_buyer = 0
+        ORDER BY s.monetary DESC
+        """
+    )
+
+
+def kpis_movimientos(
+    frontera: list[dict] | None = None,
+    cambios: list[dict] | None = None,
+) -> dict:
+    """KPIs de la vista Movimientos: en frontera + cambios de segmento del mes.
+
+    Acepta `frontera` y `cambios` ya calculados para evitar releer el snapshot
+    y recontar la frontera cuando el caller ya los obtuvo (router de la página).
+    Si no se pasan, los calcula.
+    """
+    if frontera is None:
+        frontera = clientes_en_frontera(threshold=0.7)
+    if cambios is None:
+        cambios = clientes_cambio_segmento(meses_atras=1)
+    return {
+        "n_en_frontera":   len(frontera),
+        "n_subidas_mes":   sum(1 for c in cambios if c["direccion"] == "subida"),
+        "n_bajadas_mes":   sum(1 for c in cambios if c["direccion"] == "bajada"),
+        "n_total_cambios": len(cambios),
+    }

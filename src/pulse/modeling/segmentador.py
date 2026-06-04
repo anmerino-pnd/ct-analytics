@@ -112,6 +112,31 @@ class SegmentadorClientes:
         self.pipeline = pipeline
         self.metadata = metadata
 
+    @property
+    def cluster_names_ordered(self) -> list[str]:
+        """Nombres de los clusters en el orden de los centroides del K-Means.
+
+        `metadata.cluster_names` es un dict {cluster_id: nombre}; esta propiedad
+        lo expone como lista indexada por cluster_id (el mismo orden que
+        `kmeans.cluster_centers_`), para mapear índices de centroide a nombres
+        de segmento al calcular distancias.
+        """
+        names = self.metadata.cluster_names
+        return [names[i] for i in range(len(names))]
+
+    def transform_features(self, df: pd.DataFrame) -> np.ndarray:
+        """Aplica los pasos previos a K-Means (log1p → scaler) y devuelve las
+        features en el espacio escalado donde viven los centroides.
+
+        Punto único para las transformaciones internas del pipeline: lo usan
+        tanto `predict(with_distance=True)` como la capa de analytics al calcular
+        distancias a los centroides, en vez de replicar el recorrido de pasos.
+        """
+        X = df[self.metadata.features]
+        for _, step in self.pipeline.steps[:-1]:  # todo menos kmeans
+            X = step.transform(X)
+        return np.asarray(X)
+
     # ----------------------------------------------------------------
     # Construcción desde un pipeline ya entrenado
     # ----------------------------------------------------------------
@@ -202,13 +227,7 @@ class SegmentadorClientes:
         out["segmento_cluster"] = [self.metadata.cluster_names[c] for c in clusters]
 
         if with_distance:
-            # Aplicar manualmente los pasos previos al kmeans para obtener X_scaled.
-            # Pasamos los DataFrames tal cual para que el scaler reconozca los nombres
-            # de columnas y no emita warning.
-            X_transformed = X
-            for step_name, step in self.pipeline.steps[:-1]:  # todo menos kmeans
-                X_transformed = step.transform(X_transformed)
-            X_transformed = np.asarray(X_transformed)
+            X_transformed = self.transform_features(df)
 
             kmeans = self.pipeline.named_steps["kmeans"]
             centroides_asignados = kmeans.cluster_centers_[clusters]

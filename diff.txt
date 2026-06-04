@@ -1,0 +1,1159 @@
+diff --git a/.gitignore b/.gitignore
+index a755db3..bfb397a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,5 +6,4 @@ notebooks/
+ datos/
+ QWEN.md
+ CLAUDE.md
+-.claude/
+-SPEC.md
+\ No newline at end of file
++.claude/
+\ No newline at end of file
+diff --git a/src/pulse/analytics/segmentacion.py b/src/pulse/analytics/segmentacion.py
+index 31231b4..c313ca0 100644
+--- a/src/pulse/analytics/segmentacion.py
++++ b/src/pulse/analytics/segmentacion.py
+@@ -18,6 +18,7 @@ import logging
+ from datetime import datetime
+ from typing import Optional
+ 
++import numpy as np
+ import pandas as pd
+ 
+ from pulse.analytics.rfm import calcular_rfm_completo
+@@ -48,6 +49,8 @@ def segmentar_clientes(
+         - es_single_buyer
+         - cluster_id (0-4)
+         - segmento_cluster (nombre de negocio: "MVPs", "Hibernando", etc.)
++        - distancia_propia, distancia_segunda, razon_distancias, segmento_secundario
++          (señales de "frontera" entre clusters, ver _agregar_distancias_frontera)
+     """
+     # 1. Calcular features RFM (incluye imputación de single-buyers)
+     df_rfm = calcular_rfm_completo(
+@@ -64,10 +67,57 @@ def segmentar_clientes(
+     # 3. Aplicar la segmentación
+     df_segmentado = seg.predict(df_rfm)
+ 
++    # 3b. Distancias a centroides (señales de transición para la vista Movimientos)
++    _agregar_distancias_frontera(df_segmentado, seg)
++
+     # 4. Reporte de distribución
+     log.info("Distribución de segmentos:")
+     for segmento, n in df_segmentado["segmento_cluster"].value_counts().items():
+         pct = n / len(df_segmentado) * 100
+         log.info("  %-12s %s (%.1f%%)", segmento, f"{n:,}", pct)
+ 
+-    return df_segmentado
+\ No newline at end of file
++    return df_segmentado
++
++
++def _agregar_distancias_frontera(
++    df_segmentado: pd.DataFrame,
++    seg: SegmentadorClientes,
++) -> None:
++    """Anexa in-place las señales de frontera entre clusters.
++
++    Replica los pasos del pipeline previos a K-Means (log1p → scaler) sobre las
++    features en escala original para obtener el espacio escalado donde viven los
++    centroides, y calcula la distancia de cada cliente a TODOS los centroides.
++
++    Columnas agregadas:
++        - distancia_propia    : distancia al centroide más cercano (= el asignado).
++        - distancia_segunda   : distancia al segundo centroide más cercano.
++        - razon_distancias    : distancia_propia / distancia_segunda ∈ [0, 1].
++                                Cerca de 1 ⇒ cliente "en frontera" (ambiguo).
++        - segmento_secundario : nombre del segundo cluster más cercano.
++    """
++    features = seg.metadata.features
++    X = df_segmentado[features]
++
++    # Aplicar todos los pasos del pipeline menos el K-Means final.
++    X_transformed = X
++    for _, step in seg.pipeline.steps[:-1]:
++        X_transformed = step.transform(X_transformed)
++    X_transformed = np.asarray(X_transformed)
++
++    centroides = seg.pipeline.named_steps["kmeans"].cluster_centers_
++    distancias = np.linalg.norm(
++        X_transformed[:, np.newaxis, :] - centroides[np.newaxis, :, :],
++        axis=2,
++    )  # (n_clientes, k)
++
++    orden = np.argsort(distancias, axis=1)
++    dist_propia = np.take_along_axis(distancias, orden[:, :1], axis=1).ravel()
++    dist_segunda = np.take_along_axis(distancias, orden[:, 1:2], axis=1).ravel()
++    seg_secundario_idx = orden[:, 1]
++
++    nombres = seg.cluster_names_ordered
++    df_segmentado["distancia_propia"] = dist_propia
++    df_segmentado["distancia_segunda"] = dist_segunda
++    df_segmentado["razon_distancias"] = dist_propia / dist_segunda
++    df_segmentado["segmento_secundario"] = [nombres[i] for i in seg_secundario_idx]
+\ No newline at end of file
+diff --git a/src/pulse/config/paths.py b/src/pulse/config/paths.py
+index 4dc6073..1b8cb19 100644
+--- a/src/pulse/config/paths.py
++++ b/src/pulse/config/paths.py
+@@ -14,11 +14,13 @@ DATA = BASE_DIR / "datos"
+ PROCESSED = DATA / "processed"
+ PROCESSED_PRUEBAS = DATA / "processed_pruebas"
+ MODELS = DATA / "models"
++SNAPSHOTS_DIR = PROCESSED / "snapshots"
+ 
+ for path in [
+     DATA,
+     PROCESSED,
+     PROCESSED_PRUEBAS,
+-    MODELS
++    MODELS,
++    SNAPSHOTS_DIR,
+ ]:
+     path.mkdir(parents=True, exist_ok=True)
+\ No newline at end of file
+diff --git a/src/pulse/dashboard/queries.py b/src/pulse/dashboard/queries.py
+index 9c955e6..3574bc3 100644
+--- a/src/pulse/dashboard/queries.py
++++ b/src/pulse/dashboard/queries.py
+@@ -320,12 +320,226 @@ def cliente_posicion_segmento(cliente_id: str) -> list[dict]:
+     )
+ 
+ 
++def cliente_productos_top(cliente_id: str, limit: int = 10) -> list[dict]:
++    """Top N familias compradas por un cliente, ordenadas por revenue total.
++
++    Excluye CARGO100 (cargo financiero, no producto).
++    Lee desde la vista 'items' que apunta a items_historicos.parquet.
++    """
++    return fetch_dicts(
++        """
++        SELECT
++            familia,
++            COUNT(DISTINCT order_id)                          AS n_pedidos,
++            SUM(cantidad)                                     AS unidades_totales,
++            SUM(cantidad * precio_final)                      AS revenue_total,
++            strftime(MAX(fecha), '%Y-%m-%d')                  AS ultima_compra
++        FROM items
++        WHERE cliente_id = ?
++          AND clave != 'CARGO100'
++          AND familia IS NOT NULL
++        GROUP BY familia
++        ORDER BY revenue_total DESC
++        LIMIT ?
++        """,
++        [cliente_id, limit],
++    )
++
++
++def cliente_bundles_propios(cliente_id: str, limit: int = 10) -> list[dict]:
++    """Pares de familias que el cliente compra juntas en la misma orden.
++
++    Cruza con mba_accionables del segmento para anexar lift y confidence
++    cuando la regla también es válida a nivel de segmento.
++    """
++    # 1. Pares de familias en las mismas órdenes del cliente
++    pares = fetch_dicts(
++        """
++        WITH items_cliente AS (
++            SELECT DISTINCT order_id, familia
++            FROM items
++            WHERE cliente_id = ?
++              AND clave != 'CARGO100'
++              AND familia IS NOT NULL
++        )
++        SELECT
++            a.familia                AS familia_a,
++            b.familia                AS familia_b,
++            COUNT(DISTINCT a.order_id) AS n_ordenes
++        FROM items_cliente a
++        JOIN items_cliente b USING (order_id)
++        WHERE a.familia < b.familia
++        GROUP BY a.familia, b.familia
++        HAVING COUNT(DISTINCT a.order_id) >= 2
++        ORDER BY n_ordenes DESC
++        LIMIT ?
++        """,
++        [cliente_id, limit],
++    )
++    if not pares:
++        return []
++
++    # 2. Total de órdenes del cliente
++    total_row = fetch_dicts(
++        "SELECT COUNT(DISTINCT order_id) AS total FROM items WHERE cliente_id = ? AND clave != 'CARGO100'",
++        [cliente_id],
++    )
++    total_ordenes = total_row[0]["total"] if total_row else 0
++
++    # 3. Segmento del cliente
++    seg_row = fetch_dicts(
++        "SELECT segmento_cluster FROM segmentos WHERE cliente_id = ?",
++        [cliente_id],
++    )
++    segmento = seg_row[0]["segmento_cluster"] if seg_row else None
++
++    # 4. Reglas MBA accionables del segmento (mapa par → {confidence, lift})
++    reglas_map = {}
++    if segmento:
++        reglas = fetch_dicts(
++            "SELECT antecedents, consequents, confidence, lift FROM mba_accionables WHERE segmento = ?",
++            [segmento],
++        )
++        for r in reglas:
++            if "," not in r["consequents"]:  # solo bundles 1→1
++                par_norm = tuple(sorted([r["antecedents"], r["consequents"]]))
++                reglas_map[par_norm] = {"confidence": r["confidence"], "lift": r["lift"]}
++
++    # 5. Anexar info al par
++    for p in pares:
++        par_norm = tuple(sorted([p["familia_a"], p["familia_b"]]))
++        regla = reglas_map.get(par_norm)
++        p["confidence_segmento"] = regla["confidence"] if regla else None
++        p["lift_segmento"] = regla["lift"] if regla else None
++        p["pct_aparicion"] = (p["n_ordenes"] / total_ordenes) if total_ordenes else 0.0
++
++    return pares
++
++
++def cliente_oportunidades(cliente_id: str, limit: int = 10) -> list[dict]:
++    """Órdenes donde compró parte de un bundle propio pero no completo.
++
++    Define 'bundle fuerte' como pares con co-ocurrencia >= 30% respecto a la
++    familia menos frecuente del par. Devuelve las órdenes con la oportunidad.
++    """
++    bundles_fuertes = fetch_dicts(
++        """
++        WITH items_cliente AS (
++            SELECT DISTINCT order_id, familia
++            FROM items
++            WHERE cliente_id = ?
++              AND clave != 'CARGO100'
++              AND familia IS NOT NULL
++        ),
++        pares AS (
++            SELECT
++                a.familia                       AS familia_a,
++                b.familia                       AS familia_b,
++                COUNT(DISTINCT a.order_id)      AS n_juntas
++            FROM items_cliente a
++            JOIN items_cliente b USING (order_id)
++            WHERE a.familia < b.familia
++            GROUP BY a.familia, b.familia
++        ),
++        apariciones AS (
++            SELECT familia, COUNT(DISTINCT order_id) AS n_total
++            FROM items_cliente
++            GROUP BY familia
++        )
++        SELECT
++            p.familia_a,
++            p.familia_b,
++            p.n_juntas,
++            p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) AS co_occurrence
++        FROM pares p
++        JOIN apariciones ap_a ON ap_a.familia = p.familia_a
++        JOIN apariciones ap_b ON ap_b.familia = p.familia_b
++        WHERE p.n_juntas >= 2
++          AND p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) >= 0.30
++        """,
++        [cliente_id],
++    )
++
++    if not bundles_fuertes:
++        return []
++
++    oportunidades = []
++    for bundle in bundles_fuertes:
++        fam_a, fam_b = bundle["familia_a"], bundle["familia_b"]
++
++        # Órdenes con solo A (sin B)
++        ords_solo_a = fetch_dicts(
++            """
++            SELECT
++                o.order_id,
++                strftime(o.fecha, '%Y-%m-%d %H:%M:%S')    AS fecha,
++                o.pago_total
++            FROM orders o
++            WHERE o.cliente_id = ?
++              AND o.order_id IN (
++                  SELECT DISTINCT order_id FROM items
++                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
++              )
++              AND o.order_id NOT IN (
++                  SELECT DISTINCT order_id FROM items
++                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
++              )
++            ORDER BY o.pago_total DESC
++            """,
++            [cliente_id, cliente_id, fam_a, cliente_id, fam_b],
++        )
++        for o in ords_solo_a:
++            oportunidades.append({
++                "order_id": o["order_id"], "fecha": o["fecha"],
++                "pago_total": o["pago_total"],
++                "compro": fam_a, "le_falto": fam_b,
++                "co_occurrence": bundle["co_occurrence"],
++            })
++
++        # Órdenes con solo B (sin A)
++        ords_solo_b = fetch_dicts(
++            """
++            SELECT
++                o.order_id,
++                strftime(o.fecha, '%Y-%m-%d %H:%M:%S')    AS fecha,
++                o.pago_total
++            FROM orders o
++            WHERE o.cliente_id = ?
++              AND o.order_id IN (
++                  SELECT DISTINCT order_id FROM items
++                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
++              )
++              AND o.order_id NOT IN (
++                  SELECT DISTINCT order_id FROM items
++                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
++              )
++            ORDER BY o.pago_total DESC
++            """,
++            [cliente_id, cliente_id, fam_b, cliente_id, fam_a],
++        )
++        for o in ords_solo_b:
++            oportunidades.append({
++                "order_id": o["order_id"], "fecha": o["fecha"],
++                "pago_total": o["pago_total"],
++                "compro": fam_b, "le_falto": fam_a,
++                "co_occurrence": bundle["co_occurrence"],
++            })
++
++    oportunidades.sort(key=lambda x: x["pago_total"] or 0, reverse=True)
++    return oportunidades[:limit]
++
++
+ # ─────────────────────────────────────────────────────────────────────────────
+ # 6.5 Alertas: clientes valiosos en riesgo
+ # ─────────────────────────────────────────────────────────────────────────────
+ 
+-def clientes_en_riesgo() -> list[dict]:
+-    """MVPs / Alto Valor no single-buyers cuyo recency excede 1.5× su cadencia mediana."""
++def clientes_urgentes() -> list[dict]:
++    """MVPs / Alto Valor no single-buyers cuyo recency excede 1.5× su cadencia mediana.
++
++    Renombrado desde clientes_en_riesgo() para diferenciar del segmento En Riesgo.
++    El ratio usa GREATEST(dias_entre_compras, 1) para evitar división por cero en
++    clientes B2B automatizados (cadencia 0 por compras múltiples diarias).
++    """
+     return fetch_dicts(
+         """
+         SELECT
+@@ -333,7 +547,7 @@ def clientes_en_riesgo() -> list[dict]:
+           segmento_cluster                                       AS segmento,
+           recency,
+           dias_entre_compras                                     AS cadencia,
+-          recency::DOUBLE / GREATEST(dias_entre_compras, 1) AS ratio,
++          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
+           monetary,
+           frequency
+         FROM segmentos
+@@ -346,24 +560,75 @@ def clientes_en_riesgo() -> list[dict]:
+     )
+ 
+ 
+-def kpis_alertas() -> dict:
+-    """Conteos y revenue acumulado de los clientes en riesgo (para las KPI cards)."""
++def kpis_urgentes() -> dict:
++    """KPIs de la tab Urgentes (MVPs + Alto Valor en riesgo individual)."""
+     rows = fetch_dicts(
+         """
+         SELECT
+-          COUNT(*)                                                                    AS n_total,
+-          SUM(CASE WHEN segmento_cluster = 'MVPs' THEN 1 ELSE 0 END)                  AS n_mvps,
+-          SUM(CASE WHEN segmento_cluster = 'Alto Valor' THEN 1 ELSE 0 END)            AS n_alto,
+-          SUM(monetary)                                                               AS revenue_en_riesgo
++          COUNT(*)                                                          AS n_total,
++          SUM(CASE WHEN segmento_cluster = 'MVPs' THEN 1 ELSE 0 END)        AS n_mvps,
++          SUM(CASE WHEN segmento_cluster = 'Alto Valor' THEN 1 ELSE 0 END)  AS n_alto,
++          SUM(monetary)                                                     AS revenue_en_riesgo
+         FROM segmentos
+         WHERE segmento_cluster IN ('MVPs', 'Alto Valor')
+           AND es_single_buyer = 0
++          AND dias_entre_compras >= 1
+           AND recency > 1.5 * dias_entre_compras
+         """
+     )
+     return rows[0]
+ 
+ 
++def clientes_reactivacion() -> list[dict]:
++    """Clientes del segmento En Riesgo (no single-buyers), ordenados por monetary.
++
++    A diferencia de clientes_urgentes(), aquí incluimos a todos los del segmento.
++    El ratio sigue siendo útil para priorizar dentro del grupo (cuanto más alto,
++    más tiempo lleva el cliente sin comprar respecto a su patrón histórico).
++    """
++    return fetch_dicts(
++        """
++        SELECT
++          cliente_id,
++          segmento_cluster                                       AS segmento,
++          recency,
++          dias_entre_compras                                     AS cadencia,
++          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
++          monetary,
++          frequency
++        FROM segmentos
++        WHERE segmento_cluster = 'En Riesgo'
++          AND es_single_buyer = 0
++          AND dias_entre_compras >= 1
++        ORDER BY monetary DESC
++        """
++    )
++
++
++def kpis_reactivacion() -> dict:
++    """KPIs de la tab Reactivación masiva (segmento En Riesgo)."""
++    rows = fetch_dicts(
++        """
++        SELECT
++          COUNT(*)                                AS n_total,
++          SUM(monetary)                           AS revenue_potencial,
++          MEDIAN(recency)                         AS recency_mediana,
++          MEDIAN(dias_entre_compras)              AS cadencia_mediana
++        FROM segmentos
++        WHERE segmento_cluster = 'En Riesgo'
++          AND es_single_buyer = 0
++          AND dias_entre_compras >= 1
++        """
++    )
++    return rows[0]
++
++
++# Compatibilidad hacia atrás: nombres previos al SPEC de tabs en /alertas.
++# Mantenidos como alias por si algún notebook o script externo los importa.
++clientes_en_riesgo = clientes_urgentes
++kpis_alertas = kpis_urgentes
++
++
+ # ─────────────────────────────────────────────────────────────────────────────
+ # 6.6 Comparador entre segmentos
+ # ─────────────────────────────────────────────────────────────────────────────
+@@ -515,4 +780,93 @@ def mes_pico_por_bundle(segmento: str) -> list[dict]:
+         ORDER BY pedidos DESC
+         """,
+         [segmento],
+-    )
+\ No newline at end of file
++    )
++
++
++# ─────────────────────────────────────────────────────────────────────────────
++# 6.8 Movimientos: clientes en transición entre segmentos
++# ─────────────────────────────────────────────────────────────────────────────
++
++def clientes_en_frontera(threshold: float = 0.7) -> list[dict]:
++    """Clientes cuya razón de distancias supera el threshold (cerca de la frontera)."""
++    return fetch_dicts(
++        """
++        SELECT
++          cliente_id,
++          segmento_cluster                  AS segmento_actual,
++          segmento_secundario,
++          razon_distancias,
++          recency,
++          frequency,
++          monetary,
++          dias_entre_compras                AS cadencia,
++          es_single_buyer
++        FROM segmentos
++        WHERE razon_distancias >= ?
++          AND es_single_buyer = 0
++        ORDER BY monetary DESC
++        """,
++        [threshold],
++    )
++
++
++def clientes_cambio_segmento(meses_atras: int = 1) -> list[dict]:
++    """Clientes que cambiaron de segmento respecto al snapshot de N meses atrás."""
++    from datetime import datetime
++
++    from dateutil.relativedelta import relativedelta
++
++    from pulse.config.paths import SNAPSHOTS_DIR
++
++    fecha_target = datetime.now() - relativedelta(months=meses_atras)
++    target_mes = fecha_target.strftime("%Y-%m")
++    snapshot_path = SNAPSHOTS_DIR / f"snapshot_{target_mes}.parquet"
++
++    if not snapshot_path.exists():
++        return []
++
++    from pulse.dashboard.db import get_connection
++    con = get_connection()
++    con.execute(
++        f"CREATE OR REPLACE VIEW snapshot_anterior AS "
++        f"SELECT * FROM read_parquet('{snapshot_path.as_posix()}')"
++    )
++
++    return fetch_dicts(
++        """
++        SELECT
++          s.cliente_id,
++          sa.segmento_cluster                AS segmento_anterior,
++          s.segmento_cluster                 AS segmento_actual,
++          s.recency,
++          s.frequency,
++          s.monetary,
++          s.dias_entre_compras               AS cadencia,
++          CASE
++            WHEN sa.segmento_cluster = 'Hibernando' AND s.segmento_cluster IN ('Ocasionales', 'En Riesgo', 'Alto Valor', 'MVPs') THEN 'subida'
++            WHEN sa.segmento_cluster = 'En Riesgo' AND s.segmento_cluster IN ('Ocasionales', 'Alto Valor', 'MVPs') THEN 'subida'
++            WHEN sa.segmento_cluster = 'Ocasionales' AND s.segmento_cluster IN ('Alto Valor', 'MVPs') THEN 'subida'
++            WHEN sa.segmento_cluster = 'Alto Valor' AND s.segmento_cluster = 'MVPs' THEN 'subida'
++            ELSE 'bajada'
++          END                                AS direccion
++        FROM segmentos s
++        JOIN snapshot_anterior sa USING (cliente_id)
++        WHERE s.segmento_cluster != sa.segmento_cluster
++          AND s.es_single_buyer = 0
++        ORDER BY s.monetary DESC
++        """
++    )
++
++
++def kpis_movimientos() -> dict:
++    """KPIs de la vista Movimientos: en frontera + cambios de segmento del mes."""
++    en_frontera = fetch_dicts(
++        "SELECT COUNT(*) AS n FROM segmentos WHERE razon_distancias >= 0.7 AND es_single_buyer = 0"
++    )
++    cambios = clientes_cambio_segmento(meses_atras=1)
++    return {
++        "n_en_frontera":   en_frontera[0]["n"],
++        "n_subidas_mes":   sum(1 for c in cambios if c["direccion"] == "subida"),
++        "n_bajadas_mes":   sum(1 for c in cambios if c["direccion"] == "bajada"),
++        "n_total_cambios": len(cambios),
++    }
+\ No newline at end of file
+diff --git a/src/pulse/dashboard/routers/api.py b/src/pulse/dashboard/routers/api.py
+index 6b2a4c3..226d1b7 100644
+--- a/src/pulse/dashboard/routers/api.py
++++ b/src/pulse/dashboard/routers/api.py
+@@ -90,7 +90,7 @@ async def buscar_cliente(
+ 
+ @router.get("/cliente/{cliente_id}")
+ async def cliente_drilldown(cliente_id: str) -> dict:
+-    """Payload completo del cliente: perfil, pedidos, posición en su segmento."""
++    """Payload completo del cliente: perfil, pedidos, posición, productos, bundles, oportunidades."""
+     perfil = q.cliente_perfil(cliente_id)
+     if perfil is None:
+         raise HTTPException(
+@@ -101,4 +101,43 @@ async def cliente_drilldown(cliente_id: str) -> dict:
+         "perfil": perfil,
+         "pedidos": q.cliente_pedidos(cliente_id, limit=50),
+         "posicion": q.cliente_posicion_segmento(cliente_id),
++        "productos_top": q.cliente_productos_top(cliente_id, limit=10),
++        "bundles_propios": q.cliente_bundles_propios(cliente_id, limit=10),
++        "oportunidades": q.cliente_oportunidades(cliente_id, limit=10),
++    }
++
++
++# ─────────────────────────────────────────────────────────────────────────────
++# /api/alertas/* — tabs Urgentes y Reactivación masiva
++# ─────────────────────────────────────────────────────────────────────────────
++
++@router.get("/alertas/urgentes")
++async def alertas_urgentes() -> dict:
++    """MVPs / Alto Valor en riesgo individual (acción de cuenta key)."""
++    return {
++        "kpis": q.kpis_urgentes(),
++        "clientes": q.clientes_urgentes(),
++    }
++
++
++@router.get("/alertas/reactivacion")
++async def alertas_reactivacion() -> dict:
++    """Segmento En Riesgo completo (campaña masiva de reactivación)."""
++    return {
++        "kpis": q.kpis_reactivacion(),
++        "clientes": q.clientes_reactivacion(),
++    }
++
++
++# ─────────────────────────────────────────────────────────────────────────────
++# /api/movimientos — clientes en transición entre segmentos
++# ─────────────────────────────────────────────────────────────────────────────
++
++@router.get("/movimientos")
++async def movimientos() -> dict:
++    """Clientes en frontera (espacial) y cambios de segmento (temporal)."""
++    return {
++        "kpis":     q.kpis_movimientos(),
++        "frontera": q.clientes_en_frontera(threshold=0.7),
++        "cambios":  q.clientes_cambio_segmento(meses_atras=1),
+     }
+diff --git a/src/pulse/dashboard/routers/pages.py b/src/pulse/dashboard/routers/pages.py
+index 4e7abb8..dea4ef7 100644
+--- a/src/pulse/dashboard/routers/pages.py
++++ b/src/pulse/dashboard/routers/pages.py
+@@ -113,16 +113,35 @@ async def heatmap_bundles(request: Request) -> HTMLResponse:
+ 
+ @router.get("/alertas", response_class=HTMLResponse)
+ async def alertas(request: Request) -> HTMLResponse:
+-    """Clientes valiosos en riesgo: KPIs, scatter, tabla rankeada."""
++    """Clientes valiosos en riesgo: dos tabs (urgentes y reactivación masiva)."""
+     initial_data = {
+-        "kpis": q.kpis_alertas(),
+-        "clientes": q.clientes_en_riesgo(),
++        "urgentes": {
++            "kpis": q.kpis_urgentes(),
++            "clientes": q.clientes_urgentes(),
++        },
++        "reactivacion": {
++            "kpis": q.kpis_reactivacion(),
++            "clientes": q.clientes_reactivacion(),
++        },
+     }
+     ctx = _base_context("alertas")
+     ctx["initial_data"] = initial_data
+     return templates.TemplateResponse(request, "alertas.html", ctx)
+ 
+ 
++@router.get("/movimientos", response_class=HTMLResponse)
++async def movimientos(request: Request) -> HTMLResponse:
++    """Clientes en transición: frontera espacial + cambios de segmento mes a mes."""
++    initial_data = {
++        "kpis":     q.kpis_movimientos(),
++        "frontera": q.clientes_en_frontera(threshold=0.7),
++        "cambios":  q.clientes_cambio_segmento(meses_atras=1),
++    }
++    ctx = _base_context("movimientos")
++    ctx["initial_data"] = initial_data
++    return templates.TemplateResponse(request, "movimientos.html", ctx)
++
++
+ @router.get("/cliente", response_class=HTMLResponse)
+ async def cliente(request: Request) -> HTMLResponse:
+     """Drill-down por cliente. Acepta ?id=… para autocargar desde alertas."""
+diff --git a/src/pulse/dashboard/templates/alertas.html b/src/pulse/dashboard/templates/alertas.html
+index f157e54..59c58f7 100644
+--- a/src/pulse/dashboard/templates/alertas.html
++++ b/src/pulse/dashboard/templates/alertas.html
+@@ -4,59 +4,107 @@
+ {% block content %}
+ <header class="page-header">
+   <h1>Clientes valiosos en riesgo</h1>
+-  <p class="subtitle">MVPs y Alto Valor que llevan más de 1.5× su cadencia mediana sin comprar.</p>
++  <p class="subtitle">Acciones de retención y reactivación priorizadas por valor del cliente.</p>
+ </header>
+ 
+-<section class="kpi-grid" id="kpi-grid-alertas">
+-  <div class="kpi-card">
+-    <span class="kpi-label">Total en riesgo</span>
+-    <span class="kpi-value" id="kpi-total">—</span>
+-  </div>
+-  <div class="kpi-card">
+-    <span class="kpi-label">MVPs en riesgo</span>
+-    <span class="kpi-value" id="kpi-mvps">—</span>
+-  </div>
+-  <div class="kpi-card">
+-    <span class="kpi-label">Alto Valor en riesgo</span>
+-    <span class="kpi-value" id="kpi-alto">—</span>
+-  </div>
+-  <div class="kpi-card">
+-    <span class="kpi-label">Revenue acumulado en riesgo</span>
+-    <span class="kpi-value" id="kpi-revenue">—</span>
++<section class="filters">
++  <div class="filter-group">
++    <label>Vista</label>
++    <div class="toggle-group" id="f-tab" role="tablist">
++      <button data-tab="urgentes" class="active" type="button">Urgentes (acción individual)</button>
++      <button data-tab="reactivacion" type="button">Reactivación masiva (En Riesgo)</button>
++    </div>
+   </div>
+ </section>
+ 
+-<section class="chart-card">
+-  <h2>Ratio de urgencia × monetary</h2>
+-  <div id="scatter-alertas" class="chart"></div>
+-</section>
++<!-- TAB: URGENTES -->
++<div id="tab-urgentes" class="tab-content">
++  <section class="kpi-grid">
++    <div class="kpi-card">
++      <span class="kpi-label">Total en riesgo</span>
++      <span class="kpi-value" id="kpi-urg-total">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">MVPs en riesgo</span>
++      <span class="kpi-value" id="kpi-urg-mvps">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">Alto Valor en riesgo</span>
++      <span class="kpi-value" id="kpi-urg-alto">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">Revenue en riesgo</span>
++      <span class="kpi-value" id="kpi-urg-revenue">—</span>
++    </div>
++  </section>
+ 
+-<section class="chart-card">
+-  <h2>Top clientes en riesgo (por monetary)</h2>
+-  <table class="data-table" id="tabla-alertas">
+-    <thead>
+-      <tr>
+-        <th>Cliente</th>
+-        <th>Segmento</th>
+-        <th>Recency (d)</th>
+-        <th>Cadencia mediana</th>
+-        <th>Ratio</th>
+-        <th>Monetary</th>
+-        <th>Frequency</th>
+-        <th></th>
+-      </tr>
+-    </thead>
+-    <tbody></tbody>
+-  </table>
+-</section>
++  <section class="chart-card">
++    <h2>Ratio de urgencia × monetary</h2>
++    <div id="scatter-urgentes" class="chart"></div>
++  </section>
++
++  <section class="chart-card">
++    <h2>Top clientes en riesgo (por monetary)</h2>
++    <table class="data-table" id="tabla-urgentes">
++      <thead>
++        <tr>
++          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
++          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
++          <th>Frequency</th><th></th>
++        </tr>
++      </thead>
++      <tbody></tbody>
++    </table>
++  </section>
++</div>
++
++<!-- TAB: REACTIVACIÓN -->
++<div id="tab-reactivacion" class="tab-content hidden">
++  <section class="kpi-grid">
++    <div class="kpi-card">
++      <span class="kpi-label">Total en En Riesgo</span>
++      <span class="kpi-value" id="kpi-rea-total">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">Revenue potencial recuperable</span>
++      <span class="kpi-value" id="kpi-rea-revenue">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">Recency mediana (días)</span>
++      <span class="kpi-value" id="kpi-rea-recency">—</span>
++    </div>
++    <div class="kpi-card">
++      <span class="kpi-label">Cadencia mediana original (días)</span>
++      <span class="kpi-value" id="kpi-rea-cadencia">—</span>
++    </div>
++  </section>
++
++  <section class="chart-card">
++    <h2>Distribución de monetary × ratio</h2>
++    <div id="scatter-reactivacion" class="chart"></div>
++  </section>
++
++  <section class="chart-card">
++    <h2>Top clientes En Riesgo (por monetary histórico)</h2>
++    <table class="data-table" id="tabla-reactivacion">
++      <thead>
++        <tr>
++          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
++          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
++          <th>Frequency</th><th></th>
++        </tr>
++      </thead>
++      <tbody></tbody>
++    </table>
++  </section>
++</div>
+ 
+ <details class="explainer">
+   <summary>¿Qué estoy viendo?</summary>
+   <div class="explainer-content">
+-    <p><strong>Pregunta de negocio:</strong> ¿Qué clientes valiosos están a punto de perderse?</p>
+-    <p><strong>Cómo leer esto:</strong> Cada cliente listado pertenece a <em>MVPs</em> o <em>Alto Valor</em>, no es single-buyer, y su recency actual supera 1.5× su cadencia mediana (lleva más de una cadencia y media sin comprar). El ratio te dice cuántas cadencias acumula sin comprar. El scatter muestra a todos los clientes en riesgo: ratio en X, monetary en Y (log).</p>
+-    <p><strong>Acciones sugeridas:</strong> Prioriza el top de la tabla — ahí está concentrado el revenue en riesgo. Para clientes con ratio &gt; 3 considera una intervención fuerte (descuento personalizado, contacto directo). Los clientes con ratio ∞ son extremos: su cadencia base es 0 (compraban varias veces al día) y ahora no compran — probablemente cambio operativo del cliente.</p>
+-    <p><strong>Notas técnicas:</strong> Single-buyers se excluyen porque su cadencia es imputada (p95) y el riesgo no se calcula igual. Filas con cadencia 0 muestran ratio ∞ en la tabla y se omiten del scatter.</p>
++    <p><strong>Urgentes</strong>: clientes MVPs y Alto Valor cuyo último pedido excede 1.5× su cadencia mediana habitual. Acción: contacto directo, descuento personalizado, intervención de cuenta key.</p>
++    <p><strong>Reactivación masiva</strong>: clientes del segmento En Riesgo (todos llevan tiempo sin comprar respecto a su patrón histórico). Acción: campaña de reactivación masiva, email marketing con incentivos genéricos.</p>
++    <p>El ratio representa cuántas cadencias acumula sin comprar. Ratio > 1.5 = riesgo, > 3 = abandono casi seguro.</p>
+   </div>
+ </details>
+ 
+@@ -64,38 +112,72 @@
+ {% endblock %}
+ 
+ {% block extra_scripts %}
++<style>
++  .tab-content.hidden { display: none; }
++</style>
+ <script>
+   (function () {
+-    const data = JSON.parse(document.getElementById('initial-data').textContent);
++    const initial = JSON.parse(document.getElementById('initial-data').textContent);
+     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+     const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+ 
+-    // KPI cards
+-    document.getElementById('kpi-total').textContent   = fmtNum(data.kpis.n_total);
+-    document.getElementById('kpi-mvps').textContent    = fmtNum(data.kpis.n_mvps);
+-    document.getElementById('kpi-alto').textContent    = fmtNum(data.kpis.n_alto);
+-    document.getElementById('kpi-revenue').textContent = fmtMoneda(data.kpis.revenue_en_riesgo);
+-
+-    // Scatter (excluye ratio nulo / no finito)
+-    const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
+-    PulseCharts.renderScatterAlertas('scatter-alertas', conRatio);
+-
+-    // Tabla (incluye todos, ratio nulo = "∞")
+-    const tbody = document.querySelector('#tabla-alertas tbody');
+-    data.clientes.forEach(c => {
+-      const color = window.SEGMENT_COLORS[c.segmento] || '#888';
+-      const tr = document.createElement('tr');
+-      tr.innerHTML = `
+-        <td>${c.cliente_id}</td>
+-        <td><span class="seg-chip" style="background:${color}"></span>${c.segmento}</td>
+-        <td>${fmtNum(c.recency)}</td>
+-        <td>${fmtNum(c.cadencia, 1)}</td>
+-        <td>${c.ratio != null && isFinite(c.ratio) ? fmtNum(c.ratio, 2) : '∞'}</td>
+-        <td>${fmtMoneda(c.monetary)}</td>
+-        <td>${fmtNum(c.frequency)}</td>
+-        <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
+-      `;
+-      tbody.appendChild(tr);
++    function renderTab(tabName, data) {
++      if (tabName === 'urgentes') {
++        document.getElementById('kpi-urg-total').textContent   = fmtNum(data.kpis.n_total);
++        document.getElementById('kpi-urg-mvps').textContent    = fmtNum(data.kpis.n_mvps);
++        document.getElementById('kpi-urg-alto').textContent    = fmtNum(data.kpis.n_alto);
++        document.getElementById('kpi-urg-revenue').textContent = fmtMoneda(data.kpis.revenue_en_riesgo);
++
++        const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
++        PulseCharts.renderScatterAlertas('scatter-urgentes', conRatio);
++
++        renderTabla('tabla-urgentes', data.clientes);
++      } else {
++        document.getElementById('kpi-rea-total').textContent    = fmtNum(data.kpis.n_total);
++        document.getElementById('kpi-rea-revenue').textContent  = fmtMoneda(data.kpis.revenue_potencial);
++        document.getElementById('kpi-rea-recency').textContent  = fmtNum(data.kpis.recency_mediana);
++        document.getElementById('kpi-rea-cadencia').textContent = fmtNum(data.kpis.cadencia_mediana);
++
++        const conRatio = data.clientes.filter(c => c.ratio != null && isFinite(c.ratio));
++        PulseCharts.renderScatterAlertas('scatter-reactivacion', conRatio);
++
++        renderTabla('tabla-reactivacion', data.clientes);
++      }
++    }
++
++    function renderTabla(tablaId, clientes) {
++      const tbody = document.querySelector('#' + tablaId + ' tbody');
++      tbody.innerHTML = '';
++      clientes.forEach(c => {
++        const color = window.SEGMENT_COLORS[c.segmento] || '#888';
++        const tr = document.createElement('tr');
++        tr.innerHTML = `
++          <td>${c.cliente_id}</td>
++          <td><span class="seg-chip" style="background:${color}"></span>${c.segmento}</td>
++          <td>${fmtNum(c.recency)}</td>
++          <td>${fmtNum(c.cadencia, 1)}</td>
++          <td>${c.ratio != null && isFinite(c.ratio) ? fmtNum(c.ratio, 2) : '∞'}</td>
++          <td>${fmtMoneda(c.monetary)}</td>
++          <td>${fmtNum(c.frequency)}</td>
++          <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
++        `;
++        tbody.appendChild(tr);
++      });
++    }
++
++    // Primera pintura: ambas tabs precargadas
++    renderTab('urgentes', initial.urgentes);
++    renderTab('reactivacion', initial.reactivacion);
++
++    // Switch entre tabs
++    document.querySelectorAll('#f-tab button').forEach(btn => {
++      btn.addEventListener('click', () => {
++        document.querySelectorAll('#f-tab button').forEach(b => b.classList.remove('active'));
++        btn.classList.add('active');
++        const tab = btn.dataset.tab;
++        document.getElementById('tab-urgentes').classList.toggle('hidden', tab !== 'urgentes');
++        document.getElementById('tab-reactivacion').classList.toggle('hidden', tab !== 'reactivacion');
++      });
+     });
+   })();
+ </script>
+diff --git a/src/pulse/dashboard/templates/base.html b/src/pulse/dashboard/templates/base.html
+index 5b4b7ca..c3b0646 100644
+--- a/src/pulse/dashboard/templates/base.html
++++ b/src/pulse/dashboard/templates/base.html
+@@ -18,6 +18,7 @@
+         ('comparador',      'Comparador'),
+         ('heatmap-bundles', 'Heatmap bundles'),
+         ('alertas',         'Alertas'),
++        ('movimientos',     'Movimientos'),
+         ('cliente',         'Cliente'),
+       ] %}
+       {% for slug, label in links %}
+diff --git a/src/pulse/dashboard/templates/cliente.html b/src/pulse/dashboard/templates/cliente.html
+index 774aba6..848fc87 100644
+--- a/src/pulse/dashboard/templates/cliente.html
++++ b/src/pulse/dashboard/templates/cliente.html
+@@ -77,6 +77,53 @@
+     <div id="scatter-posicion" class="chart"></div>
+   </section>
+ 
++  <section class="chart-card">
++    <h2>Top productos del cliente</h2>
++    <p class="subtitle" id="prod-summary">—</p>
++    <table class="data-table" id="tabla-productos">
++      <thead>
++        <tr>
++          <th>Familia</th>
++          <th>N° pedidos</th>
++          <th>Unidades</th>
++          <th>Revenue total</th>
++          <th>Última compra</th>
++        </tr>
++      </thead>
++      <tbody></tbody>
++    </table>
++  </section>
++
++  <section class="chart-card">
++    <h2>Bundles que el cliente compra juntos</h2>
++    <p class="subtitle">
++      Pares de familias en las mismas órdenes. <em>Conf./Lift segmento</em> indica si
++      el bundle también es regla accionable del segmento del cliente.
++    </p>
++    <table class="data-table" id="tabla-bundles-propios">
++      <thead>
++        <tr><th>Familia A</th><th>Familia B</th><th>N° órdenes juntas</th>
++            <th>% de órdenes del cliente</th><th>Conf. segmento</th><th>Lift segmento</th></tr>
++      </thead>
++      <tbody></tbody>
++    </table>
++  </section>
++
++  <section class="chart-card">
++    <h2>Oportunidades de cross-sell detectadas</h2>
++    <p class="subtitle">
++      Órdenes donde el cliente compró una parte de uno de sus bundles habituales
++      pero no la otra. Cada fila es una oportunidad de empuje concreta.
++    </p>
++    <table class="data-table" id="tabla-oportunidades">
++      <thead>
++        <tr><th>Order ID</th><th>Fecha</th><th>Pago total</th>
++            <th>Compró</th><th>Le faltó</th><th>Co-ocurrencia histórica</th></tr>
++      </thead>
++      <tbody></tbody>
++    </table>
++  </section>
++
+ </div>
+ 
+ <details class="explainer">
+@@ -98,6 +145,7 @@
+     const initial = JSON.parse(document.getElementById('initial-data').textContent);
+     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+     const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
++    const fmtPct = (v) => v == null ? '—' : (Number(v) * 100).toLocaleString('es-MX', { maximumFractionDigits: 1 }) + '%';
+ 
+     const input    = document.getElementById('f-cliente');
+     const datalist = document.getElementById('cliente-list');
+@@ -141,6 +189,64 @@
+       });
+ 
+       PulseCharts.renderScatterCliente('scatter-posicion', data.posicion, p.segmento);
++
++      // ─ Top productos del cliente
++      const tbodyProd = document.querySelector('#tabla-productos tbody');
++      tbodyProd.innerHTML = '';
++      data.productos_top.forEach(prod => {
++        const tr = document.createElement('tr');
++        tr.innerHTML = `
++          <td><code>${prod.familia}</code></td>
++          <td>${fmtNum(prod.n_pedidos)}</td>
++          <td>${fmtNum(prod.unidades_totales)}</td>
++          <td>${fmtMoneda(prod.revenue_total)}</td>
++          <td>${prod.ultima_compra ? String(prod.ultima_compra).substring(0, 10) : '—'}</td>
++        `;
++        tbodyProd.appendChild(tr);
++      });
++      document.getElementById('prod-summary').textContent =
++        data.productos_top.length + ' familias compradas (top por revenue).';
++
++      // ─ Bundles propios
++      const tbodyBP = document.querySelector('#tabla-bundles-propios tbody');
++      tbodyBP.innerHTML = '';
++      if (data.bundles_propios.length === 0) {
++        tbodyBP.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin bundles detectados (cliente con pocas órdenes multi-familia).</td></tr>';
++      } else {
++        data.bundles_propios.forEach(b => {
++          const tr = document.createElement('tr');
++          tr.innerHTML = `
++            <td><code>${b.familia_a}</code></td>
++            <td><code>${b.familia_b}</code></td>
++            <td>${fmtNum(b.n_ordenes)}</td>
++            <td>${fmtPct(b.pct_aparicion)}</td>
++            <td>${b.confidence_segmento != null ? fmtPct(b.confidence_segmento) : '—'}</td>
++            <td>${b.lift_segmento != null ? fmtNum(b.lift_segmento, 2) : '—'}</td>
++          `;
++          tbodyBP.appendChild(tr);
++        });
++      }
++
++      // ─ Oportunidades
++      const tbodyOp = document.querySelector('#tabla-oportunidades tbody');
++      tbodyOp.innerHTML = '';
++      if (data.oportunidades.length === 0) {
++        tbodyOp.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin oportunidades detectadas. El cliente cierra consistentemente sus bundles.</td></tr>';
++      } else {
++        data.oportunidades.forEach(o => {
++          const tr = document.createElement('tr');
++          tr.innerHTML = `
++            <td><code>${o.order_id}</code></td>
++            <td>${o.fecha}</td>
++            <td>${fmtMoneda(o.pago_total)}</td>
++            <td><code>${o.compro}</code></td>
++            <td><code>${o.le_falto}</code></td>
++            <td>${fmtPct(o.co_occurrence)}</td>
++          `;
++          tbodyOp.appendChild(tr);
++        });
++      }
++
+       setVista('ok');
+     }
+ 
+diff --git a/src/pulse/modeling/segmentador.py b/src/pulse/modeling/segmentador.py
+index bb756a6..ce77b9d 100644
+--- a/src/pulse/modeling/segmentador.py
++++ b/src/pulse/modeling/segmentador.py
+@@ -112,6 +112,18 @@ class SegmentadorClientes:
+         self.pipeline = pipeline
+         self.metadata = metadata
+ 
++    @property
++    def cluster_names_ordered(self) -> list[str]:
++        """Nombres de los clusters en el orden de los centroides del K-Means.
++
++        `metadata.cluster_names` es un dict {cluster_id: nombre}; esta propiedad
++        lo expone como lista indexada por cluster_id (el mismo orden que
++        `kmeans.cluster_centers_`), para mapear índices de centroide a nombres
++        de segmento al calcular distancias.
++        """
++        names = self.metadata.cluster_names
++        return [names[i] for i in range(len(names))]
++
+     # ----------------------------------------------------------------
+     # Construcción desde un pipeline ya entrenado
+     # ----------------------------------------------------------------
+diff --git a/src/pulse/pipeline/runner.py b/src/pulse/pipeline/runner.py
+index afccefe..3d0d3e2 100644
+--- a/src/pulse/pipeline/runner.py
++++ b/src/pulse/pipeline/runner.py
+@@ -36,7 +36,7 @@ from pulse.analytics.familia import agregar_familia
+ from pulse.analytics.mba import calcular_mba
+ from pulse.analytics.segmentacion import segmentar_clientes
+ from pulse.analytics.temporalidad import calcular_temporalidad
+-from pulse.config.paths import PROCESSED
++from pulse.config.paths import PROCESSED, SNAPSHOTS_DIR
+ from pulse.etl.ingest import run_ingest
+ from pulse.pipeline.validacion import (
+     QualityCheckFailed,
+@@ -163,9 +163,10 @@ def run(
+         )
+ 
+         # ========================================================
+-        # 6. MONTHLY: validación de drift contra snapshot
++        # 6. MONTHLY: snapshot mensual + validación de drift
+         # ========================================================
+         if modo == "monthly":
++            _paso_snapshot(df_clientes, resultado)
+             _paso_drift_check(df_clientes, resultado)
+ 
+     except QualityCheckFailed as e:
+@@ -322,6 +323,31 @@ def _paso_temporalidad(
+     resultado.pasos_ejecutados.append("temporalidad")
+ 
+ 
++def _paso_snapshot(
++    df_clientes: pd.DataFrame,
++    resultado: PipelineResult,
++) -> None:
++    """Guarda un snapshot mensual del estado de segmentación.
++
++    Path: datos/processed/snapshots/snapshot_YYYY-MM.parquet.
++    Idempotente: sobreescribe si ya existe el snapshot del mismo mes. Consumido
++    por la vista Movimientos (clientes_cambio_segmento) para detectar
++    reasignaciones de segmento mes a mes.
++    """
++    log.info("\n--- Paso 5: Snapshot mensual ---")
++    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
++    mes = datetime.now().strftime("%Y-%m")
++    path = SNAPSHOTS_DIR / f"snapshot_{mes}.parquet"
++
++    cols = [
++        "cliente_id", "segmento_cluster", "recency", "frequency",
++        "monetary", "dias_entre_compras", "razon_distancias",
++    ]
++    df_clientes[cols].to_parquet(path, index=False)
++    log.info("✅ Snapshot mensual guardado: %s (%s clientes)", path.name, f"{len(df_clientes):,}")
++    resultado.pasos_ejecutados.append("snapshot")
++
++
+ def _paso_drift_check(
+     df_clientes: pd.DataFrame,
+     resultado: PipelineResult,
+diff --git a/tests/test_dashboard/test_pages.py b/tests/test_dashboard/test_pages.py
+index 25a127e..adf11e5 100644
+--- a/tests/test_dashboard/test_pages.py
++++ b/tests/test_dashboard/test_pages.py
+@@ -20,11 +20,12 @@ def test_root_redirige_a_overview(client) -> None:
+     "slug,marker",
+     [
+         ("overview",        "Overview de segmentos"),
+-        ("bundles",         "Bundles accionables"),
++        ("bundles",         "Market Basket Opportunity Map"),
+         ("estacionalidad",  "Estacionalidad por segmento"),
+         ("comparador",      "Comparador entre segmentos"),
+         ("heatmap-bundles", "Heatmap de bundles"),
+         ("alertas",         "Clientes valiosos en riesgo"),
++        ("movimientos",     "Movimientos entre segmentos"),
+         ("cliente",         "Drill-down por cliente"),
+     ],
+ )
+diff --git a/tests/test_segmentacion.py b/tests/test_segmentacion.py
+index e2f803f..ef285fe 100644
+--- a/tests/test_segmentacion.py
++++ b/tests/test_segmentacion.py
+@@ -133,4 +133,19 @@ class TestSegmentarClientes:
+         df2 = segmentar_clientes(df_orders_sinteticos, fecha_ref=fecha_ref)
+         df1 = df1.sort_values("cliente_id").reset_index(drop=True)
+         df2 = df2.sort_values("cliente_id").reset_index(drop=True)
+-        pd.testing.assert_series_equal(df1["cluster_id"], df2["cluster_id"])
+\ No newline at end of file
++        pd.testing.assert_series_equal(df1["cluster_id"], df2["cluster_id"])
++
++    def test_agrega_columnas_de_distancia(
++        self, df_orders_sinteticos, fecha_ref, segmentador_apuntando_a_dummy
++    ):
++        """segmentar_clientes() debe anexar las 4 señales de frontera."""
++        df_seg = segmentar_clientes(df_orders_sinteticos, fecha_ref=fecha_ref)
++        for col in ["distancia_propia", "distancia_segunda",
++                    "razon_distancias", "segmento_secundario"]:
++            assert col in df_seg.columns
++        # razon = propia/segunda, y propia <= segunda ⇒ razón ∈ [0, 1].
++        assert (df_seg["razon_distancias"] >= 0).all()
++        assert (df_seg["razon_distancias"] <= 1.0001).all()
++        # El segmento secundario es uno de los nombres de cluster válidos.
++        nombres = set(df_seg["segmento_cluster"].unique())
++        assert set(df_seg["segmento_secundario"].unique()).issubset(nombres)
+\ No newline at end of file

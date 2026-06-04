@@ -113,14 +113,35 @@ async def heatmap_bundles(request: Request) -> HTMLResponse:
 
 @router.get("/alertas", response_class=HTMLResponse)
 async def alertas(request: Request) -> HTMLResponse:
-    """Clientes valiosos en riesgo: KPIs, scatter, tabla rankeada."""
+    """Clientes valiosos en riesgo: dos tabs (urgentes y reactivación masiva)."""
     initial_data = {
-        "kpis": q.kpis_alertas(),
-        "clientes": q.clientes_en_riesgo(),
+        "urgentes": {
+            "kpis": q.kpis_urgentes(),
+            "clientes": q.clientes_urgentes(),
+        },
+        "reactivacion": {
+            "kpis": q.kpis_reactivacion(),
+            "clientes": q.clientes_reactivacion(),
+        },
     }
     ctx = _base_context("alertas")
     ctx["initial_data"] = initial_data
     return templates.TemplateResponse(request, "alertas.html", ctx)
+
+
+@router.get("/movimientos", response_class=HTMLResponse)
+async def movimientos(request: Request) -> HTMLResponse:
+    """Clientes en transición: frontera espacial + cambios de segmento mes a mes."""
+    frontera = q.clientes_en_frontera(threshold=0.7)
+    cambios = q.clientes_cambio_segmento(meses_atras=1)
+    initial_data = {
+        "kpis":     q.kpis_movimientos(frontera, cambios),
+        "frontera": frontera,
+        "cambios":  cambios,
+    }
+    ctx = _base_context("movimientos")
+    ctx["initial_data"] = initial_data
+    return templates.TemplateResponse(request, "movimientos.html", ctx)
 
 
 @router.get("/cliente", response_class=HTMLResponse)

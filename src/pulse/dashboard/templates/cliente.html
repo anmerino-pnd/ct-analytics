@@ -77,6 +77,53 @@
     <div id="scatter-posicion" class="chart"></div>
   </section>
 
+  <section class="chart-card">
+    <h2>Top productos del cliente</h2>
+    <p class="subtitle" id="prod-summary">—</p>
+    <table class="data-table" id="tabla-productos">
+      <thead>
+        <tr>
+          <th>Familia</th>
+          <th>N° pedidos</th>
+          <th>Unidades</th>
+          <th>Revenue total</th>
+          <th>Última compra</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="chart-card">
+    <h2>Bundles que el cliente compra juntos</h2>
+    <p class="subtitle">
+      Pares de familias en las mismas órdenes. <em>Conf./Lift segmento</em> indica si
+      el bundle también es regla accionable del segmento del cliente.
+    </p>
+    <table class="data-table" id="tabla-bundles-propios">
+      <thead>
+        <tr><th>Familia A</th><th>Familia B</th><th>N° órdenes juntas</th>
+            <th>% de órdenes del cliente</th><th>Conf. segmento</th><th>Lift segmento</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="chart-card">
+    <h2>Oportunidades de cross-sell detectadas</h2>
+    <p class="subtitle">
+      Órdenes donde el cliente compró una parte de uno de sus bundles habituales
+      pero no la otra. Cada fila es una oportunidad de empuje concreta.
+    </p>
+    <table class="data-table" id="tabla-oportunidades">
+      <thead>
+        <tr><th>Order ID</th><th>Fecha</th><th>Pago total</th>
+            <th>Compró</th><th>Le faltó</th><th>Co-ocurrencia histórica</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
 </div>
 
 <details class="explainer">
@@ -98,6 +145,7 @@
     const initial = JSON.parse(document.getElementById('initial-data').textContent);
     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
     const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+    const fmtPct = (v) => v == null ? '—' : (Number(v) * 100).toLocaleString('es-MX', { maximumFractionDigits: 1 }) + '%';
 
     const input    = document.getElementById('f-cliente');
     const datalist = document.getElementById('cliente-list');
@@ -141,6 +189,64 @@
       });
 
       PulseCharts.renderScatterCliente('scatter-posicion', data.posicion, p.segmento);
+
+      // ─ Top productos del cliente
+      const tbodyProd = document.querySelector('#tabla-productos tbody');
+      tbodyProd.innerHTML = '';
+      data.productos_top.forEach(prod => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${prod.familia}</code></td>
+          <td>${fmtNum(prod.n_pedidos)}</td>
+          <td>${fmtNum(prod.unidades_totales)}</td>
+          <td>${fmtMoneda(prod.revenue_total)}</td>
+          <td>${prod.ultima_compra ? String(prod.ultima_compra).substring(0, 10) : '—'}</td>
+        `;
+        tbodyProd.appendChild(tr);
+      });
+      document.getElementById('prod-summary').textContent =
+        data.productos_top.length + ' familias compradas (top por revenue).';
+
+      // ─ Bundles propios
+      const tbodyBP = document.querySelector('#tabla-bundles-propios tbody');
+      tbodyBP.innerHTML = '';
+      if (data.bundles_propios.length === 0) {
+        tbodyBP.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin bundles detectados (cliente con pocas órdenes multi-familia).</td></tr>';
+      } else {
+        data.bundles_propios.forEach(b => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><code>${b.familia_a}</code></td>
+            <td><code>${b.familia_b}</code></td>
+            <td>${fmtNum(b.n_ordenes)}</td>
+            <td>${fmtPct(b.pct_aparicion)}</td>
+            <td>${b.confidence_segmento != null ? fmtPct(b.confidence_segmento) : '—'}</td>
+            <td>${b.lift_segmento != null ? fmtNum(b.lift_segmento, 2) : '—'}</td>
+          `;
+          tbodyBP.appendChild(tr);
+        });
+      }
+
+      // ─ Oportunidades
+      const tbodyOp = document.querySelector('#tabla-oportunidades tbody');
+      tbodyOp.innerHTML = '';
+      if (data.oportunidades.length === 0) {
+        tbodyOp.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin oportunidades detectadas. El cliente cierra consistentemente sus bundles.</td></tr>';
+      } else {
+        data.oportunidades.forEach(o => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><code>${o.order_id}</code></td>
+            <td>${o.fecha}</td>
+            <td>${fmtMoneda(o.pago_total)}</td>
+            <td><code>${o.compro}</code></td>
+            <td><code>${o.le_falto}</code></td>
+            <td>${fmtPct(o.co_occurrence)}</td>
+          `;
+          tbodyOp.appendChild(tr);
+        });
+      }
+
       setVista('ok');
     }
 

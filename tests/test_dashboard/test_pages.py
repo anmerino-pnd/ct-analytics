@@ -20,11 +20,12 @@ def test_root_redirige_a_overview(client) -> None:
     "slug,marker",
     [
         ("overview",        "Overview de segmentos"),
-        ("bundles",         "Bundles accionables"),
+        ("bundles",         "Market Basket Opportunity Map"),
         ("estacionalidad",  "Estacionalidad por segmento"),
         ("comparador",      "Comparador entre segmentos"),
         ("heatmap-bundles", "Heatmap de bundles"),
         ("alertas",         "Clientes valiosos en riesgo"),
+        ("movimientos",     "Movimientos entre segmentos"),
         ("cliente",         "Drill-down por cliente"),
     ],
 )

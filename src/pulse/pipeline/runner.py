@@ -36,7 +36,7 @@ from pulse.analytics.familia import agregar_familia
 from pulse.analytics.mba import calcular_mba
 from pulse.analytics.segmentacion import segmentar_clientes
 from pulse.analytics.temporalidad import calcular_temporalidad
-from pulse.config.paths import PROCESSED
+from pulse.config.paths import PROCESSED, SNAPSHOTS_DIR
 from pulse.etl.ingest import run_ingest
 from pulse.pipeline.validacion import (
     QualityCheckFailed,
@@ -163,9 +163,10 @@ def run(
         )
 
         # ========================================================
-        # 6. MONTHLY: validación de drift contra snapshot
+        # 6. MONTHLY: snapshot mensual + validación de drift
         # ========================================================
         if modo == "monthly":
+            _paso_snapshot(df_clientes, resultado)
             _paso_drift_check(df_clientes, resultado)
 
     except QualityCheckFailed as e:
@@ -320,6 +321,31 @@ def _paso_temporalidad(
         f"{len(agregados['bundles']):,}",
     )
     resultado.pasos_ejecutados.append("temporalidad")
+
+
+def _paso_snapshot(
+    df_clientes: pd.DataFrame,
+    resultado: PipelineResult,
+) -> None:
+    """Guarda un snapshot mensual del estado de segmentación.
+
+    Path: datos/processed/snapshots/snapshot_YYYY-MM.parquet.
+    Idempotente: sobreescribe si ya existe el snapshot del mismo mes. Consumido
+    por la vista Movimientos (clientes_cambio_segmento) para detectar
+    reasignaciones de segmento mes a mes.
+    """
+    log.info("\n--- Paso 5: Snapshot mensual ---")
+    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    mes = datetime.now().strftime("%Y-%m")
+    path = SNAPSHOTS_DIR / f"snapshot_{mes}.parquet"
+
+    cols = [
+        "cliente_id", "segmento_cluster", "recency", "frequency",
+        "monetary", "dias_entre_compras", "razon_distancias",
+    ]
+    df_clientes[cols].to_parquet(path, index=False)
+    log.info("✅ Snapshot mensual guardado: %s (%s clientes)", path.name, f"{len(df_clientes):,}")
+    resultado.pasos_ejecutados.append("snapshot")
 
 
 def _paso_drift_check(

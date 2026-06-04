@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Movimientos · Pulse{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>Movimientos entre segmentos</h1>
+  <p class="subtitle">
+    Clientes cuyo comportamiento está cambiando: detectados por trayectoria temporal
+    (cambio de segmento mes a mes) o por posición espacial (cerca de la frontera entre clusters).
+  </p>
+</header>
+
+<section class="kpi-grid">
+  <div class="kpi-card"><span class="kpi-label">Clientes en frontera</span><span class="kpi-value" id="kpi-frontera">—</span></div>
+  <div class="kpi-card"><span class="kpi-label">Subidas (mes actual)</span><span class="kpi-value" id="kpi-subidas">—</span></div>
+  <div class="kpi-card"><span class="kpi-label">Bajadas (mes actual)</span><span class="kpi-value" id="kpi-bajadas">—</span></div>
+  <div class="kpi-card"><span class="kpi-label">Total cambios</span><span class="kpi-value" id="kpi-cambios">—</span></div>
+</section>
+
+<section class="chart-card">
+  <h2>Cambios de segmento (mes a mes)</h2>
+  <p class="subtitle">
+    Clientes en un segmento distinto al de hace un mes.
+    <em>Subidas</em> = movimientos hacia segmentos de mayor valor.
+    <em>Bajadas</em> = deterioro temprano (antes de Alertas).
+  </p>
+  <table class="data-table" id="tabla-cambios">
+    <thead>
+      <tr><th>Cliente</th><th>Segmento anterior</th><th>Segmento actual</th>
+          <th>Dirección</th><th>Monetary</th><th>Frequency</th><th></th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="chart-card">
+  <h2>Clientes en frontera entre clusters</h2>
+  <p class="subtitle">
+    Clientes cuya distancia al segundo cluster más cercano es similar a la del propio.
+    Razón ≥ 0.7 indica que el cliente podría pertenecer a cualquiera de los dos.
+  </p>
+  <table class="data-table" id="tabla-frontera">
+    <thead>
+      <tr><th>Cliente</th><th>Segmento actual</th><th>Segmento secundario</th>
+          <th>Razón distancias</th><th>Monetary</th><th>Frequency</th><th></th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<details class="explainer">
+  <summary>¿Qué estoy viendo?</summary>
+  <div class="explainer-content">
+    <p><strong>Cambios de segmento</strong>: el modelo asigna cada cliente a su cluster basado en RFM + cadencia actuales. Si el comportamiento cambia, la próxima corrida lo reasigna automáticamente. Esta tabla muestra los reasignados respecto al snapshot del mes pasado.</p>
+    <p><strong>Clientes en frontera</strong>: K-Means asigna al cluster con centroide más cercano, pero algunos clientes están en zonas ambiguas. Razón cerca de 1.0 = en la frontera.</p>
+    <p><strong>Acción</strong>: subidas → profundizar la cuenta. Bajadas → intervención preventiva. Frontera → vigilar y empujar al mejor segmento.</p>
+  </div>
+</details>
+
+<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById('initial-data').textContent);
+    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
+    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+
+    document.getElementById('kpi-frontera').textContent = fmtNum(data.kpis.n_en_frontera);
+    document.getElementById('kpi-subidas').textContent  = fmtNum(data.kpis.n_subidas_mes);
+    document.getElementById('kpi-bajadas').textContent  = fmtNum(data.kpis.n_bajadas_mes);
+    document.getElementById('kpi-cambios').textContent  = fmtNum(data.kpis.n_total_cambios);
+
+    const tbodyC = document.querySelector('#tabla-cambios tbody');
+    if (data.cambios.length === 0) {
+      tbodyC.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-soft)">Sin snapshot del mes anterior disponible. El primer mes tras implementar el sistema no tiene base de comparación.</td></tr>';
+    } else {
+      data.cambios.forEach(c => {
+        const colorAnt = window.SEGMENT_COLORS[c.segmento_anterior] || '#888';
+        const colorAct = window.SEGMENT_COLORS[c.segmento_actual] || '#888';
+        const dirIcon = c.direccion === 'subida' ? '↑' : '↓';
+        const dirColor = c.direccion === 'subida' ? '#0B7332' : '#D82822';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.cliente_id}</td>
+          <td><span class="seg-chip" style="background:${colorAnt}"></span>${c.segmento_anterior}</td>
+          <td><span class="seg-chip" style="background:${colorAct}"></span>${c.segmento_actual}</td>
+          <td style="color:${dirColor};font-weight:bold">${dirIcon} ${c.direccion}</td>
+          <td>${fmtMoneda(c.monetary)}</td>
+          <td>${fmtNum(c.frequency)}</td>
+          <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
+        `;
+        tbodyC.appendChild(tr);
+      });
+    }
+
+    const tbodyF = document.querySelector('#tabla-frontera tbody');
+    data.frontera.forEach(c => {
+      const colorAct = window.SEGMENT_COLORS[c.segmento_actual] || '#888';
+      const colorSec = window.SEGMENT_COLORS[c.segmento_secundario] || '#888';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${c.cliente_id}</td>
+        <td><span class="seg-chip" style="background:${colorAct}"></span>${c.segmento_actual}</td>
+        <td><span class="seg-chip" style="background:${colorSec}"></span>${c.segmento_secundario}</td>
+        <td>${fmtNum(c.razon_distancias, 3)}</td>
+        <td>${fmtMoneda(c.monetary)}</td>
+        <td>${fmtNum(c.frequency)}</td>
+        <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
+      `;
+      tbodyF.appendChild(tr);
+    });
+  })();
+</script>
+{% endblock %}

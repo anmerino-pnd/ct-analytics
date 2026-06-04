@@ -14,11 +14,13 @@ DATA = BASE_DIR / "datos"
 PROCESSED = DATA / "processed"
 PROCESSED_PRUEBAS = DATA / "processed_pruebas"
 MODELS = DATA / "models"
+SNAPSHOTS_DIR = PROCESSED / "snapshots"
 
 for path in [
     DATA,
     PROCESSED,
     PROCESSED_PRUEBAS,
-    MODELS
+    MODELS,
+    SNAPSHOTS_DIR,
 ]:
     path.mkdir(parents=True, exist_ok=True)
