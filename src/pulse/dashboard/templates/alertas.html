@@ -21,19 +21,19 @@
 <div id="tab-urgentes" class="tab-content">
   <section class="kpi-grid">
     <div class="kpi-card">
-      <span class="kpi-label">Total en riesgo</span>
+      <span class="kpi-label" title="Clientes MVPs y Alto Valor cuyo último pedido excede 1.5 veces su cadencia mediana habitual.">Total en riesgo</span>
       <span class="kpi-value" id="kpi-urg-total">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">MVPs en riesgo</span>
+      <span class="kpi-label" title="Subconjunto del total que pertenecen al segmento MVPs (los más valiosos).">MVPs en riesgo</span>
       <span class="kpi-value" id="kpi-urg-mvps">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Alto Valor en riesgo</span>
+      <span class="kpi-label" title="Subconjunto del total que pertenecen al segmento Alto Valor.">Alto Valor en riesgo</span>
       <span class="kpi-value" id="kpi-urg-alto">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Revenue en riesgo</span>
+      <span class="kpi-label" title="Suma del monetary histórico de todos los clientes en riesgo. Es el revenue potencial que perderíamos si abandonan.">Revenue en riesgo</span>
       <span class="kpi-value" id="kpi-urg-revenue">—</span>
     </div>
   </section>
@@ -48,9 +48,9 @@
     <table class="data-table" id="tabla-urgentes">
       <thead>
         <tr>
-          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
-          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
-          <th>Frequency</th><th></th>
+          <th title="Identificador único del cliente en el sistema.">Cliente</th><th title="Cluster asignado por el modelo de segmentación K-Means.">Segmento</th><th title="Días transcurridos desde la última compra del cliente hasta hoy.">Recency (d)</th>
+          <th title="Mediana de días entre compras consecutivas del cliente. Su 'ritmo natural' de compra.">Cadencia mediana</th><th title="Recency dividido entre cadencia. Mayor a 1.5 indica riesgo, mayor a 3 indica abandono casi seguro.">Ratio</th><th title="Valor total comprado por el cliente en la ventana de análisis (30 meses).">Monetary</th>
+          <th title="Número total de pedidos del cliente en la ventana de análisis.">Frequency</th><th></th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -62,19 +62,19 @@
 <div id="tab-reactivacion" class="tab-content hidden">
   <section class="kpi-grid">
     <div class="kpi-card">
-      <span class="kpi-label">Total en En Riesgo</span>
+      <span class="kpi-label" title="Total de clientes del segmento En Riesgo (excluyendo single-buyers).">Total en En Riesgo</span>
       <span class="kpi-value" id="kpi-rea-total">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Revenue potencial recuperable</span>
+      <span class="kpi-label" title="Suma del monetary histórico de todos los clientes En Riesgo. Es el revenue total que podríamos recuperar con una campaña exitosa de reactivación.">Revenue potencial recuperable</span>
       <span class="kpi-value" id="kpi-rea-revenue">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Recency mediana (días)</span>
+      <span class="kpi-label" title="Mediana de días desde la última compra entre los clientes del segmento En Riesgo.">Recency mediana (días)</span>
       <span class="kpi-value" id="kpi-rea-recency">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Cadencia mediana original (días)</span>
+      <span class="kpi-label" title="Mediana de la cadencia de compra histórica de los clientes En Riesgo. Era su patrón normal antes de detenerse.">Cadencia mediana original (días)</span>
       <span class="kpi-value" id="kpi-rea-cadencia">—</span>
     </div>
   </section>
@@ -89,9 +89,9 @@
     <table class="data-table" id="tabla-reactivacion">
       <thead>
         <tr>
-          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
-          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
-          <th>Frequency</th><th></th>
+          <th title="Identificador único del cliente en el sistema.">Cliente</th><th title="Cluster asignado por el modelo de segmentación K-Means.">Segmento</th><th title="Días transcurridos desde la última compra del cliente hasta hoy.">Recency (d)</th>
+          <th title="Mediana de días entre compras consecutivas del cliente. Su 'ritmo natural' de compra.">Cadencia mediana</th><th title="Recency dividido entre cadencia. Mayor a 1.5 indica riesgo, mayor a 3 indica abandono casi seguro.">Ratio</th><th title="Valor total comprado por el cliente en la ventana de análisis (30 meses).">Monetary</th>
+          <th title="Número total de pedidos del cliente en la ventana de análisis.">Frequency</th><th></th>
         </tr>
       </thead>
       <tbody></tbody>

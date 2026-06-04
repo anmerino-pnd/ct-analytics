@@ -35,19 +35,19 @@
 
   <section class="kpi-grid">
     <div class="kpi-card">
-      <span class="kpi-label">Recency (días)</span>
+      <span class="kpi-label" title="Días transcurridos desde la última compra de este cliente.">Recency (días)</span>
       <span class="kpi-value" id="kpi-c-recency">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Frequency (pedidos)</span>
+      <span class="kpi-label" title="Número total de pedidos de este cliente en la ventana de análisis (30 meses).">Frequency (pedidos)</span>
       <span class="kpi-value" id="kpi-c-frequency">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Monetary</span>
+      <span class="kpi-label" title="Valor total comprado por este cliente en la ventana de análisis.">Monetary</span>
       <span class="kpi-value" id="kpi-c-monetary">—</span>
     </div>
     <div class="kpi-card">
-      <span class="kpi-label">Cadencia mediana</span>
+      <span class="kpi-label" title="Mediana de días entre compras consecutivas. El 'ritmo natural' de este cliente.">Cadencia mediana</span>
       <span class="kpi-value" id="kpi-c-cadencia">—</span>
     </div>
   </section>
@@ -83,11 +83,11 @@
     <table class="data-table" id="tabla-productos">
       <thead>
         <tr>
-          <th>Familia</th>
-          <th>N° pedidos</th>
-          <th>Unidades</th>
-          <th>Revenue total</th>
-          <th>Última compra</th>
+          <th title="Categoría del producto, derivada de la clave (por ejemplo, COMLEV es la familia común a COMLEV4710, COMLEV4720, etc.).">Familia</th>
+          <th title="En cuántos pedidos distintos aparece esta familia.">N° pedidos</th>
+          <th title="Total de unidades de la familia compradas a lo largo de todos los pedidos.">Unidades</th>
+          <th title="Suma de cantidad × precio_final de la familia, en todos los pedidos del cliente.">Revenue total</th>
+          <th title="Fecha del pedido más reciente donde aparece esta familia.">Última compra</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -102,8 +102,8 @@
     </p>
     <table class="data-table" id="tabla-bundles-propios">
       <thead>
-        <tr><th>Familia A</th><th>Familia B</th><th>N° órdenes juntas</th>
-            <th>% de órdenes del cliente</th><th>Conf. segmento</th><th>Lift segmento</th></tr>
+        <tr><th title="Par de familias que el cliente compra en la misma orden frecuentemente.">Familia A</th><th title="Par de familias que el cliente compra en la misma orden frecuentemente.">Familia B</th><th title="Número de pedidos distintos donde ambas familias aparecieron.">N° órdenes juntas</th>
+            <th title="Porcentaje del total de pedidos del cliente donde este bundle aparece.">% de órdenes del cliente</th><th title="Confidence de la regla MBA en el segmento del cliente (si existe). Si está vacío, este bundle es una firma del cliente pero no del segmento.">Conf. segmento</th><th title="Lift de la regla MBA en el segmento del cliente (si existe). Lift > 3 indica asociación fuerte. Vacío significa que el bundle no es una regla MBA accionable del segmento.">Lift segmento</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -117,8 +117,8 @@
     </p>
     <table class="data-table" id="tabla-oportunidades">
       <thead>
-        <tr><th>Order ID</th><th>Fecha</th><th>Pago total</th>
-            <th>Compró</th><th>Le faltó</th><th>Co-ocurrencia histórica</th></tr>
+        <tr><th title="Identificador único del pedido donde se detectó la oportunidad.">Order ID</th><th title="Fecha y hora del pedido.">Fecha</th><th title="Monto total facturado en ese pedido específico.">Pago total</th>
+            <th title="Familia que el cliente sí incluyó en este pedido.">Compró</th><th title="Familia que el cliente usualmente compra junto con la anterior, pero no incluyó en este pedido.">Le faltó</th><th title="Porcentaje de veces que el cliente compra estas dos familias juntas. Mayor porcentaje indica una oportunidad más fuerte.">Co-ocurrencia histórica</th></tr>
       </thead>
       <tbody></tbody>
     </table>

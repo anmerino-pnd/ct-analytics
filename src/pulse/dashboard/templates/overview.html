@@ -9,26 +9,26 @@
 
 <section class="kpi-grid" id="kpi-grid">
   <div class="kpi-card">
-    <span class="kpi-label">Clientes totales</span>
+    <span class="kpi-label" title="Clientes únicos con al menos un pedido en la ventana de análisis de 30 meses.">Clientes totales</span>
     <span class="kpi-value" id="kpi-n-clientes">—</span>
   </div>
   <div class="kpi-card">
-    <span class="kpi-label">Revenue total</span>
+    <span class="kpi-label" title="Suma de monetary de todos los clientes en la ventana de 30 meses.">Revenue total</span>
     <span class="kpi-value" id="kpi-revenue">—</span>
   </div>
   <div class="kpi-card">
-    <span class="kpi-label">Ticket promedio</span>
+    <span class="kpi-label" title="Revenue total dividido entre el número total de pedidos. Valor promedio de cada pedido.">Ticket promedio</span>
     <span class="kpi-value" id="kpi-ticket">—</span>
   </div>
   <div class="kpi-card">
-    <span class="kpi-label">Single-buyers</span>
+    <span class="kpi-label" title="Porcentaje de clientes con un solo pedido histórico. Su cadencia se imputa porque no tienen intervalo entre compras.">Single-buyers</span>
     <span class="kpi-value" id="kpi-single">—</span>
   </div>
 </section>
 
 <section class="chart-row">
   <div class="chart-card">
-    <h2>Distribución de clientes</h2>
+    <h2 title="Los 18,638 clientes agrupados en 5 clusters por K-Means según RFM y cadencia personalizada.">Distribución de clientes</h2>
     <div id="donut-distribucion" class="chart"></div>
   </div>
   <div class="chart-card">
@@ -42,13 +42,13 @@
   <table class="data-table" id="tabla-resumen">
     <thead>
       <tr>
-        <th>Segmento</th>
-        <th>N° clientes</th>
-        <th>% del total</th>
-        <th>Recency mediana (días)</th>
-        <th>Frequency mediana</th>
-        <th>Monetary mediana</th>
-        <th>Cadencia mediana (días)</th>
+        <th title="Cluster asignado por el modelo de segmentación K-Means.">Segmento</th>
+        <th title="Número de clientes únicos en el segmento.">N° clientes</th>
+        <th title="Porcentaje de la base total de clientes que representa el segmento.">% del total</th>
+        <th title="Mediana de días desde la última compra entre los clientes del segmento.">Recency mediana (días)</th>
+        <th title="Mediana del número de pedidos por cliente en el segmento.">Frequency mediana</th>
+        <th title="Mediana del valor total comprado por cliente en el segmento.">Monetary mediana</th>
+        <th title="Mediana de días entre compras consecutivas de los clientes del segmento.">Cadencia mediana (días)</th>
       </tr>
     </thead>
     <tbody></tbody>

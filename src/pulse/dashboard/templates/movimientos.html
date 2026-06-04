@@ -11,10 +11,10 @@
 </header>
 
 <section class="kpi-grid">
-  <div class="kpi-card"><span class="kpi-label">Clientes en frontera</span><span class="kpi-value" id="kpi-frontera">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Subidas (mes actual)</span><span class="kpi-value" id="kpi-subidas">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Bajadas (mes actual)</span><span class="kpi-value" id="kpi-bajadas">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Total cambios</span><span class="kpi-value" id="kpi-cambios">—</span></div>
+  <div class="kpi-card"><span class="kpi-label" title="Clientes con razón de distancias >= 0.7, es decir, casi tan cerca del segundo cluster como del propio. Candidatos a cambiar de segmento.">Clientes en frontera</span><span class="kpi-value" id="kpi-frontera">—</span></div>
+  <div class="kpi-card"><span class="kpi-label" title="Clientes que cambiaron a un segmento de mayor valor respecto al snapshot del mes anterior.">Subidas (mes actual)</span><span class="kpi-value" id="kpi-subidas">—</span></div>
+  <div class="kpi-card"><span class="kpi-label" title="Clientes que cambiaron a un segmento de menor valor respecto al snapshot del mes anterior. Detección temprana antes de Alertas.">Bajadas (mes actual)</span><span class="kpi-value" id="kpi-bajadas">—</span></div>
+  <div class="kpi-card"><span class="kpi-label" title="Suma de subidas y bajadas. Magnitud total de movimiento entre segmentos en el último mes.">Total cambios</span><span class="kpi-value" id="kpi-cambios">—</span></div>
 </section>
 
 <section class="chart-card">
@@ -26,8 +26,8 @@
   </p>
   <table class="data-table" id="tabla-cambios">
     <thead>
-      <tr><th>Cliente</th><th>Segmento anterior</th><th>Segmento actual</th>
-          <th>Dirección</th><th>Monetary</th><th>Frequency</th><th></th></tr>
+      <tr><th title="Identificador único del cliente en el sistema.">Cliente</th><th title="Cluster donde estaba el cliente hace un mes (según snapshot mensual).">Segmento anterior</th><th title="Cluster donde está el cliente hoy.">Segmento actual</th>
+          <th title="Subida = mejoró su perfil. Bajada = se deterioró respecto al mes pasado.">Dirección</th><th title="Valor total comprado por el cliente en la ventana de análisis (30 meses).">Monetary</th><th title="Número total de pedidos del cliente en la ventana de análisis.">Frequency</th><th></th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -41,8 +41,8 @@
   </p>
   <table class="data-table" id="tabla-frontera">
     <thead>
-      <tr><th>Cliente</th><th>Segmento actual</th><th>Segmento secundario</th>
-          <th>Razón distancias</th><th>Monetary</th><th>Frequency</th><th></th></tr>
+      <tr><th title="Identificador único del cliente en el sistema.">Cliente</th><th title="Cluster asignado actualmente al cliente por K-Means.">Segmento actual</th><th title="El segundo cluster más cercano al cliente. Si su comportamiento cambia ligeramente, podría reasignarse a este segmento.">Segmento secundario</th>
+          <th title="Distancia al cluster propio dividida entre la distancia al segundo más cercano. Cerca de 1.0 = cliente en la frontera. Cerca de 0.0 = cliente firmemente en su cluster.">Razón distancias</th><th title="Valor total comprado por el cliente en la ventana de análisis (30 meses).">Monetary</th><th title="Número total de pedidos del cliente en la ventana de análisis.">Frequency</th><th></th></tr>
     </thead>
     <tbody></tbody>
   </table>

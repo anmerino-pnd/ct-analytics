@@ -25,23 +25,23 @@
 </section>
 
 <section class="chart-card">
-  <h2>Mapa de oportunidades</h2>
+  <h2 title="Confidence = probabilidad de que se compre el consecuente dado el antecedente. Lift = cuántas veces más probable es esa compra conjunta vs el azar.">Mapa de oportunidades</h2>
   <div id="scatter-bundles" class="chart"></div>
 
   <div class="quadrant-legend">
     <div class="legend-row">
       <span class="legend-dot dot-strong"></span>
-      <strong>Oportunidades fuertes</strong>
+      <strong title="Alta confidence Y alto lift. Las reglas más accionables para cross-sell.">Oportunidades fuertes</strong>
       <span class="legend-desc">Alta confidence + alto lift → cross-sell directo. <em>Lo que marketing debe activar primero.</em></span>
     </div>
     <div class="legend-row">
       <span class="legend-dot dot-common"></span>
-      <strong>Co-compras frecuentes</strong>
+      <strong title="Alta confidence pero lift moderado. Patrones comunes pero no diferenciadores.">Co-compras frecuentes</strong>
       <span class="legend-desc">Alta confidence + bajo lift → bundles muy comunes. Útiles pero no diferenciadores.</span>
     </div>
     <div class="legend-row">
       <span class="legend-dot dot-niche"></span>
-      <strong>Nichos interesantes</strong>
+      <strong title="Baja confidence pero alto lift. Patrones poco frecuentes pero fuertes cuando ocurren.">Nichos interesantes</strong>
       <span class="legend-desc">Baja confidence + alto lift → patrones únicos para audiencias pequeñas pero específicas.</span>
     </div>
     <div class="legend-row">
@@ -59,14 +59,14 @@
     <table class="data-table" id="tabla-bundles">
       <thead>
         <tr>
-          <th>Antecedents</th>
-          <th>Consequents</th>
-          <th>Lift</th>
-          <th>Confidence</th>
-          <th>Support count</th>
-          <th class="col-revenue">Ticket medio</th>
-          <th class="col-revenue">Revenue total</th>
-          <th>Segmento</th>
+          <th title="Familia(s) que el cliente compra primero o como base del bundle.">Antecedents</th>
+          <th title="Familia(s) que tienden a comprarse junto con el antecedent.">Consequents</th>
+          <th title="Qué tan inusual es la asociación vs el azar. Lift > 3 = asociación fuerte.">Lift</th>
+          <th title="Probabilidad de comprar el consequent dado que compró el antecedent (0-100%).">Confidence</th>
+          <th title="Cuántos pedidos materializan esta regla. Indica volumen detrás del patrón.">Support count</th>
+          <th class="col-revenue" title="Pago promedio en pedidos que cumplen esta regla. Sirve para priorizar reglas con alto impacto monetario.">Ticket medio</th>
+          <th class="col-revenue" title="Revenue total acumulado de los pedidos que cumplen esta regla en el segmento.">Revenue total</th>
+          <th title="Segmento de clientes donde aplica esta regla de asociación.">Segmento</th>
         </tr>
       </thead>
       <tbody></tbody>
