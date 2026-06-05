@@ -16,6 +16,11 @@
 
 set -e  # salir al primer error
 
+# cron arranca con un PATH mínimo (/usr/bin:/bin) que NO incluye ~/.local/bin,
+# donde vive uv. Sin esto, el deploy a mano funciona pero bajo cron falla con
+# "uv: command not found" en cuanto hay que correr uv sync / uv run.
+export PATH="$HOME/.local/bin:$PATH"
+
 # ─────────────────────────────────────────────────────────────
 # Configuración
 # ─────────────────────────────────────────────────────────────
