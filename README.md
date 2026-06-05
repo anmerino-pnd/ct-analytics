@@ -436,7 +436,7 @@ StandardError=append:/home/<usuario>/ct-analytics/logs/dashboard.error.log
 WantedBy=multi-user.target
 ```
 
-### Cron del pipeline diario 
+### Cron del pipeline diario  
 
 ```cron
 0 3 * * * cd /home/<usuario>/ct-analytics && /home/<usuario>/.local/bin/uv run python -m pulse.pipeline daily --log-file logs/cron_$(date +\%Y\%m\%d).log 2>&1
