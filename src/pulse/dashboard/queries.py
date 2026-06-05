@@ -332,7 +332,7 @@ def cliente_productos_top(cliente_id: str, limit: int = 10) -> list[dict]:
             familia,
             COUNT(DISTINCT order_id)                          AS n_pedidos,
             SUM(cantidad)                                     AS unidades_totales,
-            SUM(cantidad * precio_final)                      AS revenue_total,
+            SUM(subtotal_mxn)                                 AS revenue_total,
             strftime(MAX(fecha), '%Y-%m-%d')                  AS ultima_compra
         FROM items
         WHERE cliente_id = ?

@@ -1,572 +1,356 @@
-# SPEC: CI con GitHub Actions + CD por polling en servidor
+
+# SPEC: Corregir queries downstream para usar moneda normalizada
 
 **Versión:** 1.0
 **Autor:** Angel Merino
 **Fecha:** Junio 2026
 **Estado:** Listo para implementación
+**Tamaño:** Quirúrgico — solo cambios en queries, sin tocar pipeline ni datos.
 
 ---
 
 ## Contexto
 
-Hoy el ciclo de deployment de Pulse es manual:
+Durante una sesión de revisión del dashboard descubrimos que el cliente PAC0751 mostraba:
 
-1. Desarrollador hace push a `main`.
-2. Desarrollador entra al servidor por SSH.
-3. `git pull` como `angel.merino`.
-4. (A veces se olvida) `uv run python -m pulse.pipeline weekly` para regenerar parquets si hubo cambio de schema.
-5. `sudo systemctl restart pulse-dashboard`.
+* KPI `monetary`: **$8,929,504** (correcto)
+* Tabla "Top productos del cliente" `revenue_total` para única familia: **$1,060,440** (incorrecto, factor ~8x menor)
 
-Este flujo tiene tres problemas: **propenso a olvidos** (el paso 4 ya nos rompió producción una vez); **fricción** (entrar manualmente al servidor cada vez); **no hay validación** (código puede llegar a `main` sin tests pasados).
+Diagnóstico paso a paso:
 
-Este SPEC implementa CI/CD en dos partes:
+1. **Las 14 órdenes del cliente tienen sus items completos.** No es problema de órdenes huérfanas.
+2. **No es CARGO100.** Los items se filtran bien.
+3. **Es moneda mixta.** El 53% de items en la base están en USD (958,274 de 1.77M items totales), pero las queries downstream multiplican `cantidad × precio_final` sin convertir USD a MXN.
+4. **Los datos YA están normalizados.** El ETL agrega columnas `precio_mxn` y `subtotal_mxn` vía `enrich_items()` en `etl/transform.py`. Estas columnas están poblados al 100% en el parquet histórico (verificado).
+5. **El bug es solo en la capa de consumo.** Las queries en `mba.py` y `dashboard/queries.py` siguen usando `precio_final` y `cantidad * precio_final` (moneda nativa, mixta).
 
-* **CI** : GitHub Actions corre tests + linter en cada push/PR. Si los tests fallan, no se mergea a `main`.
-* **CD** : Un cron en el servidor cada 5 minutos verifica si hay nuevos commits en `main`. Si los hay, hace `git pull`, regenera parquets cuando es necesario y reinicia el dashboard.
+### Cifras del diagnóstico
 
-### Archivos involucrados
+```
+Items por moneda en producción:
+  USD:  958,274 items (52.5%)
+  MXN:  890,199 items (47.5%)
 
-* `.github/workflows/ci.yml` — nuevo, define el workflow de CI.
-* `deploy.sh` — nuevo, script de deployment que vive en la raíz del repo.
-* `crontab` del usuario `angel.merino` — agregar línea del polling.
-* `/etc/sudoers.d/pulse-deploy` — nuevo, permite a `angel.merino` reiniciar el servicio sin password.
+Verificación de columnas normalizadas:
+  precio_mxn poblado:    100% en USD y MXN
+  subtotal_mxn poblado:  100% en USD y MXN
 
-### Decisiones tomadas explícitamente
+TC promedio:  18.46 USD→MXN  (variable por fecha, ya aplicado en parquet)
+```
 
-* **Branch que se deploya:** `main`.
-* **Frecuencia de polling:** cada 5 minutos.
-* **Regeneración de parquets:** detectada por cambios en `src/pulse/analytics/`, `src/pulse/modeling/`, o `src/pulse/pipeline/`. En caso de duda, regenerar (better safe than sorry).
-* **Lock para evitar deploys concurrentes:** archivo `/tmp/pulse-deploy.lock` con PID.
-* **Logging:** cada deploy genera un log en `logs/deploy_YYYYMMDD_HHMMSS.log` en el repo.
-* **Notificaciones:** ninguna en v1. Los logs sirven como auditoría.
-* **Rollback automático:** ninguno. Si algo falla en producción, se arregla manualmente.
-* **Tests requeridos para merge a main:** sí (branch protection rule en GitHub).
+### Decisiones arquitectónicas
+
+**Las queries deben usar `subtotal_mxn`, no recalcular.** La normalización es responsabilidad del ETL, no de cada query. Esto es:
+
+* Más eficiente (no se recalcula en cada query).
+* Más correcto (usa el TC histórico real del pedido, no un TC estimado).
+* Más mantenible (una sola fuente de verdad).
+* Más auditable (`enrich_items` está en un solo lugar).
+
+### Archivos afectados
+
+* `src/pulse/dashboard/queries.py` — funciones que calculan revenue por familia, bundles, etc.
+* `src/pulse/analytics/mba.py` — cálculo de `ticket_medio` y `revenue_total` en reglas accionables.
+* `src/pulse/dashboard/templates/cliente.html` — renombrar columna y agregar tooltip.
+* `tests/test_queries.py` — nuevo test de consistencia.
+
+### Archivos NO afectados
+
+* `src/pulse/etl/*` — los datos ya están bien.
+* `src/pulse/analytics/rfm.py` — `monetary` usa `pago_total` de orders, ya en MXN.
+* `src/pulse/analytics/segmentacion.py` — no toca dinero.
+* `src/pulse/analytics/temporalidad.py` — no calcula revenue, solo cuenta pedidos.
+* Parquets en `datos/processed/` — no requieren regeneración.
 
 ---
 
-## Parte 1: CI con GitHub Actions
+## Cambio 1: `dashboard/queries.py` — todas las queries monetarias
 
-### 1.1 Archivo `.github/workflows/ci.yml`
+### 1.1 `cliente_productos_top()`
 
-Crear el archivo con este contenido:
+**Antes:**
 
-```yaml
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    name: Tests y linter
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "0.4.x"
-
-      - name: Sync dependencies
-        run: uv sync --frozen
-
-      - name: Lint with ruff
-        run: uv run ruff check . --output-format=github
-        continue-on-error: true
-
-      - name: Run tests
-        run: uv run pytest -v --tb=short
-        env:
-          PYTHONPATH: src
+```python
+SELECT
+    familia,
+    COUNT(DISTINCT order_id)                          AS n_pedidos,
+    SUM(cantidad)                                     AS unidades_totales,
+    SUM(cantidad * precio_final)                      AS revenue_total,
+    MAX(fecha)                                        AS ultima_compra
+FROM items
+WHERE cliente_id = ?
+  AND clave != 'CARGO100'
+  AND familia IS NOT NULL
+GROUP BY familia
+ORDER BY revenue_total DESC
+LIMIT ?
 ```
 
-### 1.2 Configurar branch protection en GitHub
+**Después:**
 
-En la UI de GitHub:
-
-1. Ir a  **Settings → Branches → Add rule** .
-2. **Branch name pattern:** `main`.
-3. Activar:
-   * ☑ Require a pull request before merging.
-   * ☑ Require status checks to pass before merging.
-   * En el buscador de status checks, agregar **`Tests y linter`** (debe aparecer después de la primera corrida del workflow).
-   * ☑ Do not allow bypassing the above settings (opcional pero recomendado).
-4. Save changes.
-
-> [!NOTE]
-> Para que la regla "require status checks" aparezca el check `Tests y linter`, primero el workflow tiene que haber corrido  **al menos una vez** . La primera vez, haces push, esperas a que termine el CI, después configuras la regla.
-
-### 1.3 Asegurar que `pyproject.toml` tiene `ruff` configurado
-
-Si no está configurado, agregar al `pyproject.toml`:
-
-```toml
-[tool.ruff]
-line-length = 100
-target-version = "py313"
-
-[tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
-]
-ignore = [
-    "E501",  # line too long (formateo manual)
-]
+```python
+SELECT
+    familia,
+    COUNT(DISTINCT order_id)                          AS n_pedidos,
+    SUM(cantidad)                                     AS unidades_totales,
+    SUM(subtotal_mxn)                                 AS revenue_total,
+    MAX(fecha)                                        AS ultima_compra
+FROM items
+WHERE cliente_id = ?
+  AND clave != 'CARGO100'
+  AND familia IS NOT NULL
+GROUP BY familia
+ORDER BY revenue_total DESC
+LIMIT ?
 ```
 
-Y agregar `ruff` como dev dependency:
+### 1.2 Auditar TODAS las queries del archivo
 
-```bash
-uv add --dev ruff
-```
+Buscar en `queries.py` cualquier ocurrencia de:
+
+* `cantidad * precio_final`
+* `cantidad*precio_final`
+* `SUM(precio_final)` (en contextos monetarios)
+
+Y reemplazar por `subtotal_mxn` o `SUM(subtotal_mxn)` según corresponda.
 
 > [!IMPORTANT]
-> En el workflow CI usamos `continue-on-error: true` para ruff. Esto significa que el linter  **reporta problemas pero no rompe el build** . Es deliberado para no bloquear merges por formato durante la adopción. Cuando el código esté limpio, se puede quitar el `continue-on-error` para hacer el linter obligatorio.
+> Antes de hacer reemplazo global, **buscar con grep/ripgrep** todas las ocurrencias y revisar caso por caso. Puede haber lugares donde `precio_final` se use con intención (mostrar el precio nativo) y no quieras reemplazarlo.
+
+Comando útil:
+
+```bash
+rg "precio_final|cantidad\s*\*\s*precio" src/pulse/
+```
 
 ---
 
-## Parte 2: Script `deploy.sh`
+## Cambio 2: `analytics/mba.py` — ticket_medio y revenue_total
 
-### 2.1 Archivo en la raíz del repo
+En la función que calcula métricas monetarias para reglas accionables (probablemente `_calcular_metricas_monetarias` o similar), reemplazar:
 
-Crear `deploy.sh` con este contenido:
+**Antes:**
 
-```bash
-#!/bin/bash
-# deploy.sh — Script de deployment de Pulse
-#
-# Comportamiento:
-# - Si no hay commits nuevos en origin/main, sale sin hacer nada.
-# - Si hay commits nuevos, hace pull, regenera parquets si es necesario, y reinicia el dashboard.
-# - Logs en logs/deploy_YYYYMMDD_HHMMSS.log
-#
-# Uso:
-#   ./deploy.sh           # corrida normal
-#   ./deploy.sh --force   # forzar regeneración aunque no haya cambios
-#
-# Requiere:
-# - Usuario angel.merino con permisos sudo limitados (ver /etc/sudoers.d/pulse-deploy)
-# - Variable PULSE_REPO con la ruta al repo (default: directorio del script)
-
-set -e  # salir al primer error
-
-# ─────────────────────────────────────────────────────────────
-# Configuración
-# ─────────────────────────────────────────────────────────────
-PULSE_REPO="${PULSE_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-LOCK_FILE="/tmp/pulse-deploy.lock"
-LOG_DIR="${PULSE_REPO}/logs"
-LOG_FILE="${LOG_DIR}/deploy_$(date +%Y%m%d_%H%M%S).log"
-
-# Paths que disparan regeneración de parquets
-# (cambios fuera de estos solo requieren restart)
-REGEN_TRIGGER_PATHS=(
-  "src/pulse/analytics/"
-  "src/pulse/modeling/"
-  "src/pulse/pipeline/"
-  "src/pulse/etl/"
-  "src/pulse/config/paths.py"
+```python
+# Para cada regla accionable: ticket promedio y revenue total
+df_metricas = df_pedidos_que_cumplen.groupby("regla_id").agg(
+    ticket_medio=("cantidad * precio_final", "mean"),  # o equivalente
+    revenue_total=("cantidad * precio_final", "sum"),
 )
-
-# ─────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────
-log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
-}
-
-cleanup() {
-  if [ -f "$LOCK_FILE" ] && [ "$(cat "$LOCK_FILE")" = "$$" ]; then
-    rm -f "$LOCK_FILE"
-  fi
-}
-
-trap cleanup EXIT
-
-# ─────────────────────────────────────────────────────────────
-# Verificar lock
-# ─────────────────────────────────────────────────────────────
-if [ -f "$LOCK_FILE" ]; then
-  EXISTING_PID=$(cat "$LOCK_FILE")
-  if kill -0 "$EXISTING_PID" 2>/dev/null; then
-    log "⚠️  Otro deploy en progreso (PID $EXISTING_PID). Saliendo."
-    exit 0
-  else
-    log "🧹 Lock de proceso muerto encontrado. Limpiando."
-    rm -f "$LOCK_FILE"
-  fi
-fi
-echo $$ > "$LOCK_FILE"
-
-# ─────────────────────────────────────────────────────────────
-# Setup
-# ─────────────────────────────────────────────────────────────
-mkdir -p "$LOG_DIR"
-cd "$PULSE_REPO"
-
-log "🚀 Iniciando deploy desde $PULSE_REPO"
-
-# ─────────────────────────────────────────────────────────────
-# Verificar si hay cambios en origin/main
-# ─────────────────────────────────────────────────────────────
-log "📡 Fetching origin/main..."
-git fetch origin main 2>&1 | tee -a "$LOG_FILE"
-
-LOCAL_HASH=$(git rev-parse HEAD)
-REMOTE_HASH=$(git rev-parse origin/main)
-
-if [ "$LOCAL_HASH" = "$REMOTE_HASH" ] && [ "$1" != "--force" ]; then
-  log "✅ Ya en el último commit ($LOCAL_HASH). Nada que hacer."
-  rm -f "$LOG_FILE"  # No dejar logs vacíos cuando no hay deploy
-  exit 0
-fi
-
-log "📥 Hay cambios nuevos."
-log "   Local:  $LOCAL_HASH"
-log "   Remoto: $REMOTE_HASH"
-
-# ─────────────────────────────────────────────────────────────
-# Detectar si necesitamos regenerar parquets
-# ─────────────────────────────────────────────────────────────
-NEEDS_REGEN=false
-CHANGED_FILES=$(git diff --name-only "$LOCAL_HASH" "$REMOTE_HASH")
-
-log "📋 Archivos cambiados:"
-echo "$CHANGED_FILES" | tee -a "$LOG_FILE"
-
-for path_pattern in "${REGEN_TRIGGER_PATHS[@]}"; do
-  if echo "$CHANGED_FILES" | grep -q "^${path_pattern}"; then
-    NEEDS_REGEN=true
-    log "🔄 Cambio detectado en '$path_pattern' — se requiere regeneración de parquets."
-    break
-  fi
-done
-
-if [ "$1" = "--force" ]; then
-  NEEDS_REGEN=true
-  log "🔧 Flag --force detectado: forzando regeneración."
-fi
-
-# ─────────────────────────────────────────────────────────────
-# Pull
-# ─────────────────────────────────────────────────────────────
-log "⬇️  git pull..."
-git pull origin main 2>&1 | tee -a "$LOG_FILE"
-
-# ─────────────────────────────────────────────────────────────
-# Sync dependencies
-# ─────────────────────────────────────────────────────────────
-log "📦 uv sync..."
-uv sync 2>&1 | tee -a "$LOG_FILE"
-
-# ─────────────────────────────────────────────────────────────
-# Regenerar parquets si es necesario
-# ─────────────────────────────────────────────────────────────
-if [ "$NEEDS_REGEN" = true ]; then
-  log "🏗️  Regenerando parquets con pipeline weekly..."
-  if uv run python -m pulse.pipeline weekly --log-file "$LOG_FILE.pipeline" 2>&1 | tee -a "$LOG_FILE"; then
-    log "✅ Pipeline OK."
-  else
-    log "❌ Pipeline falló. Dashboard NO reiniciado para evitar romperlo."
-    log "   Revisa $LOG_FILE.pipeline para detalles."
-    exit 1
-  fi
-else
-  log "⏭️  Sin cambios que requieran regenerar parquets."
-fi
-
-# ─────────────────────────────────────────────────────────────
-# Reiniciar dashboard
-# ─────────────────────────────────────────────────────────────
-log "🔁 Reiniciando dashboard..."
-sudo systemctl restart pulse-dashboard 2>&1 | tee -a "$LOG_FILE"
-
-# Esperar 5 segundos y verificar
-sleep 5
-if sudo systemctl is-active --quiet pulse-dashboard; then
-  log "✅ Dashboard activo."
-else
-  log "❌ Dashboard NO está activo después del restart. Revisar:"
-  log "   sudo systemctl status pulse-dashboard"
-  log "   sudo journalctl -u pulse-dashboard -n 50"
-  exit 1
-fi
-
-NEW_HASH=$(git rev-parse HEAD)
-log "🎉 Deploy completado. Ahora en commit $NEW_HASH."
 ```
 
-Hacer ejecutable:
+**Después:**
 
-```bash
-chmod +x deploy.sh
+```python
+df_metricas = df_pedidos_que_cumplen.groupby("regla_id").agg(
+    ticket_medio=("subtotal_mxn", "mean"),
+    revenue_total=("subtotal_mxn", "sum"),
+)
 ```
 
-### 2.2 Reglas importantes del script
+> [!NOTE]
+> El nombre exacto de la función y la estructura del groupby pueden variar — el principio es: cualquier suma o promedio monetario debe consumir `subtotal_mxn` directamente.
 
-* **Idempotente** : corres dos veces seguidas sin cambios, el segundo no hace nada.
-* **Lock seguro** : usa PID en archivo. Si el proceso anterior murió sin limpiar, se detecta y se limpia automáticamente.
-* **Logs solo cuando hay deploy real** : si no hay cambios, no deja archivos vacíos.
-* **Si pipeline falla, NO reinicia el dashboard** : la versión vieja sigue corriendo. Better degraded service than broken service.
-* **`set -e` al inicio** : cualquier error intermedio detiene el script.
-
-### 2.3 Pruebas manuales antes de automatizar
-
-Antes de meter el cron, prueba el script en tres escenarios:
-
-**Escenario A: sin cambios**
-
-```bash
-./deploy.sh
-```
-
-Esperado: "Ya en el último commit. Nada que hacer." Sin tocar nada.
-
-**Escenario B: con cambios cosméticos** (ej. modificar un template HTML)
-
-Hacer commit cosmético, push:
-
-```bash
-./deploy.sh
-```
-
-Esperado: detecta cambio, hace pull, NO regenera parquets, reinicia dashboard.
-
-**Escenario C: con cambios de schema** (ej. modificar `src/pulse/analytics/segmentacion.py`)
-
-Esperado: detecta cambio en path crítico, hace pull,  **SÍ regenera parquets** , reinicia dashboard.
-
-**Escenario D: forzar regeneración**
-
-```bash
-./deploy.sh --force
-```
-
-Esperado: regenera parquets aunque no haya cambios.
+Si la función necesita el precio unitario por algún motivo, usar `precio_mxn` en lugar de `precio_final`.
 
 ---
 
-## Parte 3: Sudoers sin password
+## Cambio 3: `templates/cliente.html` — UX
 
-### 3.1 Configurar
+### 3.1 Renombrar columna
 
-Como root:
+En la sección "Top productos del cliente":
 
-```bash
-sudo visudo -f /etc/sudoers.d/pulse-deploy
+**Antes:**
+
+```html
+<th>Revenue total</th>
 ```
 
-Pegar este contenido:
+**Después:**
 
-```sudoers
-# Permitir a angel.merino reiniciar y consultar el servicio de Pulse sin password.
-# Cualquier otra acción con sudo sigue requiriendo password.
-angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pulse-dashboard
-angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl status pulse-dashboard
-angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active pulse-dashboard
+```html
+<th title="Revenue total en MXN. Para items facturados en USD, se aplicó el tipo de cambio del día del pedido (TC histórico). La suma de esta columna refleja el valor real pagado por el cliente.">Revenue (MXN)</th>
 ```
 
-Guardar. `visudo` valida la sintaxis automáticamente antes de salvar; si hay error te lo dice.
+### 3.2 Actualizar texto bajo el título de la sección
 
-### 3.2 Verificar
+**Antes:**
 
-Como `angel.merino`:
-
-```bash
-sudo systemctl restart pulse-dashboard
-# NO debe pedir password
+```html
+<p class="subtitle" id="prod-summary">—</p>
 ```
 
-Si pide password, hay un error en sudoers. Revisar `/etc/sudoers.d/pulse-deploy` con sintaxis exacta.
+(generado dinámicamente en JS con "N familias compradas")
 
-### 3.3 Seguridad
+**Después:** mantener el JS que genera el resumen, pero asegurar que el tooltip de la columna explica la conversión.
 
-Estos permisos son  **scoped** :
+### 3.3 Mismo tratamiento en Bundles y MBA
 
-* Solo `angel.merino` (no todos los usuarios).
-* Solo `systemctl restart`, `status`, `is-active` (no stop, start, enable, disable, ni cualquier otro comando).
-* Solo `pulse-dashboard` (no otros servicios).
+Si la tabla de "Bundles que el cliente compra juntos" o la tabla principal de Bundles muestran `ticket_medio` o `revenue_total`, agregar tooltip equivalente:
 
-Cualquier otro `sudo` que `angel.merino` intente correr sigue pidiendo password.
-
----
-
-## Parte 4: Cron del polling
-
-### 4.1 Agregar al crontab de `angel.merino`
-
-Como `angel.merino` (NO root):
-
-```bash
-crontab -e
-```
-
-Agregar al final, manteniendo los crons existentes:
-
-```cron
-# Pipeline diario (ya existente)
-0 3 * * * cd /home/angel.merino/ct-analytics && /home/angel.merino/.local/bin/uv run python -m pulse.pipeline daily --log-file logs/cron_$(date +\%Y\%m\%d).log 2>&1
-
-# Snapshot mensual (ya existente)
-0 4 1 * * cd /home/angel.merino/ct-analytics && /home/angel.merino/.local/bin/uv run python -m pulse.pipeline monthly --log-file logs/snapshot_$(date +\%Y\%m).log 2>&1
-
-# NUEVO: polling de deployment cada 5 minutos
-*/5 * * * * /home/angel.merino/ct-analytics/deploy.sh >> /home/angel.merino/ct-analytics/logs/cron_deploy.log 2>&1
-```
-
-Verificar:
-
-```bash
-crontab -l
-```
-
-Debe mostrar las tres líneas.
-
-### 4.2 Por qué `*/5` y no cada minuto
-
-Cada 5 minutos:
-
-* Latencia aceptable entre push y deploy (peor caso: 5 min).
-* Bajo overhead: `git fetch` sin cambios tarda 1-2 segundos.
-* Reduce ruido en logs.
-
-### 4.3 Monitoreo del cron de deploy
-
-El log de cron va a `logs/cron_deploy.log` (acumulativo, sin rotación). Para inspeccionar:
-
-```bash
-# Ver actividad reciente
-tail -50 /home/angel.merino/ct-analytics/logs/cron_deploy.log
-
-# Ver deploys completos (los individuales con timestamp)
-ls -lt /home/angel.merino/ct-analytics/logs/deploy_*.log | head -10
-
-# Ver el último deploy con detalle
-ls -lt /home/angel.merino/ct-analytics/logs/deploy_*.log | head -1 | awk '{print $NF}' | xargs cat
-```
-
-> [!TIP]
-> Si `cron_deploy.log` crece demasiado, agregar un logrotate config. No urgente — un `git fetch` sin cambios escribe ~3 líneas cada 5 minutos = ~864 líneas/día. Aceptable por meses.
-
----
-
-## Parte 5: Cambios de schema — el caso especial
-
-### 5.1 El problema
-
-Cuando un commit cambia el schema de los parquets (nuevas columnas, nuevos modos del pipeline), el dashboard puede crashear si:
-
-1. `git pull` trae el código nuevo.
-2. Regeneración de parquets falla por alguna razón.
-3. `set -e` detiene el script ANTES del restart del dashboard.
-
-**Esto es deliberado.** El dashboard sigue corriendo con el código y parquets viejos hasta que la regeneración termine OK. Better degraded service than broken service.
-
-### 5.2 ¿Y si la regeneración falla por una razón legítima?
-
-Por ejemplo: cambias el código del pipeline para incluir una columna nueva, pero el código tiene un bug. La regeneración falla.
-
- **Comportamiento esperado** :
-
-* `deploy.sh` falla con exit 1, log lo registra.
-* Dashboard sigue corriendo con código viejo y parquets viejos.
-* En 5 minutos, el siguiente polling reintenta. Si arreglaste el bug y pusheaste, el deploy nuevo funciona. Si no, sigue fallando.
-
-Esto es el sistema funcionando como se espera. No es bug.
-
-### 5.3 Diagnóstico cuando algo no funciona
-
-Si después de un push notas que el dashboard no refleja los cambios:
-
-```bash
-# 1. Ver el último intento de deploy
-ls -lt logs/deploy_*.log | head -1
-
-# 2. Si NO hay deploy reciente: el cron no está corriendo
-crontab -l   # ¿está la línea de */5?
-ls -lt logs/cron_deploy.log
-
-# 3. Si SÍ hay deploy reciente pero falló: leer el log
-cat logs/deploy_<fecha>.log
-
-# 4. Si el deploy fue OK pero dashboard no cambió: caché del navegador
-# Hard refresh: Ctrl+Shift+R
+```html
+<th title="Revenue en MXN. Items facturados en USD están convertidos con el tipo de cambio histórico del pedido.">Revenue total</th>
+<th title="Ticket promedio del bundle en MXN (TC histórico aplicado a items USD).">Ticket medio</th>
 ```
 
 ---
 
-## Testing
+## Cambio 4: Tests de consistencia
 
-### Tests automáticos (CI)
+Agregar a `tests/test_queries.py`:
 
-Una vez que el workflow esté activo, cada push debe correr `pytest` automáticamente. Verifica:
+```python
+def test_revenue_total_suma_a_monetary():
+    """La suma de revenue_total de TODAS las familias de un cliente debe
+    coincidir con su monetary RFM (dentro de un margen de redondeo).
 
-1. Hacer un push trivial (cambio en README, por ejemplo).
-2. Ir a la pestaña "Actions" del repo en GitHub.
-3. Verificar que el workflow corre y termina en verde.
+    Si no coincide, hay un bug de moneda o un filtro inconsistente entre
+    items y orders.
+    """
+    from pulse.dashboard.queries import cliente_productos_top, cliente_perfil
 
-### Tests manuales del deploy script
+    # Cliente de prueba con compras en USD (caso problemático histórico)
+    cliente_id = "PAC0751"
+    productos = cliente_productos_top(cliente_id, limit=999)  # sin límite efectivo
+    perfil = cliente_perfil(cliente_id)
 
-Antes de habilitar el cron, correr `./deploy.sh` manualmente en los 4 escenarios de la sección 2.3.
+    suma_revenue = sum(p["revenue_total"] for p in productos)
+    monetary = perfil["monetary"]
 
-### Test end-to-end
+    # Tolerancia: 5% por diferencias legítimas entre pago_total (incluye IVA,
+    # cargos extra) y subtotal_mxn (solo productos). Si la diferencia es mayor,
+    # algo está mal estructuralmente.
+    diferencia_pct = abs(suma_revenue - monetary) / monetary
+    assert diferencia_pct < 0.05, (
+        f"Suma de revenue ({suma_revenue:,.0f}) no coincide con monetary "
+        f"({monetary:,.0f}). Diferencia: {diferencia_pct:.1%}"
+    )
 
-1. Hacer un cambio cosmético en un template (ej. cambiar un texto).
-2. Push a `main`.
-3. Esperar a que CI termine (verde).
-4. Esperar máximo 5 minutos.
-5. Verificar `logs/cron_deploy.log` que se ejecutó el deploy.
-6. Hard refresh del dashboard, ver el cambio reflejado.
+
+def test_revenue_total_no_es_subestimado_para_usd():
+    """Verificación específica: clientes con catálogo principalmente USD
+    deben mostrar revenue en órdenes de magnitud razonables vs su monetary.
+
+    Antes del fix, PAC0751 mostraba $1.06M en revenue cuando su monetary
+    real era $8.93M (factor ~8x por no convertir USD).
+    """
+    from pulse.dashboard.queries import cliente_productos_top, cliente_perfil
+
+    cliente_id = "PAC0751"
+    productos = cliente_productos_top(cliente_id, limit=999)
+    perfil = cliente_perfil(cliente_id)
+
+    suma_revenue = sum(p["revenue_total"] for p in productos)
+    monetary = perfil["monetary"]
+
+    # Después del fix, la suma de revenue debe ser al menos el 50% del
+    # monetary (sería 100% si no hubiera IVA ni cargos extra).
+    assert suma_revenue / monetary > 0.5, (
+        f"Revenue ({suma_revenue:,.0f}) es menos del 50% del monetary "
+        f"({monetary:,.0f}). Probablemente las queries siguen usando "
+        f"precio_final sin normalizar."
+    )
+```
+
+> [!NOTE]
+> Estos dos tests requieren parquets reales. Si en el CI los tests del dashboard están skippeados (como decidimos en la sesión anterior), estos tests también se saltarán. Eso es OK — el test corre en local cuando hagas `uv run pytest` y se ejecuta en producción cuando regeneres los parquets.
+
+---
+
+## Verificación post-implementación
+
+### Manual: PAC0751
+
+```bash
+# En el servidor o local
+cd /home/angel.merino/ct-analytics
+uv run python << 'EOF'
+from pulse.dashboard.queries import cliente_productos_top, cliente_perfil
+
+productos = cliente_productos_top("PAC0751", limit=10)
+perfil = cliente_perfil("PAC0751")
+
+print(f"Monetary RFM: ${perfil['monetary']:,.0f}")
+print(f"Suma revenue (top 10): ${sum(p['revenue_total'] for p in productos):,.0f}")
+print(f"\nDetalle:")
+for p in productos:
+    print(f"  {p['familia']:8s}: ${p['revenue_total']:,.0f} ({p['n_pedidos']} pedidos)")
+EOF
+```
+
+Resultado esperado:
+
+```
+Monetary RFM: $8,929,504
+Suma revenue (top 10): $X,XXX,XXX  ← debe ser cercano a monetary (>50%)
+
+Detalle:
+  ESDMSF  : $8,XXX,XXX  ← antes del fix era $1,060,440
+```
+
+### Verificación del bundles dashboard
+
+Abrir `/dashboard/bundles` y verificar que `ticket_medio` y `revenue_total` muestren cifras en órdenes de magnitud razonables. Antes del fix los items USD estaban subestimados ~18x; después deben aparecer correctos.
+
+---
+
+## Sobre el deploy
+
+Este SPEC **no requiere regenerar parquets** porque las columnas necesarias (`precio_mxn`, `subtotal_mxn`) ya existen en `items_historicos.parquet`.
+
+El cambio toca solo `queries.py`, `mba.py` y `cliente.html`. Ninguno de esos paths está en los `REGEN_TRIGGER_PATHS` de `deploy.sh`. Por lo tanto:
+
+1. Commit + push a `main`.
+2. El polling cron detecta los cambios en ~5 minutos.
+3. `deploy.sh` corre, ve que **NO** son archivos críticos del pipeline, hace `git pull` + `systemctl restart`.
+4. Dashboard actualizado en producción sin regenerar nada.
+
+Excepción: si Claude Code modifica `mba.py` (`src/pulse/analytics/`), eso SÍ está en `REGEN_TRIGGER_PATHS` y disparará una regeneración del pipeline (~45-90s). Esto es deseable porque `mba_accionables.parquet` también necesita los `ticket_medio` y `revenue_total` correctos.
+
+**Será el primer test real del CI/CD end-to-end.** Validamos:
+
+* CI corre tests automáticamente.
+* Polling detecta el cambio.
+* `deploy.sh` regenera parquets cuando toca `analytics/`.
+* Dashboard se actualiza solo.
 
 ---
 
 ## Definición de "Hecho"
 
-* [ ] `.github/workflows/ci.yml` creado, primer push verde.
-* [ ] Branch protection rule en `main` configurada para requerir CI verde.
-* [ ] `pyproject.toml` con `ruff` configurado (si no lo tenía).
-* [ ] `deploy.sh` creado, ejecutable, probado en escenarios A-D.
-* [ ] `/etc/sudoers.d/pulse-deploy` configurado, `sudo systemctl restart pulse-dashboard` no pide password para `angel.merino`.
-* [ ] Cron de polling cada 5 minutos agregado a `crontab` de `angel.merino`.
-* [ ] Test end-to-end: push cosmético → CI verde → dashboard actualizado en ≤5min.
-* [ ] Test schema change: push con cambio en `src/pulse/analytics/` → parquets regenerados → dashboard actualizado.
+* [ ] `cliente_productos_top()` usa `SUM(subtotal_mxn)` en lugar de `SUM(cantidad * precio_final)`.
+* [ ] `mba.py` usa `subtotal_mxn` para cálculos de `ticket_medio` y `revenue_total`.
+* [ ] Auditoría de `grep` confirma que no quedan referencias a `cantidad * precio_final` en queries monetarias.
+* [ ] `cliente.html` tiene la columna renombrada y tooltip explicativo.
+* [ ] Tests nuevos pasan localmente (`uv run pytest tests/test_queries.py -v`).
+* [ ] Verificación manual de PAC0751: revenue_total ≈ monetary (margen <5%).
+* [ ] CI verde después del push.
+* [ ] Polling automático detecta el cambio y regenera parquets (revisar logs de `deploy_*.log` en el servidor).
+* [ ] Dashboard en producción muestra cifras correctas.
 
 ---
 
 ## Lo que NO está en este SPEC
 
-* **Notificaciones de éxito/fallo** (email, Slack, Discord). Versión 2 si lo necesitas.
-* **Rollback automático** ante fallo. Versión 2.
-* **Deploy via webhook** (push-driven en lugar de pull-driven). Polling es más simple y resuelve el caso.
-* **Self-hosted GitHub Actions runners** que pudieran tocar el servidor directamente. No necesario para esta iteración.
-* **Logrotate de `cron_deploy.log`** . Se agrega después si crece demasiado.
-* **Métricas de deploy** (cuántos deploys, cuánto duran). Después.
+* **Regenerar parquets manualmente** : el polling lo hará automáticamente porque `mba.py` está en los paths críticos.
+* **Backfill de datos** : las columnas ya existen, no hay que re-extraer nada de MongoDB.
+* **Cambios al ETL** : `enrich_items()` ya está bien implementado.
+* **Tests para `mba.py`** : si ya hay tests existentes que validan ticket_medio o revenue_total, deben pasar después del fix; si no hay, no es prioridad agregarlos ahora.
+* **Documentación en el portfolio público** : vale agregar una nota en `2_exploracion_datos.qmd` o `7_productizacion.qmd` sobre este bug y su lección, pero como tarea aparte después de validar el fix.
 
 ---
 
 ## Orden de implementación sugerido
 
-1. **Parte 1 (CI)** primero. Sin tocar servidor. Validas que el workflow funcione y branch protection esté activa. Pasos 1.1, 1.2, 1.3.
-2. **Parte 3 (sudoers)** . Necesario para que `deploy.sh` pueda restartear.
-3. **Parte 2 (`deploy.sh`)** . Pruebas manuales antes del cron.
-4. **Parte 4 (cron)** . Activar el polling cada 5 min.
-5. **Test end-to-end** y observar primer deploy automático en vivo.
-
-> [!IMPORTANT]
-> Mientras estés probando `deploy.sh` manualmente en paso 3, **NO actives el cron de polling** todavía. Si hay un bug en el script y se está ejecutando cada 5 minutos, vas a tener cientos de logs basura y posiblemente reinicios innecesarios. Activa el cron solo después de validar el script.
->
+1. **Hacer grep exhaustivo** de `precio_final` y `cantidad * precio_final` en `src/pulse/`. Listar todos los lugares que requieren cambio.
+2. **Modificar `queries.py`** (todas las queries monetarias).
+3. **Modificar `mba.py`** (cálculos de revenue y ticket).
+4. **Actualizar `cliente.html`** (rename + tooltip).
+5. **Agregar tests** de consistencia.
+6. **Probar localmente** con `uv run pytest` + verificación manual de PAC0751.
+7. **Commit + push** a feature branch.
+8. **Abrir PR** , esperar CI verde.
+9. **Merge a main** .
+10. **Observar polling** : en ~5 min, ver el log de `deploy_*.log` en el servidor.
+11. **Verificar producción** : abrir dashboard, validar que PAC0751 ahora muestra revenue cercano a monetary.
