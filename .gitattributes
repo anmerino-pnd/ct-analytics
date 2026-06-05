@@ -1,0 +1,3 @@
+# Los scripts shell corren en el servidor Linux: forzar LF siempre, aunque se
+# editen en Windows (CRLF rompe el shebang: "/bin/bash^M: bad interpreter").
+*.sh text eol=lf
