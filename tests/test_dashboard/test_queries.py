@@ -120,3 +120,59 @@ def test_api_movimientos(client) -> None:
     assert isinstance(d["cambios"], list)
     # Coherencia: el KPI de frontera coincide con el largo de la tabla frontera.
     assert d["kpis"]["n_en_frontera"] == len(d["frontera"])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Consistencia de moneda: revenue_total (subtotal_mxn) vs monetary RFM
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_revenue_total_suma_a_monetary():
+    """La suma de revenue_total de TODAS las familias de un cliente debe
+    coincidir con su monetary RFM (dentro de un margen de redondeo).
+
+    Si no coincide, hay un bug de moneda o un filtro inconsistente entre
+    items y orders.
+    """
+    from pulse.dashboard.queries import cliente_productos_top, cliente_perfil
+
+    # Cliente de prueba con compras en USD (caso problemático histórico)
+    cliente_id = "PAC0751"
+    productos = cliente_productos_top(cliente_id, limit=999)  # sin límite efectivo
+    perfil = cliente_perfil(cliente_id)
+
+    suma_revenue = sum(p["revenue_total"] for p in productos)
+    monetary = perfil["monetary"]
+
+    # Tolerancia: 5% por diferencias legítimas entre pago_total (incluye IVA,
+    # cargos extra) y subtotal_mxn (solo productos). Si la diferencia es mayor,
+    # algo está mal estructuralmente.
+    diferencia_pct = abs(suma_revenue - monetary) / monetary
+    assert diferencia_pct < 0.05, (
+        f"Suma de revenue ({suma_revenue:,.0f}) no coincide con monetary "
+        f"({monetary:,.0f}). Diferencia: {diferencia_pct:.1%}"
+    )
+
+
+def test_revenue_total_no_es_subestimado_para_usd():
+    """Verificación específica: clientes con catálogo principalmente USD
+    deben mostrar revenue en órdenes de magnitud razonables vs su monetary.
+
+    Antes del fix, PAC0751 mostraba $1.06M en revenue cuando su monetary
+    real era $8.93M (factor ~8x por no convertir USD).
+    """
+    from pulse.dashboard.queries import cliente_productos_top, cliente_perfil
+
+    cliente_id = "PAC0751"
+    productos = cliente_productos_top(cliente_id, limit=999)
+    perfil = cliente_perfil(cliente_id)
+
+    suma_revenue = sum(p["revenue_total"] for p in productos)
+    monetary = perfil["monetary"]
+
+    # Después del fix, la suma de revenue debe ser al menos el 50% del
+    # monetary (sería 100% si no hubiera IVA ni cargos extra).
+    assert suma_revenue / monetary > 0.5, (
+        f"Revenue ({suma_revenue:,.0f}) es menos del 50% del monetary "
+        f"({monetary:,.0f}). Probablemente las queries siguen usando "
+        f"precio_final sin normalizar."
+    )
