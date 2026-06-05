@@ -1,6 +1,6 @@
-# SPEC v2: Alertas con Tabs, Drill-down Enriquecido y Vista Movimientos
+# SPEC: CI con GitHub Actions + CD por polling en servidor
 
-**Versión:** 2.0 (reemplaza completamente v1)
+**Versión:** 1.0
 **Autor:** Angel Merino
 **Fecha:** Junio 2026
 **Estado:** Listo para implementación
@@ -9,1064 +9,564 @@
 
 ## Contexto
 
-Esta es una iteración del SPEC original que incorpora tres cambios coordinados:
+Hoy el ciclo de deployment de Pulse es manual:
 
-1. **Alertas con tabs** (Urgentes vs Reactivación masiva).
-2. **Drill-down de cliente enriquecido** : en lugar de recomendar bundles MBA que el cliente no haya comprado (que en B2B con catálogo amplio es "aguja en pajar"), mostramos **bundles que el cliente ya forma en sus órdenes** y **oportunidades concretas** (órdenes donde compró parte del bundle pero no todo).
-3. **Nueva vista "Movimientos"** : detecta clientes cuyo comportamiento está cambiando, vía dos señales: posición espacial cerca de la frontera entre clusters (K-Means + distance-to-centroid features) y trayectoria temporal mes a mes (snapshots mensuales).
+1. Desarrollador hace push a `main`.
+2. Desarrollador entra al servidor por SSH.
+3. `git pull` como `angel.merino`.
+4. (A veces se olvida) `uv run python -m pulse.pipeline weekly` para regenerar parquets si hubo cambio de schema.
+5. `sudo systemctl restart pulse-dashboard`.
 
-Estos tres cambios se diseñaron juntos porque tocan los mismos archivos y forman una narrativa coherente del producto:  **detectar tanto los riesgos como las oportunidades** .
+Este flujo tiene tres problemas: **propenso a olvidos** (el paso 4 ya nos rompió producción una vez); **fricción** (entrar manualmente al servidor cada vez); **no hay validación** (código puede llegar a `main` sin tests pasados).
 
-### Bibliografía relevante
+Este SPEC implementa CI/CD en dos partes:
 
-* **B2B revenue growth** : McKinsey ("The B2B opportunity in customer experience") y BCG ("Profitable B2B growth") documentan que 70-80% del revenue incremental en B2B viene de profundización en cuentas existentes, no de nuevos productos. De ahí el cambio de enfoque del drill-down.
-* **UX patterns** : Cooper et al., "About Face: The Essentials of Interaction Design" — vistas con modos mentales distintos requieren interfaces distintas. De ahí "Movimientos" como vista separada (no tab de Alertas).
-* **Concept drift handling** : Gama et al. (2014), "A survey on concept drift adaptation"; Lu et al. (2019), "Learning under Concept Drift" — recomiendan re-entrenamiento por trigger de drift sobre snapshots históricos. De ahí los snapshots mensuales.
+* **CI** : GitHub Actions corre tests + linter en cada push/PR. Si los tests fallan, no se mergea a `main`.
+* **CD** : Un cron en el servidor cada 5 minutos verifica si hay nuevos commits en `main`. Si los hay, hace `git pull`, regenera parquets cuando es necesario y reinicia el dashboard.
 
 ### Archivos involucrados
 
-* `src/pulse/dashboard/queries.py`
-* `src/pulse/dashboard/routers/api.py`
-* `src/pulse/dashboard/routers/pages.py`
-* `src/pulse/dashboard/templates/{alertas,cliente,movimientos}.html`
-* `src/pulse/dashboard/templates/base.html` (link en navbar)
-* `src/pulse/dashboard/db.py` (registrar vista de snapshots)
-* `src/pulse/analytics/segmentacion.py` (agregar distancias a centroides)
-* `src/pulse/pipeline/runner.py` (guardar snapshots mensuales)
-* `src/pulse/config/paths.py` (path de snapshots)
-* `src/pulse/modeling/segmentador.py` (exponer `cluster_names_ordered`)
+* `.github/workflows/ci.yml` — nuevo, define el workflow de CI.
+* `deploy.sh` — nuevo, script de deployment que vive en la raíz del repo.
+* `crontab` del usuario `angel.merino` — agregar línea del polling.
+* `/etc/sudoers.d/pulse-deploy` — nuevo, permite a `angel.merino` reiniciar el servicio sin password.
+
+### Decisiones tomadas explícitamente
+
+* **Branch que se deploya:** `main`.
+* **Frecuencia de polling:** cada 5 minutos.
+* **Regeneración de parquets:** detectada por cambios en `src/pulse/analytics/`, `src/pulse/modeling/`, o `src/pulse/pipeline/`. En caso de duda, regenerar (better safe than sorry).
+* **Lock para evitar deploys concurrentes:** archivo `/tmp/pulse-deploy.lock` con PID.
+* **Logging:** cada deploy genera un log en `logs/deploy_YYYYMMDD_HHMMSS.log` en el repo.
+* **Notificaciones:** ninguna en v1. Los logs sirven como auditoría.
+* **Rollback automático:** ninguno. Si algo falla en producción, se arregla manualmente.
+* **Tests requeridos para merge a main:** sí (branch protection rule en GitHub).
 
 ---
 
-## Cambio 1: Tabs en la vista de Alertas
+## Parte 1: CI con GitHub Actions
 
-### Problema actual
+### 1.1 Archivo `.github/workflows/ci.yml`
 
-La vista `/dashboard/alertas` solo muestra clientes de los segmentos **MVPs** y **Alto Valor** cuya recency supera 1.5× su cadencia mediana. El segmento **En Riesgo** está excluido. Marketing necesita actuar sobre ambos grupos pero con estrategias distintas:
+Crear el archivo con este contenido:
 
-* **MVPs / Alto Valor con ratio > 1.5** : contacto directo, intervención de cuenta key, descuento personalizado. Lista corta, acción individual.
-* **En Riesgo (todos)** : campaña masiva de reactivación, email marketing genérico. Lista larga, acción por grupos.
+```yaml
+name: CI
 
-### Diseño
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
-Modificar `/dashboard/alertas` para tener dos tabs:
+jobs:
+  test:
+    name: Tests y linter
+    runs-on: ubuntu-latest
 
-1. **"Urgentes"** (default): MVPs y Alto Valor con ratio > 1.5.
-2. **"Reactivación masiva"** : todo el segmento En Riesgo (excluyendo single-buyers y cadencia < 1).
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-### Cambios técnicos
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-#### 1.1 `src/pulse/dashboard/queries.py`
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
 
-**Renombrar** `clientes_en_riesgo` → `clientes_urgentes` y `kpis_alertas` → `kpis_urgentes`. Cambiar `NULLIF(dias_entre_compras, 0)` por `GREATEST(dias_entre_compras, 1)` y agregar `dias_entre_compras >= 1` al WHERE (corrige los ratios infinitos que se ven hoy como ∞ en la tabla).
+      - name: Sync dependencies
+        run: uv sync --frozen
 
-```python
-def clientes_urgentes() -> list[dict]:
-    """MVPs / Alto Valor no single-buyers cuyo recency excede 1.5× su cadencia mediana."""
-    return fetch_dicts(
-        """
-        SELECT
-          cliente_id,
-          segmento_cluster                                       AS segmento,
-          recency,
-          dias_entre_compras                                     AS cadencia,
-          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
-          monetary,
-          frequency
-        FROM segmentos
-        WHERE segmento_cluster IN ('MVPs', 'Alto Valor')
-          AND es_single_buyer = 0
-          AND dias_entre_compras >= 1
-          AND recency > 1.5 * dias_entre_compras
-        ORDER BY monetary DESC
-        """
-    )
+      - name: Lint with ruff
+        run: uv run ruff check . --output-format=github
+        continue-on-error: true
 
-
-def kpis_urgentes() -> dict:
-    rows = fetch_dicts(
-        """
-        SELECT
-          COUNT(*)                                                          AS n_total,
-          SUM(CASE WHEN segmento_cluster = 'MVPs' THEN 1 ELSE 0 END)        AS n_mvps,
-          SUM(CASE WHEN segmento_cluster = 'Alto Valor' THEN 1 ELSE 0 END)  AS n_alto,
-          SUM(monetary)                                                     AS revenue_en_riesgo
-        FROM segmentos
-        WHERE segmento_cluster IN ('MVPs', 'Alto Valor')
-          AND es_single_buyer = 0
-          AND dias_entre_compras >= 1
-          AND recency > 1.5 * dias_entre_compras
-        """
-    )
-    return rows[0]
-
-
-def clientes_reactivacion() -> list[dict]:
-    """Clientes del segmento En Riesgo (no single-buyers), ordenados por monetary."""
-    return fetch_dicts(
-        """
-        SELECT
-          cliente_id,
-          segmento_cluster                                       AS segmento,
-          recency,
-          dias_entre_compras                                     AS cadencia,
-          recency::DOUBLE / GREATEST(dias_entre_compras, 1)      AS ratio,
-          monetary,
-          frequency
-        FROM segmentos
-        WHERE segmento_cluster = 'En Riesgo'
-          AND es_single_buyer = 0
-          AND dias_entre_compras >= 1
-        ORDER BY monetary DESC
-        """
-    )
-
-
-def kpis_reactivacion() -> dict:
-    rows = fetch_dicts(
-        """
-        SELECT
-          COUNT(*)                                AS n_total,
-          SUM(monetary)                           AS revenue_potencial,
-          MEDIAN(recency)                         AS recency_mediana,
-          MEDIAN(dias_entre_compras)              AS cadencia_mediana
-        FROM segmentos
-        WHERE segmento_cluster = 'En Riesgo'
-          AND es_single_buyer = 0
-          AND dias_entre_compras >= 1
-        """
-    )
-    return rows[0]
+      - name: Run tests
+        run: uv run pytest -v --tb=short
+        env:
+          PYTHONPATH: src
 ```
 
-#### 1.2 `routers/api.py` y `routers/pages.py`
-
-Endpoints API:
-
-```python
-@router.get("/alertas/urgentes")
-async def alertas_urgentes() -> dict:
-    return {"kpis": q.kpis_urgentes(), "clientes": q.clientes_urgentes()}
-
-
-@router.get("/alertas/reactivacion")
-async def alertas_reactivacion() -> dict:
-    return {"kpis": q.kpis_reactivacion(), "clientes": q.clientes_reactivacion()}
-```
-
-Handler de página (pre-carga ambas tabs):
-
-```python
-@router.get("/alertas", response_class=HTMLResponse)
-async def alertas(request: Request) -> HTMLResponse:
-    initial_data = {
-        "urgentes":     {"kpis": q.kpis_urgentes(),     "clientes": q.clientes_urgentes()},
-        "reactivacion": {"kpis": q.kpis_reactivacion(), "clientes": q.clientes_reactivacion()},
-    }
-    ctx = _base_context("alertas")
-    ctx["initial_data"] = initial_data
-    return templates.TemplateResponse(request, "alertas.html", ctx)
-```
-
-#### 1.3 `templates/alertas.html`
-
-```html
-{% extends "base.html" %}
-{% block title %}Alertas · Pulse{% endblock %}
-
-{% block content %}
-<header class="page-header">
-  <h1>Clientes valiosos en riesgo</h1>
-  <p class="subtitle">Acciones de retención y reactivación priorizadas por valor del cliente.</p>
-</header>
-
-<section class="filters">
-  <div class="filter-group">
-    <label>Vista</label>
-    <div class="toggle-group" id="f-tab" role="tablist">
-      <button data-tab="urgentes" class="active" type="button">Urgentes (acción individual)</button>
-      <button data-tab="reactivacion" type="button">Reactivación masiva (En Riesgo)</button>
-    </div>
-  </div>
-</section>
-
-<!-- TAB: URGENTES -->
-<div id="tab-urgentes" class="tab-content">
-  <section class="kpi-grid">
-    <div class="kpi-card"><span class="kpi-label">Total en riesgo</span><span class="kpi-value" id="kpi-urg-total">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">MVPs en riesgo</span><span class="kpi-value" id="kpi-urg-mvps">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">Alto Valor en riesgo</span><span class="kpi-value" id="kpi-urg-alto">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">Revenue en riesgo</span><span class="kpi-value" id="kpi-urg-revenue">—</span></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Ratio de urgencia × monetary</h2>
-    <div id="scatter-urgentes" class="chart"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Top clientes en riesgo (por monetary)</h2>
-    <table class="data-table" id="tabla-urgentes">
-      <thead>
-        <tr>
-          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
-          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
-          <th>Frequency</th><th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
-</div>
-
-<!-- TAB: REACTIVACIÓN -->
-<div id="tab-reactivacion" class="tab-content hidden">
-  <section class="kpi-grid">
-    <div class="kpi-card"><span class="kpi-label">Total en En Riesgo</span><span class="kpi-value" id="kpi-rea-total">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">Revenue potencial recuperable</span><span class="kpi-value" id="kpi-rea-revenue">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">Recency mediana (días)</span><span class="kpi-value" id="kpi-rea-recency">—</span></div>
-    <div class="kpi-card"><span class="kpi-label">Cadencia mediana original (días)</span><span class="kpi-value" id="kpi-rea-cadencia">—</span></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Distribución de monetary × ratio</h2>
-    <div id="scatter-reactivacion" class="chart"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Top clientes En Riesgo (por monetary histórico)</h2>
-    <table class="data-table" id="tabla-reactivacion">
-      <thead>
-        <tr>
-          <th>Cliente</th><th>Segmento</th><th>Recency (d)</th>
-          <th>Cadencia mediana</th><th>Ratio</th><th>Monetary</th>
-          <th>Frequency</th><th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
-</div>
-
-<details class="explainer">
-  <summary>¿Qué estoy viendo?</summary>
-  <div class="explainer-content">
-    <p><strong>Urgentes</strong>: clientes MVPs y Alto Valor cuyo último pedido excede 1.5× su cadencia mediana habitual. Acción: contacto directo, descuento personalizado.</p>
-    <p><strong>Reactivación masiva</strong>: clientes del segmento En Riesgo (todos llevan tiempo sin comprar respecto a su patrón histórico). Acción: campaña masiva con incentivos genéricos.</p>
-  </div>
-</details>
-
-<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
-{% endblock %}
-
-{% block extra_scripts %}
-<style>.tab-content.hidden { display: none; }</style>
-<script>
-  (function () {
-    const initial = JSON.parse(document.getElementById('initial-data').textContent);
-    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
-    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
-
-    function renderTab(tabName, data) {
-      if (tabName === 'urgentes') {
-        document.getElementById('kpi-urg-total').textContent   = fmtNum(data.kpis.n_total);
-        document.getElementById('kpi-urg-mvps').textContent    = fmtNum(data.kpis.n_mvps);
-        document.getElementById('kpi-urg-alto').textContent    = fmtNum(data.kpis.n_alto);
-        document.getElementById('kpi-urg-revenue').textContent = fmtMoneda(data.kpis.revenue_en_riesgo);
-        PulseCharts.renderScatterAlertas('scatter-urgentes', data.clientes.filter(c => c.ratio != null && isFinite(c.ratio)));
-        renderTabla('tabla-urgentes', data.clientes);
-      } else {
-        document.getElementById('kpi-rea-total').textContent    = fmtNum(data.kpis.n_total);
-        document.getElementById('kpi-rea-revenue').textContent  = fmtMoneda(data.kpis.revenue_potencial);
-        document.getElementById('kpi-rea-recency').textContent  = fmtNum(data.kpis.recency_mediana);
-        document.getElementById('kpi-rea-cadencia').textContent = fmtNum(data.kpis.cadencia_mediana);
-        PulseCharts.renderScatterAlertas('scatter-reactivacion', data.clientes.filter(c => c.ratio != null && isFinite(c.ratio)));
-        renderTabla('tabla-reactivacion', data.clientes);
-      }
-    }
-
-    function renderTabla(tablaId, clientes) {
-      const tbody = document.querySelector('#' + tablaId + ' tbody');
-      tbody.innerHTML = '';
-      clientes.forEach(c => {
-        const color = window.SEGMENT_COLORS[c.segmento] || '#888';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.cliente_id}</td>
-          <td><span class="seg-chip" style="background:${color}"></span>${c.segmento}</td>
-          <td>${fmtNum(c.recency)}</td>
-          <td>${fmtNum(c.cadencia, 1)}</td>
-          <td>${fmtNum(c.ratio, 2)}</td>
-          <td>${fmtMoneda(c.monetary)}</td>
-          <td>${fmtNum(c.frequency)}</td>
-          <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    renderTab('urgentes', initial.urgentes);
-    renderTab('reactivacion', initial.reactivacion);
-
-    document.querySelectorAll('#f-tab button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#f-tab button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const tab = btn.dataset.tab;
-        document.getElementById('tab-urgentes').classList.toggle('hidden', tab !== 'urgentes');
-        document.getElementById('tab-reactivacion').classList.toggle('hidden', tab !== 'reactivacion');
-      });
-    });
-  })();
-</script>
-{% endblock %}
-```
-
----
-
-## Cambio 2: Drill-down con bundles propios + oportunidades concretas
-
-### Por qué este enfoque (no recomendaciones futuras)
-
-En B2B con catálogos especializados, los clientes activos compran casi todas las familias relevantes para ellos. Recomendar "lo que no han comprado" produce listas vacías o irrelevantes. Por eso este SPEC cambia el enfoque a  **profundización** :
-
- **A. Top bundles propios** : pares de familias que el cliente ya compra juntos. Útil para entender su patrón de compra.
-
- **B. Oportunidades concretas** : órdenes específicas donde compró parte del bundle pero no toda. Cada fila es una oportunidad accionable directa: "en estas 3 órdenes el cliente compró A pero no B, históricamente compra ambas juntas en 32% de sus pedidos con A".
-
-### 2.1 `queries.py` — Funciones nuevas
-
-```python
-def cliente_bundles_propios(cliente_id: str, limit: int = 10) -> list[dict]:
-    """Pares de familias que el cliente compra juntas en la misma orden.
-
-    Cruza con mba_accionables del segmento para anexar lift y confidence
-    cuando la regla también es válida a nivel de segmento.
-    """
-    # 1. Pares de familias en las mismas órdenes del cliente
-    pares = fetch_dicts(
-        """
-        WITH items_cliente AS (
-            SELECT DISTINCT order_id, familia
-            FROM items
-            WHERE cliente_id = ?
-              AND clave != 'CARGO100'
-              AND familia IS NOT NULL
-        )
-        SELECT
-            a.familia                AS familia_a,
-            b.familia                AS familia_b,
-            COUNT(DISTINCT a.order_id) AS n_ordenes
-        FROM items_cliente a
-        JOIN items_cliente b USING (order_id)
-        WHERE a.familia < b.familia
-        GROUP BY a.familia, b.familia
-        HAVING COUNT(DISTINCT a.order_id) >= 2
-        ORDER BY n_ordenes DESC
-        LIMIT ?
-        """,
-        [cliente_id, limit],
-    )
-    if not pares:
-        return []
-
-    # 2. Total de órdenes del cliente
-    total_row = fetch_dicts(
-        "SELECT COUNT(DISTINCT order_id) AS total FROM items WHERE cliente_id = ? AND clave != 'CARGO100'",
-        [cliente_id],
-    )
-    total_ordenes = total_row[0]["total"] if total_row else 0
-
-    # 3. Segmento del cliente
-    seg_row = fetch_dicts(
-        "SELECT segmento_cluster FROM segmentos WHERE cliente_id = ?",
-        [cliente_id],
-    )
-    segmento = seg_row[0]["segmento_cluster"] if seg_row else None
-
-    # 4. Reglas MBA accionables del segmento (mapa par → {confidence, lift})
-    reglas_map = {}
-    if segmento:
-        reglas = fetch_dicts(
-            "SELECT antecedents, consequents, confidence, lift FROM mba_accionables WHERE segmento = ?",
-            [segmento],
-        )
-        for r in reglas:
-            if "," not in r["consequents"]:  # solo bundles 1→1
-                par_norm = tuple(sorted([r["antecedents"], r["consequents"]]))
-                reglas_map[par_norm] = {"confidence": r["confidence"], "lift": r["lift"]}
-
-    # 5. Anexar info al par
-    for p in pares:
-        par_norm = tuple(sorted([p["familia_a"], p["familia_b"]]))
-        regla = reglas_map.get(par_norm)
-        p["confidence_segmento"] = regla["confidence"] if regla else None
-        p["lift_segmento"] = regla["lift"] if regla else None
-        p["pct_aparicion"] = (p["n_ordenes"] / total_ordenes) if total_ordenes else 0.0
-
-    return pares
-
-
-def cliente_oportunidades(cliente_id: str, limit: int = 10) -> list[dict]:
-    """Órdenes donde compró parte de un bundle propio pero no completo.
-
-    Define 'bundle fuerte' como pares con co-ocurrencia >= 30% respecto a la
-    familia menos frecuente del par. Devuelve las órdenes con la oportunidad.
-    """
-    bundles_fuertes = fetch_dicts(
-        """
-        WITH items_cliente AS (
-            SELECT DISTINCT order_id, familia
-            FROM items
-            WHERE cliente_id = ?
-              AND clave != 'CARGO100'
-              AND familia IS NOT NULL
-        ),
-        pares AS (
-            SELECT
-                a.familia                       AS familia_a,
-                b.familia                       AS familia_b,
-                COUNT(DISTINCT a.order_id)      AS n_juntas
-            FROM items_cliente a
-            JOIN items_cliente b USING (order_id)
-            WHERE a.familia < b.familia
-            GROUP BY a.familia, b.familia
-        ),
-        apariciones AS (
-            SELECT familia, COUNT(DISTINCT order_id) AS n_total
-            FROM items_cliente
-            GROUP BY familia
-        )
-        SELECT
-            p.familia_a,
-            p.familia_b,
-            p.n_juntas,
-            p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) AS co_occurrence
-        FROM pares p
-        JOIN apariciones ap_a ON ap_a.familia = p.familia_a
-        JOIN apariciones ap_b ON ap_b.familia = p.familia_b
-        WHERE p.n_juntas >= 2
-          AND p.n_juntas * 1.0 / LEAST(ap_a.n_total, ap_b.n_total) >= 0.30
-        """,
-        [cliente_id],
-    )
-
-    if not bundles_fuertes:
-        return []
-
-    oportunidades = []
-    for bundle in bundles_fuertes:
-        fam_a, fam_b = bundle["familia_a"], bundle["familia_b"]
-
-        # Órdenes con solo A (sin B)
-        ords_solo_a = fetch_dicts(
-            """
-            SELECT
-                o.order_id,
-                strftime(o.fecha, '%Y-%m-%d %H:%M:%S')    AS fecha,
-                o.pago_total
-            FROM orders o
-            WHERE o.cliente_id = ?
-              AND o.order_id IN (
-                  SELECT DISTINCT order_id FROM items
-                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
-              )
-              AND o.order_id NOT IN (
-                  SELECT DISTINCT order_id FROM items
-                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
-              )
-            ORDER BY o.pago_total DESC
-            """,
-            [cliente_id, cliente_id, fam_a, cliente_id, fam_b],
-        )
-        for o in ords_solo_a:
-            oportunidades.append({
-                "order_id": o["order_id"], "fecha": o["fecha"],
-                "pago_total": o["pago_total"],
-                "compro": fam_a, "le_falto": fam_b,
-                "co_occurrence": bundle["co_occurrence"],
-            })
-
-        # Órdenes con solo B (sin A)
-        ords_solo_b = fetch_dicts(
-            """
-            SELECT
-                o.order_id,
-                strftime(o.fecha, '%Y-%m-%d %H:%M:%S')    AS fecha,
-                o.pago_total
-            FROM orders o
-            WHERE o.cliente_id = ?
-              AND o.order_id IN (
-                  SELECT DISTINCT order_id FROM items
-                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
-              )
-              AND o.order_id NOT IN (
-                  SELECT DISTINCT order_id FROM items
-                  WHERE cliente_id = ? AND familia = ? AND clave != 'CARGO100'
-              )
-            ORDER BY o.pago_total DESC
-            """,
-            [cliente_id, cliente_id, fam_b, cliente_id, fam_a],
-        )
-        for o in ords_solo_b:
-            oportunidades.append({
-                "order_id": o["order_id"], "fecha": o["fecha"],
-                "pago_total": o["pago_total"],
-                "compro": fam_b, "le_falto": fam_a,
-                "co_occurrence": bundle["co_occurrence"],
-            })
-
-    oportunidades.sort(key=lambda x: x["pago_total"] or 0, reverse=True)
-    return oportunidades[:limit]
-```
-
-### 2.2 Endpoint extendido
-
-```python
-@router.get("/cliente/{cliente_id}")
-async def cliente_drilldown(cliente_id: str) -> dict:
-    perfil = q.cliente_perfil(cliente_id)
-    if perfil is None:
-        raise HTTPException(status_code=404, detail=f"Cliente '{cliente_id}' no encontrado")
-    return {
-        "perfil":          perfil,
-        "pedidos":         q.cliente_pedidos(cliente_id, limit=50),
-        "posicion":        q.cliente_posicion_segmento(cliente_id),
-        "productos_top":   q.cliente_productos_top(cliente_id, limit=10),
-        "bundles_propios": q.cliente_bundles_propios(cliente_id, limit=10),
-        "oportunidades":   q.cliente_oportunidades(cliente_id, limit=10),
-    }
-```
-
-### 2.3 Template — tres secciones nuevas
-
-Reemplazar la sección de "Recomendaciones" del SPEC v1 (si existía) por tres secciones nuevas en `cliente.html` después del scatter de posición:
-
-```html
-<section class="chart-card">
-  <h2>Top productos del cliente</h2>
-  <p class="subtitle" id="prod-summary">—</p>
-  <table class="data-table" id="tabla-productos">
-    <thead>
-      <tr><th>Familia</th><th>N° pedidos</th><th>Unidades</th><th>Revenue total</th><th>Última compra</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section class="chart-card">
-  <h2>Bundles que el cliente compra juntos</h2>
-  <p class="subtitle">
-    Pares de familias en las mismas órdenes. <em>Conf./Lift segmento</em> indica si
-    el bundle también es regla accionable del segmento del cliente.
-  </p>
-  <table class="data-table" id="tabla-bundles-propios">
-    <thead>
-      <tr><th>Familia A</th><th>Familia B</th><th>N° órdenes juntas</th>
-          <th>% de órdenes del cliente</th><th>Conf. segmento</th><th>Lift segmento</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section class="chart-card">
-  <h2>Oportunidades de cross-sell detectadas</h2>
-  <p class="subtitle">
-    Órdenes donde el cliente compró una parte de uno de sus bundles habituales
-    pero no la otra. Cada fila es una oportunidad de empuje concreta.
-  </p>
-  <table class="data-table" id="tabla-oportunidades">
-    <thead>
-      <tr><th>Order ID</th><th>Fecha</th><th>Pago total</th>
-          <th>Compró</th><th>Le faltó</th><th>Co-ocurrencia histórica</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-```
-
-JS para renderizar (dentro del template, agregar al final del bloque que ya pinta `renderCliente`):
-
-```javascript
-// Top productos
-const tbodyProd = document.querySelector('#tabla-productos tbody');
-tbodyProd.innerHTML = '';
-data.productos_top.forEach(p => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><code>${p.familia}</code></td>
-    <td>${fmtNum(p.n_pedidos)}</td>
-    <td>${fmtNum(p.unidades_totales)}</td>
-    <td>${fmtMoneda(p.revenue_total)}</td>
-    <td>${p.ultima_compra ? p.ultima_compra.substring(0, 10) : '—'}</td>
-  `;
-  tbodyProd.appendChild(tr);
-});
-document.getElementById('prod-summary').textContent =
-  data.productos_top.length + ' familias compradas (top por revenue).';
-
-// Bundles propios
-const tbodyBP = document.querySelector('#tabla-bundles-propios tbody');
-tbodyBP.innerHTML = '';
-if (data.bundles_propios.length === 0) {
-  tbodyBP.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin bundles detectados (cliente con pocas órdenes multi-familia).</td></tr>';
-} else {
-  data.bundles_propios.forEach(b => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><code>${b.familia_a}</code></td>
-      <td><code>${b.familia_b}</code></td>
-      <td>${fmtNum(b.n_ordenes)}</td>
-      <td>${fmtPct(b.pct_aparicion)}</td>
-      <td>${b.confidence_segmento != null ? fmtPct(b.confidence_segmento) : '—'}</td>
-      <td>${b.lift_segmento != null ? fmtNum(b.lift_segmento, 2) : '—'}</td>
-    `;
-    tbodyBP.appendChild(tr);
-  });
-}
-
-// Oportunidades
-const tbodyOp = document.querySelector('#tabla-oportunidades tbody');
-tbodyOp.innerHTML = '';
-if (data.oportunidades.length === 0) {
-  tbodyOp.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft)">Sin oportunidades detectadas. El cliente cierra consistentemente sus bundles.</td></tr>';
-} else {
-  data.oportunidades.forEach(o => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><code>${o.order_id}</code></td>
-      <td>${o.fecha}</td>
-      <td>${fmtMoneda(o.pago_total)}</td>
-      <td><code>${o.compro}</code></td>
-      <td><code>${o.le_falto}</code></td>
-      <td>${fmtPct(o.co_occurrence)}</td>
-    `;
-    tbodyOp.appendChild(tr);
-  });
-}
-```
-
----
-
-## Cambio 3: Vista "Movimientos" — clientes en transición
-
-### Concepto
-
-Vista nueva (`/dashboard/movimientos`) que detecta clientes cuyo comportamiento está cambiando. Dos señales:
-
-1. **Espacial** : clientes cuya distancia al segundo cluster más cercano es similar a la del propio (`razon_distancias >= 0.7`). Están "en frontera".
-2. **Temporal** : clientes que cambiaron de segmento entre el snapshot del mes pasado y el actual.
-
-**Vista separada (no tab de Alertas)** porque el modo mental es opuesto: Alertas = retención reactiva; Movimientos = oportunidad proactiva. Cooper et al. recomiendan no mezclar contextos en tabs.
-
-### 3.1 `analytics/segmentacion.py` — agregar distancias
-
-La función `segmentar_clientes()` actualmente devuelve `cliente_id, cluster_id, segmento_cluster`. Agregar 4 columnas más después del `predict()`:
-
-```python
-import numpy as np
-
-# Aplicar log_transform + scaler manualmente para obtener features escaladas
-pipeline = modelo.pipeline
-features_array = df_rfm[feature_cols].values
-features_transformed = pipeline.named_steps['scaler'].transform(
-    pipeline.named_steps['log_transform'].transform(features_array)
-)
-
-# Distancias a todos los centroides
-centroides = pipeline.named_steps['kmeans'].cluster_centers_  # shape (k, n_features)
-distancias = np.linalg.norm(
-    features_transformed[:, np.newaxis, :] - centroides[np.newaxis, :, :],
-    axis=2
-)  # shape (n_clientes, k)
-
-# Sort para obtener primer y segundo centroide más cercano
-sorted_idx = np.argsort(distancias, axis=1)
-dist_propia = np.take_along_axis(distancias, sorted_idx[:, :1], axis=1).flatten()
-dist_segunda = np.take_along_axis(distancias, sorted_idx[:, 1:2], axis=1).flatten()
-seg_secundario_idx = sorted_idx[:, 1]
-
-# Mapear índice a nombre — requiere cluster_names_ordered en SegmentadorClientes
-cluster_names = modelo.cluster_names_ordered  # lista de nombres en orden de centroides
-segmento_secundario = [cluster_names[i] for i in seg_secundario_idx]
-
-df_resultado["distancia_propia"]    = dist_propia
-df_resultado["distancia_segunda"]   = dist_segunda
-df_resultado["razon_distancias"]    = dist_propia / dist_segunda
-df_resultado["segmento_secundario"] = segmento_secundario
-```
+### 1.2 Configurar branch protection en GitHub
+
+En la UI de GitHub:
+
+1. Ir a  **Settings → Branches → Add rule** .
+2. **Branch name pattern:** `main`.
+3. Activar:
+   * ☑ Require a pull request before merging.
+   * ☑ Require status checks to pass before merging.
+   * En el buscador de status checks, agregar **`Tests y linter`** (debe aparecer después de la primera corrida del workflow).
+   * ☑ Do not allow bypassing the above settings (opcional pero recomendado).
+4. Save changes.
 
 > [!NOTE]
-> Si `cluster_names_ordered` no existe en `modeling/segmentador.py`, agregarlo: una lista que se construya durante el `fit()` y se guarde en `metadata.json` para que tras `load()` esté disponible.
+> Para que la regla "require status checks" aparezca el check `Tests y linter`, primero el workflow tiene que haber corrido  **al menos una vez** . La primera vez, haces push, esperas a que termine el CI, después configuras la regla.
 
-### 3.2 `pipeline/runner.py` — snapshots mensuales
+### 1.3 Asegurar que `pyproject.toml` tiene `ruff` configurado
 
-En el flujo del runner, cuando `modo == "monthly"`, después del paso de segmentación, llamar:
+Si no está configurado, agregar al `pyproject.toml`:
 
-```python
-from datetime import datetime
-from pulse.config.paths import SNAPSHOTS_DIR
+```toml
+[tool.ruff]
+line-length = 100
+target-version = "py313"
 
-def guardar_snapshot_mensual(df_segmentados: pd.DataFrame) -> None:
-    """Guarda snapshot del estado actual de segmentación mes a mes.
-
-    Path: datos/processed/snapshots/snapshot_YYYY-MM.parquet.
-    Idempotente: sobreescribe si ya existe el snapshot del mismo mes.
-    """
-    SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
-    mes = datetime.now().strftime("%Y-%m")
-    path = SNAPSHOTS_DIR / f"snapshot_{mes}.parquet"
-    df_segmentados[
-        ["cliente_id", "segmento_cluster", "recency", "frequency",
-         "monetary", "dias_entre_compras", "razon_distancias"]
-    ].to_parquet(path, index=False)
-    log.info(f"✅ Snapshot mensual guardado: {path.name}")
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (formateo manual)
+]
 ```
 
-### 3.3 `config/paths.py`
+Y agregar `ruff` como dev dependency:
 
-```python
-SNAPSHOTS_DIR = PROCESSED / "snapshots"
+```bash
+uv add --dev ruff
 ```
 
-### 3.4 `queries.py` — funciones para Movimientos
+> [!IMPORTANT]
+> En el workflow CI usamos `continue-on-error: true` para ruff. Esto significa que el linter  **reporta problemas pero no rompe el build** . Es deliberado para no bloquear merges por formato durante la adopción. Cuando el código esté limpio, se puede quitar el `continue-on-error` para hacer el linter obligatorio.
 
-```python
-def clientes_en_frontera(threshold: float = 0.7) -> list[dict]:
-    """Clientes cuya razón de distancias supera el threshold (cerca de la frontera)."""
-    return fetch_dicts(
-        """
-        SELECT
-          cliente_id,
-          segmento_cluster                  AS segmento_actual,
-          segmento_secundario,
-          razon_distancias,
-          recency,
-          frequency,
-          monetary,
-          dias_entre_compras                AS cadencia,
-          es_single_buyer
-        FROM segmentos
-        WHERE razon_distancias >= ?
-          AND es_single_buyer = 0
-        ORDER BY monetary DESC
-        """,
-        [threshold],
-    )
+---
 
+## Parte 2: Script `deploy.sh`
 
-def clientes_cambio_segmento(meses_atras: int = 1) -> list[dict]:
-    """Clientes que cambiaron de segmento respecto al snapshot de N meses atrás."""
-    from datetime import datetime
-    from dateutil.relativedelta import relativedelta
-    from pulse.config.paths import SNAPSHOTS_DIR
+### 2.1 Archivo en la raíz del repo
 
-    fecha_target = datetime.now() - relativedelta(months=meses_atras)
-    target_mes = fecha_target.strftime("%Y-%m")
-    snapshot_path = SNAPSHOTS_DIR / f"snapshot_{target_mes}.parquet"
+Crear `deploy.sh` con este contenido:
 
-    if not snapshot_path.exists():
-        return []
+```bash
+#!/bin/bash
+# deploy.sh — Script de deployment de Pulse
+#
+# Comportamiento:
+# - Si no hay commits nuevos en origin/main, sale sin hacer nada.
+# - Si hay commits nuevos, hace pull, regenera parquets si es necesario, y reinicia el dashboard.
+# - Logs en logs/deploy_YYYYMMDD_HHMMSS.log
+#
+# Uso:
+#   ./deploy.sh           # corrida normal
+#   ./deploy.sh --force   # forzar regeneración aunque no haya cambios
+#
+# Requiere:
+# - Usuario angel.merino con permisos sudo limitados (ver /etc/sudoers.d/pulse-deploy)
+# - Variable PULSE_REPO con la ruta al repo (default: directorio del script)
 
-    from pulse.dashboard.db import get_connection
-    con = get_connection()
-    con.execute(
-        f"CREATE OR REPLACE VIEW snapshot_anterior AS "
-        f"SELECT * FROM read_parquet('{snapshot_path.as_posix()}')"
-    )
+set -e  # salir al primer error
 
-    return fetch_dicts(
-        """
-        SELECT
-          s.cliente_id,
-          sa.segmento_cluster                AS segmento_anterior,
-          s.segmento_cluster                 AS segmento_actual,
-          s.recency,
-          s.frequency,
-          s.monetary,
-          s.dias_entre_compras               AS cadencia,
-          CASE
-            WHEN sa.segmento_cluster = 'Hibernando' AND s.segmento_cluster IN ('Ocasionales', 'En Riesgo', 'Alto Valor', 'MVPs') THEN 'subida'
-            WHEN sa.segmento_cluster = 'En Riesgo' AND s.segmento_cluster IN ('Ocasionales', 'Alto Valor', 'MVPs') THEN 'subida'
-            WHEN sa.segmento_cluster = 'Ocasionales' AND s.segmento_cluster IN ('Alto Valor', 'MVPs') THEN 'subida'
-            WHEN sa.segmento_cluster = 'Alto Valor' AND s.segmento_cluster = 'MVPs' THEN 'subida'
-            ELSE 'bajada'
-          END                                AS direccion
-        FROM segmentos s
-        JOIN snapshot_anterior sa USING (cliente_id)
-        WHERE s.segmento_cluster != sa.segmento_cluster
-          AND s.es_single_buyer = 0
-        ORDER BY s.monetary DESC
-        """
-    )
+# ─────────────────────────────────────────────────────────────
+# Configuración
+# ─────────────────────────────────────────────────────────────
+PULSE_REPO="${PULSE_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+LOCK_FILE="/tmp/pulse-deploy.lock"
+LOG_DIR="${PULSE_REPO}/logs"
+LOG_FILE="${LOG_DIR}/deploy_$(date +%Y%m%d_%H%M%S).log"
 
+# Paths que disparan regeneración de parquets
+# (cambios fuera de estos solo requieren restart)
+REGEN_TRIGGER_PATHS=(
+  "src/pulse/analytics/"
+  "src/pulse/modeling/"
+  "src/pulse/pipeline/"
+  "src/pulse/etl/"
+  "src/pulse/config/paths.py"
+)
 
-def kpis_movimientos() -> dict:
-    en_frontera = fetch_dicts(
-        "SELECT COUNT(*) AS n FROM segmentos WHERE razon_distancias >= 0.7 AND es_single_buyer = 0"
-    )
-    cambios = clientes_cambio_segmento(meses_atras=1)
-    return {
-        "n_en_frontera":   en_frontera[0]["n"],
-        "n_subidas_mes":   sum(1 for c in cambios if c["direccion"] == "subida"),
-        "n_bajadas_mes":   sum(1 for c in cambios if c["direccion"] == "bajada"),
-        "n_total_cambios": len(cambios),
-    }
+# ─────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+cleanup() {
+  if [ -f "$LOCK_FILE" ] && [ "$(cat "$LOCK_FILE")" = "$$" ]; then
+    rm -f "$LOCK_FILE"
+  fi
+}
+
+trap cleanup EXIT
+
+# ─────────────────────────────────────────────────────────────
+# Verificar lock
+# ─────────────────────────────────────────────────────────────
+if [ -f "$LOCK_FILE" ]; then
+  EXISTING_PID=$(cat "$LOCK_FILE")
+  if kill -0 "$EXISTING_PID" 2>/dev/null; then
+    log "⚠️  Otro deploy en progreso (PID $EXISTING_PID). Saliendo."
+    exit 0
+  else
+    log "🧹 Lock de proceso muerto encontrado. Limpiando."
+    rm -f "$LOCK_FILE"
+  fi
+fi
+echo $$ > "$LOCK_FILE"
+
+# ─────────────────────────────────────────────────────────────
+# Setup
+# ─────────────────────────────────────────────────────────────
+mkdir -p "$LOG_DIR"
+cd "$PULSE_REPO"
+
+log "🚀 Iniciando deploy desde $PULSE_REPO"
+
+# ─────────────────────────────────────────────────────────────
+# Verificar si hay cambios en origin/main
+# ─────────────────────────────────────────────────────────────
+log "📡 Fetching origin/main..."
+git fetch origin main 2>&1 | tee -a "$LOG_FILE"
+
+LOCAL_HASH=$(git rev-parse HEAD)
+REMOTE_HASH=$(git rev-parse origin/main)
+
+if [ "$LOCAL_HASH" = "$REMOTE_HASH" ] && [ "$1" != "--force" ]; then
+  log "✅ Ya en el último commit ($LOCAL_HASH). Nada que hacer."
+  rm -f "$LOG_FILE"  # No dejar logs vacíos cuando no hay deploy
+  exit 0
+fi
+
+log "📥 Hay cambios nuevos."
+log "   Local:  $LOCAL_HASH"
+log "   Remoto: $REMOTE_HASH"
+
+# ─────────────────────────────────────────────────────────────
+# Detectar si necesitamos regenerar parquets
+# ─────────────────────────────────────────────────────────────
+NEEDS_REGEN=false
+CHANGED_FILES=$(git diff --name-only "$LOCAL_HASH" "$REMOTE_HASH")
+
+log "📋 Archivos cambiados:"
+echo "$CHANGED_FILES" | tee -a "$LOG_FILE"
+
+for path_pattern in "${REGEN_TRIGGER_PATHS[@]}"; do
+  if echo "$CHANGED_FILES" | grep -q "^${path_pattern}"; then
+    NEEDS_REGEN=true
+    log "🔄 Cambio detectado en '$path_pattern' — se requiere regeneración de parquets."
+    break
+  fi
+done
+
+if [ "$1" = "--force" ]; then
+  NEEDS_REGEN=true
+  log "🔧 Flag --force detectado: forzando regeneración."
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Pull
+# ─────────────────────────────────────────────────────────────
+log "⬇️  git pull..."
+git pull origin main 2>&1 | tee -a "$LOG_FILE"
+
+# ─────────────────────────────────────────────────────────────
+# Sync dependencies
+# ─────────────────────────────────────────────────────────────
+log "📦 uv sync..."
+uv sync 2>&1 | tee -a "$LOG_FILE"
+
+# ─────────────────────────────────────────────────────────────
+# Regenerar parquets si es necesario
+# ─────────────────────────────────────────────────────────────
+if [ "$NEEDS_REGEN" = true ]; then
+  log "🏗️  Regenerando parquets con pipeline weekly..."
+  if uv run python -m pulse.pipeline weekly --log-file "$LOG_FILE.pipeline" 2>&1 | tee -a "$LOG_FILE"; then
+    log "✅ Pipeline OK."
+  else
+    log "❌ Pipeline falló. Dashboard NO reiniciado para evitar romperlo."
+    log "   Revisa $LOG_FILE.pipeline para detalles."
+    exit 1
+  fi
+else
+  log "⏭️  Sin cambios que requieran regenerar parquets."
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Reiniciar dashboard
+# ─────────────────────────────────────────────────────────────
+log "🔁 Reiniciando dashboard..."
+sudo systemctl restart pulse-dashboard 2>&1 | tee -a "$LOG_FILE"
+
+# Esperar 5 segundos y verificar
+sleep 5
+if sudo systemctl is-active --quiet pulse-dashboard; then
+  log "✅ Dashboard activo."
+else
+  log "❌ Dashboard NO está activo después del restart. Revisar:"
+  log "   sudo systemctl status pulse-dashboard"
+  log "   sudo journalctl -u pulse-dashboard -n 50"
+  exit 1
+fi
+
+NEW_HASH=$(git rev-parse HEAD)
+log "🎉 Deploy completado. Ahora en commit $NEW_HASH."
 ```
 
-### 3.5 Routers
+Hacer ejecutable:
 
-```python
-# api.py
-@router.get("/movimientos")
-async def movimientos() -> dict:
-    return {
-        "kpis":     q.kpis_movimientos(),
-        "frontera": q.clientes_en_frontera(threshold=0.7),
-        "cambios":  q.clientes_cambio_segmento(meses_atras=1),
-    }
-
-# pages.py
-@router.get("/movimientos", response_class=HTMLResponse)
-async def movimientos(request: Request) -> HTMLResponse:
-    initial_data = {
-        "kpis":     q.kpis_movimientos(),
-        "frontera": q.clientes_en_frontera(threshold=0.7),
-        "cambios":  q.clientes_cambio_segmento(meses_atras=1),
-    }
-    ctx = _base_context("movimientos")
-    ctx["initial_data"] = initial_data
-    return templates.TemplateResponse(request, "movimientos.html", ctx)
+```bash
+chmod +x deploy.sh
 ```
 
-### 3.6 `templates/base.html` — agregar nav
+### 2.2 Reglas importantes del script
 
-```html
-<a href="/dashboard/movimientos"
-   class="nav-link {% if vista_activa == 'movimientos' %}active{% endif %}">Movimientos</a>
+* **Idempotente** : corres dos veces seguidas sin cambios, el segundo no hace nada.
+* **Lock seguro** : usa PID en archivo. Si el proceso anterior murió sin limpiar, se detecta y se limpia automáticamente.
+* **Logs solo cuando hay deploy real** : si no hay cambios, no deja archivos vacíos.
+* **Si pipeline falla, NO reinicia el dashboard** : la versión vieja sigue corriendo. Better degraded service than broken service.
+* **`set -e` al inicio** : cualquier error intermedio detiene el script.
+
+### 2.3 Pruebas manuales antes de automatizar
+
+Antes de meter el cron, prueba el script en tres escenarios:
+
+**Escenario A: sin cambios**
+
+```bash
+./deploy.sh
 ```
 
-### 3.7 `templates/movimientos.html`
+Esperado: "Ya en el último commit. Nada que hacer." Sin tocar nada.
 
-```html
-{% extends "base.html" %}
-{% block title %}Movimientos · Pulse{% endblock %}
+**Escenario B: con cambios cosméticos** (ej. modificar un template HTML)
 
-{% block content %}
-<header class="page-header">
-  <h1>Movimientos entre segmentos</h1>
-  <p class="subtitle">
-    Clientes cuyo comportamiento está cambiando: detectados por trayectoria temporal
-    (cambio de segmento mes a mes) o por posición espacial (cerca de la frontera entre clusters).
-  </p>
-</header>
+Hacer commit cosmético, push:
 
-<section class="kpi-grid">
-  <div class="kpi-card"><span class="kpi-label">Clientes en frontera</span><span class="kpi-value" id="kpi-frontera">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Subidas (mes actual)</span><span class="kpi-value" id="kpi-subidas">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Bajadas (mes actual)</span><span class="kpi-value" id="kpi-bajadas">—</span></div>
-  <div class="kpi-card"><span class="kpi-label">Total cambios</span><span class="kpi-value" id="kpi-cambios">—</span></div>
-</section>
+```bash
+./deploy.sh
+```
 
-<section class="chart-card">
-  <h2>Cambios de segmento (mes a mes)</h2>
-  <p class="subtitle">
-    Clientes en un segmento distinto al de hace un mes.
-    <em>Subidas</em> = movimientos hacia segmentos de mayor valor.
-    <em>Bajadas</em> = deterioro temprano (antes de Alertas).
-  </p>
-  <table class="data-table" id="tabla-cambios">
-    <thead>
-      <tr><th>Cliente</th><th>Segmento anterior</th><th>Segmento actual</th>
-          <th>Dirección</th><th>Monetary</th><th>Frequency</th><th></th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
+Esperado: detecta cambio, hace pull, NO regenera parquets, reinicia dashboard.
 
-<section class="chart-card">
-  <h2>Clientes en frontera entre clusters</h2>
-  <p class="subtitle">
-    Clientes cuya distancia al segundo cluster más cercano es similar a la del propio.
-    Razón ≥ 0.7 indica que el cliente podría pertenecer a cualquiera de los dos.
-  </p>
-  <table class="data-table" id="tabla-frontera">
-    <thead>
-      <tr><th>Cliente</th><th>Segmento actual</th><th>Segmento secundario</th>
-          <th>Razón distancias</th><th>Monetary</th><th>Frequency</th><th></th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
+**Escenario C: con cambios de schema** (ej. modificar `src/pulse/analytics/segmentacion.py`)
 
-<details class="explainer">
-  <summary>¿Qué estoy viendo?</summary>
-  <div class="explainer-content">
-    <p><strong>Cambios de segmento</strong>: el modelo asigna cada cliente a su cluster basado en RFM + cadencia actuales. Si el comportamiento cambia, la próxima corrida lo reasigna automáticamente. Esta tabla muestra los reasignados respecto al snapshot del mes pasado.</p>
-    <p><strong>Clientes en frontera</strong>: K-Means asigna al cluster con centroide más cercano, pero algunos clientes están en zonas ambiguas. Razón cerca de 1.0 = en la frontera.</p>
-    <p><strong>Acción</strong>: subidas → profundizar la cuenta. Bajadas → intervención preventiva. Frontera → vigilar y empujar al mejor segmento.</p>
-  </div>
-</details>
+Esperado: detecta cambio en path crítico, hace pull,  **SÍ regenera parquets** , reinicia dashboard.
 
-<script id="initial-data" type="application/json">{{ initial_data | tojson | safe }}</script>
-{% endblock %}
+**Escenario D: forzar regeneración**
 
-{% block extra_scripts %}
-<script>
-  (function () {
-    const data = JSON.parse(document.getElementById('initial-data').textContent);
-    const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
-    const fmtMoneda = (v) => v == null ? '—' : '$' + Math.round(v).toLocaleString('es-MX');
+```bash
+./deploy.sh --force
+```
 
-    document.getElementById('kpi-frontera').textContent = fmtNum(data.kpis.n_en_frontera);
-    document.getElementById('kpi-subidas').textContent  = fmtNum(data.kpis.n_subidas_mes);
-    document.getElementById('kpi-bajadas').textContent  = fmtNum(data.kpis.n_bajadas_mes);
-    document.getElementById('kpi-cambios').textContent  = fmtNum(data.kpis.n_total_cambios);
+Esperado: regenera parquets aunque no haya cambios.
 
-    const tbodyC = document.querySelector('#tabla-cambios tbody');
-    if (data.cambios.length === 0) {
-      tbodyC.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-soft)">Sin snapshot del mes anterior disponible. El primer mes tras implementar el sistema no tiene base de comparación.</td></tr>';
-    } else {
-      data.cambios.forEach(c => {
-        const colorAnt = window.SEGMENT_COLORS[c.segmento_anterior] || '#888';
-        const colorAct = window.SEGMENT_COLORS[c.segmento_actual] || '#888';
-        const dirIcon = c.direccion === 'subida' ? '↑' : '↓';
-        const dirColor = c.direccion === 'subida' ? '#0B7332' : '#D82822';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.cliente_id}</td>
-          <td><span class="seg-chip" style="background:${colorAnt}"></span>${c.segmento_anterior}</td>
-          <td><span class="seg-chip" style="background:${colorAct}"></span>${c.segmento_actual}</td>
-          <td style="color:${dirColor};font-weight:bold">${dirIcon} ${c.direccion}</td>
-          <td>${fmtMoneda(c.monetary)}</td>
-          <td>${fmtNum(c.frequency)}</td>
-          <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
-        `;
-        tbodyC.appendChild(tr);
-      });
-    }
+---
 
-    const tbodyF = document.querySelector('#tabla-frontera tbody');
-    data.frontera.forEach(c => {
-      const colorAct = window.SEGMENT_COLORS[c.segmento_actual] || '#888';
-      const colorSec = window.SEGMENT_COLORS[c.segmento_secundario] || '#888';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${c.cliente_id}</td>
-        <td><span class="seg-chip" style="background:${colorAct}"></span>${c.segmento_actual}</td>
-        <td><span class="seg-chip" style="background:${colorSec}"></span>${c.segmento_secundario}</td>
-        <td>${fmtNum(c.razon_distancias, 3)}</td>
-        <td>${fmtMoneda(c.monetary)}</td>
-        <td>${fmtNum(c.frequency)}</td>
-        <td><a href="/dashboard/cliente?id=${encodeURIComponent(c.cliente_id)}">Ver perfil →</a></td>
-      `;
-      tbodyF.appendChild(tr);
-    });
-  })();
-</script>
-{% endblock %}
+## Parte 3: Sudoers sin password
+
+### 3.1 Configurar
+
+Como root:
+
+```bash
+sudo visudo -f /etc/sudoers.d/pulse-deploy
+```
+
+Pegar este contenido:
+
+```sudoers
+# Permitir a angel.merino reiniciar y consultar el servicio de Pulse sin password.
+# Cualquier otra acción con sudo sigue requiriendo password.
+angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pulse-dashboard
+angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl status pulse-dashboard
+angel.merino ALL=(ALL) NOPASSWD: /usr/bin/systemctl is-active pulse-dashboard
+```
+
+Guardar. `visudo` valida la sintaxis automáticamente antes de salvar; si hay error te lo dice.
+
+### 3.2 Verificar
+
+Como `angel.merino`:
+
+```bash
+sudo systemctl restart pulse-dashboard
+# NO debe pedir password
+```
+
+Si pide password, hay un error en sudoers. Revisar `/etc/sudoers.d/pulse-deploy` con sintaxis exacta.
+
+### 3.3 Seguridad
+
+Estos permisos son  **scoped** :
+
+* Solo `angel.merino` (no todos los usuarios).
+* Solo `systemctl restart`, `status`, `is-active` (no stop, start, enable, disable, ni cualquier otro comando).
+* Solo `pulse-dashboard` (no otros servicios).
+
+Cualquier otro `sudo` que `angel.merino` intente correr sigue pidiendo password.
+
+---
+
+## Parte 4: Cron del polling
+
+### 4.1 Agregar al crontab de `angel.merino`
+
+Como `angel.merino` (NO root):
+
+```bash
+crontab -e
+```
+
+Agregar al final, manteniendo los crons existentes:
+
+```cron
+# Pipeline diario (ya existente)
+0 3 * * * cd /home/angel.merino/ct-analytics && /home/angel.merino/.local/bin/uv run python -m pulse.pipeline daily --log-file logs/cron_$(date +\%Y\%m\%d).log 2>&1
+
+# Snapshot mensual (ya existente)
+0 4 1 * * cd /home/angel.merino/ct-analytics && /home/angel.merino/.local/bin/uv run python -m pulse.pipeline monthly --log-file logs/snapshot_$(date +\%Y\%m).log 2>&1
+
+# NUEVO: polling de deployment cada 5 minutos
+*/5 * * * * /home/angel.merino/ct-analytics/deploy.sh >> /home/angel.merino/ct-analytics/logs/cron_deploy.log 2>&1
+```
+
+Verificar:
+
+```bash
+crontab -l
+```
+
+Debe mostrar las tres líneas.
+
+### 4.2 Por qué `*/5` y no cada minuto
+
+Cada 5 minutos:
+
+* Latencia aceptable entre push y deploy (peor caso: 5 min).
+* Bajo overhead: `git fetch` sin cambios tarda 1-2 segundos.
+* Reduce ruido en logs.
+
+### 4.3 Monitoreo del cron de deploy
+
+El log de cron va a `logs/cron_deploy.log` (acumulativo, sin rotación). Para inspeccionar:
+
+```bash
+# Ver actividad reciente
+tail -50 /home/angel.merino/ct-analytics/logs/cron_deploy.log
+
+# Ver deploys completos (los individuales con timestamp)
+ls -lt /home/angel.merino/ct-analytics/logs/deploy_*.log | head -10
+
+# Ver el último deploy con detalle
+ls -lt /home/angel.merino/ct-analytics/logs/deploy_*.log | head -1 | awk '{print $NF}' | xargs cat
+```
+
+> [!TIP]
+> Si `cron_deploy.log` crece demasiado, agregar un logrotate config. No urgente — un `git fetch` sin cambios escribe ~3 líneas cada 5 minutos = ~864 líneas/día. Aceptable por meses.
+
+---
+
+## Parte 5: Cambios de schema — el caso especial
+
+### 5.1 El problema
+
+Cuando un commit cambia el schema de los parquets (nuevas columnas, nuevos modos del pipeline), el dashboard puede crashear si:
+
+1. `git pull` trae el código nuevo.
+2. Regeneración de parquets falla por alguna razón.
+3. `set -e` detiene el script ANTES del restart del dashboard.
+
+**Esto es deliberado.** El dashboard sigue corriendo con el código y parquets viejos hasta que la regeneración termine OK. Better degraded service than broken service.
+
+### 5.2 ¿Y si la regeneración falla por una razón legítima?
+
+Por ejemplo: cambias el código del pipeline para incluir una columna nueva, pero el código tiene un bug. La regeneración falla.
+
+ **Comportamiento esperado** :
+
+* `deploy.sh` falla con exit 1, log lo registra.
+* Dashboard sigue corriendo con código viejo y parquets viejos.
+* En 5 minutos, el siguiente polling reintenta. Si arreglaste el bug y pusheaste, el deploy nuevo funciona. Si no, sigue fallando.
+
+Esto es el sistema funcionando como se espera. No es bug.
+
+### 5.3 Diagnóstico cuando algo no funciona
+
+Si después de un push notas que el dashboard no refleja los cambios:
+
+```bash
+# 1. Ver el último intento de deploy
+ls -lt logs/deploy_*.log | head -1
+
+# 2. Si NO hay deploy reciente: el cron no está corriendo
+crontab -l   # ¿está la línea de */5?
+ls -lt logs/cron_deploy.log
+
+# 3. Si SÍ hay deploy reciente pero falló: leer el log
+cat logs/deploy_<fecha>.log
+
+# 4. Si el deploy fue OK pero dashboard no cambió: caché del navegador
+# Hard refresh: Ctrl+Shift+R
 ```
 
 ---
 
 ## Testing
 
-```python
-def test_clientes_urgentes_excluye_single_buyers():
-    from pulse.dashboard.queries import clientes_urgentes
-    segmentos = {r["segmento"] for r in clientes_urgentes()}
-    assert segmentos.issubset({"MVPs", "Alto Valor"})
+### Tests automáticos (CI)
 
+Una vez que el workflow esté activo, cada push debe correr `pytest` automáticamente. Verifica:
 
-def test_clientes_reactivacion_solo_en_riesgo():
-    from pulse.dashboard.queries import clientes_reactivacion
-    segmentos = {r["segmento"] for r in clientes_reactivacion()}
-    assert segmentos == {"En Riesgo"} or len(segmentos) == 0
+1. Hacer un push trivial (cambio en README, por ejemplo).
+2. Ir a la pestaña "Actions" del repo en GitHub.
+3. Verificar que el workflow corre y termina en verde.
 
+### Tests manuales del deploy script
 
-def test_ratio_no_es_infinito():
-    from pulse.dashboard.queries import clientes_urgentes, clientes_reactivacion
-    import math
-    for fn in [clientes_urgentes, clientes_reactivacion]:
-        for r in fn():
-            assert r["ratio"] is not None and math.isfinite(r["ratio"])
+Antes de habilitar el cron, correr `./deploy.sh` manualmente en los 4 escenarios de la sección 2.3.
 
+### Test end-to-end
 
-def test_cliente_bundles_propios_orden_lexicografico():
-    from pulse.dashboard.queries import cliente_bundles_propios
-    for r in cliente_bundles_propios("PAC0751", limit=10):
-        assert r["familia_a"] < r["familia_b"]
-
-
-def test_cliente_oportunidades_estructura():
-    from pulse.dashboard.queries import cliente_oportunidades
-    for r in cliente_oportunidades("PAC0751", limit=10):
-        assert "compro" in r and "le_falto" in r
-        assert r["compro"] != r["le_falto"]
-
-
-def test_clientes_en_frontera_threshold():
-    from pulse.dashboard.queries import clientes_en_frontera
-    for r in clientes_en_frontera(threshold=0.7):
-        assert r["razon_distancias"] >= 0.7
-
-
-def test_segmentador_devuelve_distancias():
-    """El segmentador debe agregar las 4 columnas nuevas."""
-    from pulse.analytics.segmentacion import segmentar_clientes
-    import pandas as pd
-    df_rfm = pd.read_parquet("datos/processed/clientes_segmentados.parquet")
-    df_seg = segmentar_clientes(df_rfm)
-    for col in ["distancia_propia", "distancia_segunda", "razon_distancias", "segmento_secundario"]:
-        assert col in df_seg.columns
-    assert (df_seg["razon_distancias"] >= 0).all()
-    assert (df_seg["razon_distancias"] <= 1.0001).all()
-```
-
-### Smoke test manual
-
-1. Correr `uv run python -m pulse.pipeline monthly` para regenerar parquets y crear primer snapshot.
-2. Arrancar dashboard: `uv run uvicorn pulse.dashboard.app:app --reload`.
-3. Verificar:
-   * `/dashboard/alertas` → dos tabs funcionando.
-   * `/dashboard/cliente?id=PAC0751` → secciones Productos + Bundles propios + Oportunidades.
-   * `/dashboard/movimientos` → KPIs + tabla frontera poblada. Tabla cambios vacía el primer mes (esperado).
-4. Después del segundo mes (o forzando un snapshot anterior), volver a Movimientos: tabla cambios poblada.
-
----
-
-## Lo que NO está en este SPEC
-
-* **Re-entrenamiento automático del modelo `v2`** . Sigue manual. Movimientos da los insumos para decidir cuándo, no lo hace solo.
-* **Visualización de trayectoria temporal del cliente** (timeline de cambios en su drill-down). Iteración futura.
-* **Modelo de propensity to migrate** (predicción de movimiento futuro). Fase 5+.
-* **Paginación de tabla Reactivación** (~3,500 filas). Si causa lag visual, se agrega después.
-
----
-
-## Orden de implementación
-
-1. **Pipeline analítico** : modificar `segmentador.py` (agregar `cluster_names_ordered`), `segmentacion.py` (distancias), `runner.py` (snapshots), `paths.py` (SNAPSHOTS_DIR). Correr `uv run pytest tests/test_segmentacion.py`.
-2. **Regenerar parquets** : `uv run python -m pulse.pipeline monthly`. Verifica que `clientes_segmentados.parquet` tiene las nuevas columnas y existe el primer snapshot.
-3. **Cambio 1 (Alertas tabs)** : queries + api + pages + template.
-4. **Cambio 2 (Drill-down enriquecido)** : queries + api + template.
-5. **Cambio 3 (Vista Movimientos)** : queries + api + pages + template nuevo + nav.
-6. **Tests nuevos** + verificar que todos pasan.
-7. **Smoke test manual** local.
-8. **Deploy** : commit, push, en servidor `git pull && sudo systemctl restart pulse-dashboard`.
+1. Hacer un cambio cosmético en un template (ej. cambiar un texto).
+2. Push a `main`.
+3. Esperar a que CI termine (verde).
+4. Esperar máximo 5 minutos.
+5. Verificar `logs/cron_deploy.log` que se ejecutó el deploy.
+6. Hard refresh del dashboard, ver el cambio reflejado.
 
 ---
 
 ## Definición de "Hecho"
 
-* [ ] `SegmentadorClientes` expone `cluster_names_ordered`.
-* [ ] `segmentar_clientes()` devuelve las 4 columnas nuevas.
-* [ ] `runner.py` modo `monthly` persiste snapshots idempotentes.
-* [ ] Bug del ratio infinito (`NULLIF` → `GREATEST`) corregido.
-* [ ] `/dashboard/alertas` tiene dos tabs funcionales.
-* [ ] `/dashboard/cliente` muestra tres tablas: productos, bundles propios, oportunidades.
-* [ ] `/dashboard/movimientos` carga con KPIs + dos tablas.
-* [ ] Nav actualizado.
-* [ ] Tests nuevos pasan (`uv run pytest`).
-* [ ] Smoke test manual sin errores.
-* [ ] Deploy a producción exitoso.
+* [ ] `.github/workflows/ci.yml` creado, primer push verde.
+* [ ] Branch protection rule en `main` configurada para requerir CI verde.
+* [ ] `pyproject.toml` con `ruff` configurado (si no lo tenía).
+* [ ] `deploy.sh` creado, ejecutable, probado en escenarios A-D.
+* [ ] `/etc/sudoers.d/pulse-deploy` configurado, `sudo systemctl restart pulse-dashboard` no pide password para `angel.merino`.
+* [ ] Cron de polling cada 5 minutos agregado a `crontab` de `angel.merino`.
+* [ ] Test end-to-end: push cosmético → CI verde → dashboard actualizado en ≤5min.
+* [ ] Test schema change: push con cambio en `src/pulse/analytics/` → parquets regenerados → dashboard actualizado.
+
+---
+
+## Lo que NO está en este SPEC
+
+* **Notificaciones de éxito/fallo** (email, Slack, Discord). Versión 2 si lo necesitas.
+* **Rollback automático** ante fallo. Versión 2.
+* **Deploy via webhook** (push-driven en lugar de pull-driven). Polling es más simple y resuelve el caso.
+* **Self-hosted GitHub Actions runners** que pudieran tocar el servidor directamente. No necesario para esta iteración.
+* **Logrotate de `cron_deploy.log`** . Se agrega después si crece demasiado.
+* **Métricas de deploy** (cuántos deploys, cuánto duran). Después.
+
+---
+
+## Orden de implementación sugerido
+
+1. **Parte 1 (CI)** primero. Sin tocar servidor. Validas que el workflow funcione y branch protection esté activa. Pasos 1.1, 1.2, 1.3.
+2. **Parte 3 (sudoers)** . Necesario para que `deploy.sh` pueda restartear.
+3. **Parte 2 (`deploy.sh`)** . Pruebas manuales antes del cron.
+4. **Parte 4 (cron)** . Activar el polling cada 5 min.
+5. **Test end-to-end** y observar primer deploy automático en vivo.
+
+> [!IMPORTANT]
+> Mientras estés probando `deploy.sh` manualmente en paso 3, **NO actives el cron de polling** todavía. Si hay un bug en el script y se está ejecutando cada 5 minutos, vas a tener cientos de logs basura y posiblemente reinicios innecesarios. Activa el cron solo después de validar el script.
+>
