@@ -43,6 +43,10 @@ cat > "$TMP_FILE" <<EOF
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} restart pulse-dashboard
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} status pulse-dashboard
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} is-active pulse-dashboard
+# deploy.sh llama is-active CON --quiet; sudoers matchea args exactos, así que
+# esta variante necesita su propia línea (sin ella, sudo pide password y el
+# script truena por set -e en la verificación post-restart).
+${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} is-active --quiet pulse-dashboard
 EOF
 
 # Validar sintaxis ANTES de instalar. visudo -c -f revisa el archivo aislado.
