@@ -40,6 +40,6 @@ jobs:
         continue-on-error: true
 
       - name: Run tests
-        run: uv run pytest -v --tb=short
+        run: uv run pytest -v --tb=short -rs
         env:
           PYTHONPATH: src
