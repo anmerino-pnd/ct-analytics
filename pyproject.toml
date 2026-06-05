@@ -17,6 +17,7 @@ dependencies = [
     "pymongo",
     "python-dotenv",
     "pyarrow",
+    "seaborn>=0.13.2",
 ]
 
 [build-system]
