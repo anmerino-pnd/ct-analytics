@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests y linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # pulse.config.paths fuerza locale es_MX.UTF-8 al importar; ubuntu-latest
+      # no lo trae por defecto, así que lo generamos antes de correr los tests.
+      - name: Generar locale es_MX.UTF-8
+        run: |
+          sudo locale-gen es_MX.UTF-8
+          sudo update-locale
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Lint with ruff
+        run: uv run ruff check . --output-format=github
+        continue-on-error: true
+
+      - name: Run tests
+        run: uv run pytest -v --tb=short
+        env:
+          PYTHONPATH: src
