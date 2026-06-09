@@ -221,7 +221,7 @@ class SegmentadorClientes:
         self._validate_input(df)
 
         X = df[self.metadata.features].copy()
-        clusters = cast(NDArray, self.pipeline.predict(X))
+        clusters = self.pipeline.predict(X)
 
         out = df.copy()
         out["cluster_id"] = clusters
