@@ -171,7 +171,7 @@ class SegmentadorClientes:
     # Persistencia
     # ----------------------------------------------------------------
     @classmethod
-    def load(cls, version: str, models_dir: Path | str = "") -> "SegmentadorClientes":
+    def load(cls, version: str, models_dir: Path | str ) -> "SegmentadorClientes":
         """Carga un modelo congelado desde disco."""
         models_dir = _resolve_models_dir(models_dir) / version
         log.info(models_dir)
