@@ -172,6 +172,7 @@ class SegmentadorClientes:
     def load(cls, version: str, models_dir: Path | str = "") -> "SegmentadorClientes":
         """Carga un modelo congelado desde disco."""
         models_dir = _resolve_models_dir(models_dir) / version
+        print(models_dir)
 
         if not models_dir.exists():
             raise FileNotFoundError(
@@ -221,7 +222,7 @@ class SegmentadorClientes:
         self._validate_input(df)
 
         X = df[self.metadata.features].copy()
-        clusters = self.pipeline.predict(X)
+        clusters = cast(NDArray, self.pipeline.predict(X))
 
         out = df.copy()
         out["cluster_id"] = clusters
@@ -351,6 +352,7 @@ def _resolve_models_dir(models_dir: Path | str | None) -> Path:
 
     try:
         from pulse.config.paths import MODELS
+        print(Path(MODELS))
         return Path(MODELS)
     except (ImportError, AttributeError) as e:
         raise ValueError(
