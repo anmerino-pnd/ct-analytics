@@ -17,6 +17,7 @@ SUDOERS_FILE="/etc/sudoers.d/pulse-deploy"
 TMP_FILE="$(mktemp)"
 DEPLOY_USER="angel.merino"
 SYSTEMCTL="/usr/bin/systemctl"
+JOURNALCTL="/usr/bin/journalctl"
 
 # Limpiar el temporal pase lo que pase.
 trap 'rm -f "$TMP_FILE"' EXIT
@@ -35,6 +36,11 @@ if [ ! -x "$SYSTEMCTL" ]; then
   exit 1
 fi
 
+if [ ! -x "$JOURNALCTL" ]; then
+  echo "❌ No existe $JOURNALCTL (o no es ejecutable)." >&2
+  exit 1
+fi
+
 # Generar el contenido del sudoers.
 cat > "$TMP_FILE" <<EOF
 # Permitir a ${DEPLOY_USER} reiniciar y consultar el servicio de Pulse sin password.
@@ -43,6 +49,7 @@ cat > "$TMP_FILE" <<EOF
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} restart pulse-dashboard
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} status pulse-dashboard
 ${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${SYSTEMCTL} is-active pulse-dashboard
+${DEPLOY_USER} ALL=(ALL) NOPASSWD: ${JOURNALCTL} -u pulse-dashboard *
 # deploy.sh llama is-active CON --quiet; sudoers matchea args exactos, así que
 # esta variante necesita su propia línea (sin ella, sudo pide password y el
 # script truena por set -e en la verificación post-restart).
