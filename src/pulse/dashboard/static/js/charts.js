@@ -2,7 +2,15 @@
 
 window.PulseCharts = (function () {
 
+  // Localiza meses/días al español (e.g. tickformat '%b %y' → "jun 24").
+  // El locale se carga vía CDN en base.html antes de este script.
+  Plotly.setPlotConfig({ locale: 'es' });
+
   const LAYOUT_BASE = {
+    // Tema built-in sin grid de fondo (fondo blanco, ejes con línea fina).
+    // Se hereda en cada Object.assign({}, LAYOUT_BASE, {...}). Los heatmaps
+    // lo sobreescriben con template:'plotly' (ver renderHeatmap*).
+    template: 'simple_white',
     font: { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', size: 13, color: '#1d1d1f' },
     plot_bgcolor: 'white',
     paper_bgcolor: 'white',
@@ -303,6 +311,7 @@ window.PulseCharts = (function () {
       colorbar: { thickness: 10, len: 0.8, tickformat: '.2f', ticksuffix: '%' },
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
+      template: 'plotly',  // heatmap: conserva el template default (excluido del tema global)
       title: { text: segmento, font: { size: 14 } },
       xaxis: { title: 'Hora', dtick: 2, tickfont: { size: 11 } },
       yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
@@ -319,7 +328,9 @@ window.PulseCharts = (function () {
     const porSeg = {};
     rows.forEach(r => {
       if (!porSeg[r.segmento]) porSeg[r.segmento] = { x: [], y: [] };
-      porSeg[r.segmento].x.push(r.ano_mes);
+      // ano_mes llega como string "2024-06" → "2024-06-01" para que el eje
+      // lo trate como fecha (ticks cada 6 meses, sin etiquetas verticales).
+      porSeg[r.segmento].x.push(r.ano_mes + '-01');
       porSeg[r.segmento].y.push(r.pedidos);
     });
     const traces = orden
@@ -330,10 +341,10 @@ window.PulseCharts = (function () {
         x: porSeg[s].x, y: porSeg[s].y,
         line: { color: colorOf(s), width: 2 },
         marker: { size: 5 },
-        hovertemplate: '%{x}<br>%{y:,} pedidos<extra>' + s + '</extra>',
+        hovertemplate: '%{x|%b %Y}<br>%{y:,} pedidos<extra>' + s + '</extra>',
       }));
     const layout = Object.assign({}, LAYOUT_BASE, {
-      xaxis: { title: 'Año-Mes', type: 'category' },
+      xaxis: { title: '', type: 'date', tickangle: 0, dtick: 'M6', tickformat: '%b %y' },
       yaxis: { title: 'Pedidos', tickformat: ',.0f' },
     });
     Plotly.react(elId, traces, layout, CONFIG_BASE);
@@ -409,7 +420,7 @@ window.PulseCharts = (function () {
       customdata: pedidos.map(p => p.num_productos),
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
-      xaxis: { title: 'Fecha', type: 'date' },
+      xaxis: { title: '', type: 'date', tickangle: 0, dtick: 'M6', tickformat: '%b %y' },
       yaxis: { title: 'Pago total (MXN)', tickformat: ',.0f' },
       showlegend: false,
     });
@@ -506,6 +517,7 @@ window.PulseCharts = (function () {
       colorbar: { thickness: 10, len: 0.8 },
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
+      template: 'plotly',  // heatmap: conserva el template default (excluido del tema global)
       xaxis: { title: 'Año-Mes', type: 'category' },
       yaxis: { autorange: 'reversed', automargin: true, tickfont: { size: 11 } },
       margin: { t: 30, r: 20, b: 60, l: 180 },
