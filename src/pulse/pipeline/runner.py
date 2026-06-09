@@ -6,7 +6,7 @@ Tres modos de ejecución:
     weekly  → daily + recálculo de MBA.
     monthly → weekly + validación de drift (futuro: trigger de reentrenamiento).
 
-Persiste 7 parquets en datos/processed/:
+Persiste 8 parquets en datos/processed/:
     - clientes_segmentados.parquet
     - mba_por_segmento.parquet
     - mba_exclusivas.parquet
@@ -14,6 +14,7 @@ Persiste 7 parquets en datos/processed/:
     - temp_hora_dia.parquet
     - temp_mensual.parquet
     - temp_bundles.parquet
+    - temp_diario.parquet
 
 Uso:
     from pulse.pipeline.runner import run
@@ -35,7 +36,7 @@ import pandas as pd
 from pulse.analytics.familia import agregar_familia
 from pulse.analytics.mba import calcular_mba
 from pulse.analytics.segmentacion import segmentar_clientes
-from pulse.analytics.temporalidad import calcular_temporalidad
+from pulse.analytics.temporalidad import calcular_temp_diario, calcular_temporalidad
 from pulse.config.paths import PROCESSED, SNAPSHOTS_DIR
 from pulse.etl.ingest import run_ingest
 from pulse.pipeline.validacion import (
@@ -43,6 +44,7 @@ from pulse.pipeline.validacion import (
     validar_clientes_segmentados,
     validar_distribucion_segmentos,
     validar_ingest,
+    validar_temp_diario,
     validar_temporalidad_mensual,
 )
 
@@ -56,6 +58,7 @@ MBA_ACCIONABLES = PROCESSED / "mba_accionables.parquet"
 TEMP_HORA_DIA = PROCESSED / "temp_hora_dia.parquet"
 TEMP_MENSUAL = PROCESSED / "temp_mensual.parquet"
 TEMP_BUNDLES = PROCESSED / "temp_bundles.parquet"
+TEMP_DIARIO = PROCESSED / "temp_diario.parquet"
 
 # Inputs
 ORDERS_HIST = PROCESSED / "orders_historicos.parquet"
@@ -320,6 +323,14 @@ def _paso_temporalidad(
         f"{len(agregados['mensual']):,}",
         f"{len(agregados['bundles']):,}",
     )
+
+    # Agregado diario (ventana 90 días) para la vista "Último mes".
+    log.info("    Generando temp_diario...")
+    df_temp_diario = calcular_temp_diario(df_orders, df_clientes, fecha_ref=fecha_ref)
+    validar_temp_diario(df_temp_diario)
+    df_temp_diario.to_parquet(TEMP_DIARIO, index=False)
+    log.info("    ✅ Temp diario guardado: %s filas", f"{len(df_temp_diario):,}")
+
     resultado.pasos_ejecutados.append("temporalidad")
 
 

@@ -99,6 +99,65 @@ def calcular_temporalidad(
     }
 
 
+def calcular_temp_diario(
+    df_orders: pd.DataFrame,
+    df_segmentos: pd.DataFrame,
+    fecha_ref: Optional[datetime] = None,
+    dias_atras: int = 90,
+) -> pd.DataFrame:
+    """Agregado diario de pedidos por segmento.
+
+    Se limita a una ventana corta (default 90 días) porque solo se consume
+    para la vista 'Último mes' del dashboard, no para el histórico de 30 meses.
+
+    Args:
+        df_orders: pedidos con [order_id, cliente_id, fecha (UTC), pago_total].
+        df_segmentos: [cliente_id, segmento_cluster].
+        fecha_ref: tope superior de la ventana. None = ahora UTC.
+        dias_atras: días hacia atrás desde fecha_ref a incluir.
+
+    Returns:
+        DataFrame con [fecha_dia (date), segmento, pedidos, revenue].
+    """
+    _validar_columnas(df_orders, ["order_id", "cliente_id", "fecha", "pago_total"])
+    _validar_columnas(df_segmentos, ["cliente_id", "segmento_cluster"])
+
+    cols_salida = ["fecha_dia", "segmento", "pedidos", "revenue"]
+
+    if fecha_ref is None:
+        fecha_ref = datetime.now(tz=timezone.utc)
+    fecha_ref = pd.Timestamp(fecha_ref)
+    if fecha_ref.tzinfo is None:
+        fecha_ref = fecha_ref.tz_localize("UTC")
+
+    fecha_corte = fecha_ref - pd.Timedelta(days=dias_atras)
+
+    df = df_orders.copy()
+    df["fecha"] = pd.to_datetime(df["fecha"], utc=True)
+    df = df[(df["fecha"] >= fecha_corte) & (df["fecha"] <= fecha_ref)]
+    if df.empty:
+        return pd.DataFrame(columns=cols_salida)
+
+    # Día en hora local (CDMX), consistente con el resto de agregados temporales.
+    fecha_local = df["fecha"].dt.tz_convert(TIMEZONE_LOCAL)
+    df = df.assign(fecha_dia=fecha_local.dt.date)
+
+    df = df.merge(
+        df_segmentos[["cliente_id", "segmento_cluster"]],
+        on="cliente_id",
+        how="inner",
+    )
+    if df.empty:
+        return pd.DataFrame(columns=cols_salida)
+
+    agregado = (
+        df.groupby(["fecha_dia", "segmento_cluster"], as_index=False)
+        .agg(pedidos=("order_id", "count"), revenue=("pago_total", "sum"))
+        .rename(columns={"segmento_cluster": "segmento"})
+    )
+    return agregado.sort_values(["fecha_dia", "segmento"]).reset_index(drop=True)
+
+
 # ----------------------------------------------------------------
 # Helpers internos
 # ----------------------------------------------------------------

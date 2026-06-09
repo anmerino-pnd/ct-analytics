@@ -59,6 +59,16 @@ async def estacionalidad(
     }
 
 
+@router.get("/estacionalidad/ultimo-mes")
+async def estacionalidad_ultimo_mes() -> dict:
+    """Vista 'Último mes': diario del mes en curso vs mismo rango del mes anterior."""
+    return {
+        "actual":   q.temp_diario_ultimo_mes(),
+        "anterior": q.temp_diario_mes_anterior_mismo_rango(),
+        "kpis":     q.kpis_variacion_mensual(),
+    }
+
+
 @router.get("/comparador")
 async def comparador(
     seg_a: str = Query(...),

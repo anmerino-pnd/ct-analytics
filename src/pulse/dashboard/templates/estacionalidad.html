@@ -24,8 +24,29 @@
 </section>
 
 <section class="chart-card">
-  <h2 title="Pedidos por mes y segmento en los últimos 30 meses. Útil para detectar tendencias macro y picos estacionales (Buen Fin).">Evolución mensual de pedidos</h2>
-  <div id="line-mensual" class="chart"></div>
+  <div class="card-header">
+    <h2 title="Pedidos por mes y segmento. 'Histórico mensual' muestra la serie completa; 'Último mes' compara el mes en curso día a día contra el mismo rango del mes anterior.">Evolución de pedidos</h2>
+    <div class="toggle-group" id="f-modo-temporal" role="tablist">
+      <button data-modo="historico" class="active" type="button">Histórico mensual</button>
+      <button data-modo="ultimo-mes" type="button">Último mes</button>
+    </div>
+  </div>
+
+  <!-- Modo: histórico (default) -->
+  <div id="modo-historico" class="modo-content">
+    <div id="line-mensual" class="chart"></div>
+  </div>
+
+  <!-- Modo: último mes -->
+  <div id="modo-ultimo-mes" class="modo-content hidden">
+    <div class="kpi-grid" id="kpis-variacion"></div>
+    <div id="grafica-evolucion-diaria" class="chart"></div>
+    <p class="subtitle" style="margin-top: 8px;">
+      Líneas continuas: <strong>mes en curso</strong>.
+      Líneas punteadas: <strong>mismo rango del mes anterior</strong>.
+      Las KPIs comparan el total acumulado hasta hoy vs el mismo número de días del mes anterior.
+    </p>
+  </div>
 </section>
 
 <section class="chart-card">
@@ -90,6 +111,33 @@
 
     // Primera pintura con datos embebidos
     renderAll(initial);
+
+    // Pre-render del modo "Último mes" (oculto, listo para el toggle).
+    // Es segment-independiente: siempre muestra los 5 segmentos.
+    PulseCharts.renderKpisVariacion('kpis-variacion', initial.ultimo_mes.kpis);
+    PulseCharts.renderEvolucionDiaria(
+      'grafica-evolucion-diaria',
+      initial.ultimo_mes.actual,
+      initial.ultimo_mes.anterior,
+    );
+
+    // Toggle de modo temporal (histórico mensual ↔ último mes)
+    document.querySelectorAll('#f-modo-temporal button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#f-modo-temporal button')
+          .forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const modo = btn.dataset.modo;
+        document.getElementById('modo-historico')
+          .classList.toggle('hidden', modo !== 'historico');
+        document.getElementById('modo-ultimo-mes')
+          .classList.toggle('hidden', modo !== 'ultimo-mes');
+
+        // Plotly necesita resize cuando la gráfica pasa de hidden a visible.
+        const elId = modo === 'ultimo-mes' ? 'grafica-evolucion-diaria' : 'line-mensual';
+        Plotly.Plots.resize(document.getElementById(elId));
+      });
+    });
 
     // Multi-toggle de segmentos
     document.querySelectorAll('#f-segmentos button').forEach(btn => {

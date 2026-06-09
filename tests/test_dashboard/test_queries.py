@@ -53,6 +53,18 @@ def test_cliente_productos_top_excluye_cargo(cliente_real: str) -> None:
     assert not any("CARGO" in r["familia"] for r in rows)
 
 
+def test_temp_diario_revenue_no_negativo() -> None:
+    """revenue y pedidos del agregado diario siempre son >= 0 (ambos rangos)."""
+    from pulse.dashboard.queries import (
+        temp_diario_mes_anterior_mismo_rango,
+        temp_diario_ultimo_mes,
+    )
+    for fn in (temp_diario_ultimo_mes, temp_diario_mes_anterior_mismo_rango):
+        for r in fn():
+            assert r["revenue"] >= 0
+            assert r["pedidos"] >= 0
+
+
 def test_cliente_bundles_propios_orden_lexicografico(cliente_real: str) -> None:
     """En cada par, familia_a < familia_b (normalización lexicográfica)."""
     for r in cliente_bundles_propios(cliente_real, limit=10):

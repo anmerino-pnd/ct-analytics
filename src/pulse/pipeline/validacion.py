@@ -181,3 +181,35 @@ def validar_temporalidad_mensual(
         "✅ Cross-check temporalidad-RFM OK (diferencia %.2f%%)",
         diff_pct,
     )
+
+
+def validar_temp_diario(df_temp_diario: pd.DataFrame) -> None:
+    """Verifica que temp_diario tiene datos razonables.
+
+    No hacemos cross-check exacto contra RFM porque temp_diario solo cubre
+    los últimos 90 días, mientras RFM cubre la ventana completa de 30 meses.
+    """
+    if df_temp_diario.empty:
+        raise QualityCheckFailed(
+            "temp_diario está vacío — sin pedidos en los últimos 90 días."
+        )
+
+    pedidos_total = int(df_temp_diario["pedidos"].sum())
+    if pedidos_total < 100:
+        raise QualityCheckFailed(
+            f"temp_diario tiene solo {pedidos_total} pedidos en 90 días — anómalo."
+        )
+
+    n_segmentos_unicos = df_temp_diario["segmento"].nunique()
+    if n_segmentos_unicos < 3:
+        raise QualityCheckFailed(
+            f"temp_diario tiene solo {n_segmentos_unicos} segmentos únicos — "
+            f"esperamos al menos 3."
+        )
+
+    log.info(
+        "✅ temp_diario OK (%s pedidos en %s días, %s segmentos)",
+        f"{pedidos_total:,}",
+        df_temp_diario["fecha_dia"].nunique(),
+        n_segmentos_unicos,
+    )

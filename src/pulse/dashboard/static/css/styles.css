@@ -103,6 +103,21 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+.kpi-sublabel { font-size: 13px; }
+
+/* Encabezado de card con título + toggle a la derecha (vista Estacionalidad) */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.card-header h2 { margin: 0; }
+
+/* Variación de KPIs: verde sube, rojo baja, neutro sin base de comparación */
+.kpi-variacion-up   { color: #0B7332; font-weight: 600; }
+.kpi-variacion-down { color: #D82822; font-weight: 600; }
+.kpi-variacion-flat { color: var(--text-soft); }
 
 /* ─── Chart cards ─────────────────────────────────────────── */
 .chart-card {
