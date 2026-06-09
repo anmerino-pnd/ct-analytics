@@ -171,9 +171,9 @@ class SegmentadorClientes:
     # Persistencia
     # ----------------------------------------------------------------
     @classmethod
-    def load(cls, version: str, models_dir: Path | str ) -> "SegmentadorClientes":
+    def load(cls, version: str) -> "SegmentadorClientes":
         """Carga un modelo congelado desde disco."""
-        models_dir = _resolve_models_dir(models_dir) / version
+        models_dir = _resolve_models_dir() / version
         log.info(models_dir)
 
         if not models_dir.exists():
@@ -191,7 +191,7 @@ class SegmentadorClientes:
 
     def save(self, models_dir: Path | str = "") -> Path:
         """Guarda pipeline + metadata en `<models_dir>/<version>/`."""
-        models_dir = _resolve_models_dir(models_dir) / self.metadata.version
+        models_dir = _resolve_models_dir() / self.metadata.version
         models_dir.mkdir(parents=True, exist_ok=True)
 
         joblib.dump(self.pipeline, models_dir / "pipeline.pkl")
@@ -347,11 +347,8 @@ class SegmentadorClientes:
 # ----------------------------------------------------------------
 # Helpers a nivel de módulo
 # ----------------------------------------------------------------
-def _resolve_models_dir(models_dir: Path | str | None) -> Path:
+def _resolve_models_dir() -> Path:
     """Resuelve el directorio de modelos. Si no se pasa, intenta usar pulse.config.paths.MODELS."""
-    if models_dir is not None:
-        return Path(models_dir)
-
     try:
         from pulse.config.paths import MODELS
         log.info(Path(MODELS))
