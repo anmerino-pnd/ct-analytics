@@ -28,7 +28,8 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
+from numpy.typing import NDArray
 
 import joblib
 import numpy as np
@@ -168,7 +169,7 @@ class SegmentadorClientes:
     # Persistencia
     # ----------------------------------------------------------------
     @classmethod
-    def load(cls, version: str, models_dir: Path | str = None) -> "SegmentadorClientes":
+    def load(cls, version: str, models_dir: Path | str = "") -> "SegmentadorClientes":
         """Carga un modelo congelado desde disco."""
         models_dir = _resolve_models_dir(models_dir) / version
 
@@ -185,7 +186,7 @@ class SegmentadorClientes:
 
         return cls(pipeline=pipeline, metadata=metadata)
 
-    def save(self, models_dir: Path | str = None) -> Path:
+    def save(self, models_dir: Path | str = "") -> Path:
         """Guarda pipeline + metadata en `<models_dir>/<version>/`."""
         models_dir = _resolve_models_dir(models_dir) / self.metadata.version
         models_dir.mkdir(parents=True, exist_ok=True)
@@ -220,7 +221,7 @@ class SegmentadorClientes:
         self._validate_input(df)
 
         X = df[self.metadata.features].copy()
-        clusters = self.pipeline.predict(X)
+        clusters = np.asarray(self.pipeline.predict(X), dtype=int)
 
         out = df.copy()
         out["cluster_id"] = clusters

@@ -105,8 +105,10 @@ def _calcular_features(
         monetary=("pago_total", "sum"),
     )
 
-    # Recency: días desde la última compra hasta la fecha de referencia
-    rfm["recency"] = (fecha_ref - rfm["ultima_compra"]).dt.days
+    # Recency: días desde la última compra hasta la fecha de referencia.
+    # clip(lower=0): una compra con fecha posterior a fecha_ref (borde de
+    # reloj/timezone) daría recency negativo y rompe el log1p del modelo.
+    rfm["recency"] = (fecha_ref - rfm["ultima_compra"]).dt.days.clip(lower=0)
     rfm = rfm.drop(columns=["ultima_compra"])
 
     # Cadencia: mediana de días entre compras consecutivas por cliente.
