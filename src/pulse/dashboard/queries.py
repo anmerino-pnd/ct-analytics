@@ -246,6 +246,82 @@ def estacionalidad_tipica(segmentos: list[str]) -> list[dict]:
     )
 
 
+def temp_diario_ultimo_mes() -> list[dict]:
+    """Datos diarios del mes en curso, por segmento (vista 'Último mes')."""
+    return fetch_dicts(
+        """
+        SELECT CAST(fecha_dia AS VARCHAR) AS fecha_dia, segmento, pedidos, revenue
+        FROM temp_diario
+        WHERE date_trunc('month', fecha_dia) = date_trunc('month', current_date)
+        ORDER BY fecha_dia, segmento
+        """
+    )
+
+
+def temp_diario_mes_anterior_mismo_rango() -> list[dict]:
+    """Datos diarios del mes anterior, limitados al mismo día relativo.
+
+    Si hoy es 2026-06-09, devuelve datos del 2026-05-01 al 2026-05-09.
+    """
+    return fetch_dicts(
+        """
+        SELECT CAST(fecha_dia AS VARCHAR) AS fecha_dia, segmento, pedidos, revenue
+        FROM temp_diario
+        WHERE fecha_dia >= date_trunc('month', current_date - INTERVAL '1 month')
+          AND fecha_dia <= (current_date - INTERVAL '1 month')
+        ORDER BY fecha_dia, segmento
+        """
+    )
+
+
+def kpis_variacion_mensual() -> dict:
+    """KPIs de variación: pedidos del mes en curso vs mismo rango del mes anterior."""
+    rows = fetch_dicts(
+        """
+        WITH actual AS (
+            SELECT segmento, SUM(pedidos) AS pedidos_actual
+            FROM temp_diario
+            WHERE date_trunc('month', fecha_dia) = date_trunc('month', current_date)
+            GROUP BY segmento
+        ),
+        anterior AS (
+            SELECT segmento, SUM(pedidos) AS pedidos_anterior
+            FROM temp_diario
+            WHERE fecha_dia >= date_trunc('month', current_date - INTERVAL '1 month')
+              AND fecha_dia <= (current_date - INTERVAL '1 month')
+            GROUP BY segmento
+        )
+        SELECT
+            COALESCE(a.segmento, b.segmento)                         AS segmento,
+            COALESCE(a.pedidos_actual, 0)                            AS pedidos_actual,
+            COALESCE(b.pedidos_anterior, 0)                          AS pedidos_anterior,
+            CASE
+                WHEN COALESCE(b.pedidos_anterior, 0) = 0 THEN NULL
+                ELSE (COALESCE(a.pedidos_actual, 0) - b.pedidos_anterior)
+                     * 100.0 / b.pedidos_anterior
+            END                                                      AS variacion_pct
+        FROM actual a
+        FULL OUTER JOIN anterior b USING (segmento)
+        ORDER BY segmento
+        """
+    )
+
+    total_actual = sum(r["pedidos_actual"] for r in rows)
+    total_anterior = sum(r["pedidos_anterior"] for r in rows)
+    total_variacion = (
+        ((total_actual - total_anterior) * 100.0 / total_anterior)
+        if total_anterior > 0
+        else None
+    )
+
+    return {
+        "por_segmento": rows,
+        "total_actual": total_actual,
+        "total_anterior": total_anterior,
+        "total_variacion_pct": total_variacion,
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 6.4 Drill-down por cliente
 # ─────────────────────────────────────────────────────────────────────────────

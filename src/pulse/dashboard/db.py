@@ -39,8 +39,9 @@ _VIEWS: dict[str, str] = {
     "mba_por_segmento":  "mba_por_segmento.parquet",
     "mba_exclusivas":    "mba_exclusivas.parquet",
     "temp_hora_dia":     "temp_hora_dia.parquet",
-    "temp_mes":          "temp_mensual.parquet",         
+    "temp_mes":          "temp_mensual.parquet",
     "temp_bundles":      "temp_bundles.parquet",
+    "temp_diario":       "temp_diario.parquet",
 }
 
 

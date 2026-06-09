@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pulse.analytics.temporalidad import calcular_temporalidad
+from pulse.analytics.temporalidad import calcular_temp_diario, calcular_temporalidad
 
 
 # ----------------------------------------------------------------
@@ -254,3 +254,44 @@ class TestValidacion:
                 datos_temporales["accionables"],
                 fecha_ref=fecha_ref,
             )
+
+
+class TestAgregadoDiario:
+    def test_ventana_correcta(self):
+        """Solo se incluyen pedidos dentro de la ventana de N días."""
+        fecha_ref = pd.Timestamp("2026-06-09 12:00:00", tz="UTC")
+
+        df_orders = pd.DataFrame({
+            "order_id":   ["a", "b", "c"],
+            "cliente_id": ["c1", "c1", "c2"],
+            "fecha": pd.to_datetime([
+                "2026-06-08 10:00:00+00:00",  # dentro
+                "2026-02-01 10:00:00+00:00",  # fuera (>90 días atrás)
+                "2026-06-01 10:00:00+00:00",  # dentro
+            ], utc=True),
+            "pago_total": [1000.0, 500.0, 2000.0],
+        })
+        df_segmentos = pd.DataFrame({
+            "cliente_id":       ["c1", "c2"],
+            "segmento_cluster": ["MVPs", "Alto Valor"],
+        })
+
+        resultado = calcular_temp_diario(
+            df_orders=df_orders,
+            df_segmentos=df_segmentos,
+            fecha_ref=fecha_ref,
+            dias_atras=90,
+        )
+
+        assert len(resultado) == 2  # solo 'a' y 'c'
+        assert set(resultado["segmento"].unique()) == {"MVPs", "Alto Valor"}
+
+    def test_vacio_si_no_hay_pedidos(self):
+        """Sin pedidos en la ventana → DataFrame vacío con columnas correctas."""
+        df_orders = pd.DataFrame(columns=["order_id", "cliente_id", "fecha", "pago_total"])
+        df_orders["fecha"] = pd.to_datetime(df_orders["fecha"], utc=True)
+        df_segmentos = pd.DataFrame(columns=["cliente_id", "segmento_cluster"])
+
+        resultado = calcular_temp_diario(df_orders, df_segmentos)
+        assert resultado.empty
+        assert set(resultado.columns) == {"fecha_dia", "segmento", "pedidos", "revenue"}

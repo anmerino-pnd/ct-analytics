@@ -64,6 +64,13 @@ async def estacionalidad(request: Request) -> HTMLResponse:
         "mensual": q.temporalidad_mensual(todos),
         "tipica": q.estacionalidad_tipica(todos),
         "seleccion_inicial": todos,
+        # Modo "Último mes" (segment-independiente): se pre-carga oculto y el
+        # toggle del front lo muestra sin un fetch extra.
+        "ultimo_mes": {
+            "actual":   q.temp_diario_ultimo_mes(),
+            "anterior": q.temp_diario_mes_anterior_mismo_rango(),
+            "kpis":     q.kpis_variacion_mensual(),
+        },
     }
     ctx = _base_context("estacionalidad")
     ctx["initial_data"] = initial_data

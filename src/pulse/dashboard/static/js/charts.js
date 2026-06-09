@@ -339,6 +339,108 @@ window.PulseCharts = (function () {
     Plotly.react(elId, traces, layout, CONFIG_BASE);
   }
 
+  // ─── Line chart diario: mes en curso vs mismo rango del mes anterior ──
+  function renderEvolucionDiaria(elId, datosActual, datosAnterior) {
+    const orden = window.SEGMENT_ORDER || [];
+    // Agrupar una sola vez por segmento (evita re-filtrar los arrays en cada vuelta).
+    const porSegActual = {};
+    const porSegAnterior = {};
+    datosActual.forEach(d => {
+      if (!porSegActual[d.segmento]) porSegActual[d.segmento] = [];
+      porSegActual[d.segmento].push(d);
+    });
+    datosAnterior.forEach(d => {
+      if (!porSegAnterior[d.segmento]) porSegAnterior[d.segmento] = [];
+      porSegAnterior[d.segmento].push(d);
+    });
+    const segmentos = orden.filter(s => porSegActual[s] || porSegAnterior[s]);
+
+    // Mes en curso (YYYY-MM) para superponer el mes anterior por día-de-mes.
+    // Si el mes actual aún no tiene datos, se deriva del mes anterior + 1, de
+    // modo que la comparación se ve igual (alineación por número de día, no por
+    // índice de arreglo → robusta ante días faltantes y mes actual vacío).
+    const addMonthStr = (ym) => {
+      let [y, m] = ym.split('-').map(Number);
+      m += 1; if (m > 12) { m = 1; y += 1; }
+      return y + '-' + String(m).padStart(2, '0');
+    };
+    const ymActual =
+      datosActual.length ? datosActual[0].fecha_dia.slice(0, 7)
+      : datosAnterior.length ? addMonthStr(datosAnterior[0].fecha_dia.slice(0, 7))
+      : null;
+
+    const traces = [];
+    segmentos.forEach(seg => {
+      const act = porSegActual[seg] || [];
+      traces.push({
+        type: 'scatter', mode: 'lines+markers',
+        name: seg,
+        x: act.map(d => d.fecha_dia),
+        y: act.map(d => d.pedidos),
+        line: { color: colorOf(seg), width: 2.5 },
+        marker: { size: 6 },
+        legendgroup: seg,
+        hovertemplate: '%{x|%d %b}<br>%{y:,} pedidos<extra>' + seg + ' · este mes</extra>',
+      });
+      // Mes anterior alineado al mismo día relativo del mes en curso (punteada).
+      const ant = porSegAnterior[seg] || [];
+      traces.push({
+        type: 'scatter', mode: 'lines',
+        name: seg + ' (mes anterior)',
+        // Superpuesto por día-de-mes sobre el mes en curso (mismo día → misma x).
+        x: ymActual ? ant.map(d => ymActual + '-' + d.fecha_dia.slice(8, 10)) : [],
+        y: ant.map(d => d.pedidos),
+        line: { color: colorOf(seg), width: 1.5, dash: 'dot' },
+        legendgroup: seg,
+        showlegend: false,
+        hovertemplate: '%{x|%d %b}<br>%{y:,} pedidos<extra>' + seg + ' · mes anterior</extra>',
+      });
+    });
+    const layout = Object.assign({}, LAYOUT_BASE, {
+      xaxis: { title: '', type: 'date', tickformat: '%d %b', tickangle: 0 },
+      yaxis: { title: 'Pedidos', tickformat: ',.0f' },
+      hovermode: 'x unified',
+      margin: { t: 20, r: 20, b: 60, l: 60 },
+    });
+    Plotly.react(elId, traces, layout, CONFIG_BASE);
+  }
+
+  // ─── KPI cards de variación mensual (mes en curso vs anterior) ──
+  function renderKpisVariacion(elId, kpisData) {
+    const container = document.getElementById(elId);
+    container.innerHTML = '';
+
+    const fmtPct = (v) => {
+      if (v == null) return '—';
+      const sign = v >= 0 ? '+' : '';
+      return sign + v.toFixed(1) + '%';
+    };
+    const fmtNum = (v) => Number(v).toLocaleString('es-MX');
+    const claseVar = (v) => v == null ? 'kpi-variacion-flat'
+                          : v >= 0 ? 'kpi-variacion-up'
+                          : 'kpi-variacion-down';
+
+    const totalCard = document.createElement('div');
+    totalCard.className = 'kpi-card';
+    totalCard.innerHTML =
+      '<span class="kpi-label">Total este mes</span>' +
+      '<span class="kpi-value">' + fmtNum(kpisData.total_actual) + '</span>' +
+      '<span class="kpi-sublabel ' + claseVar(kpisData.total_variacion_pct) + '">' +
+      fmtPct(kpisData.total_variacion_pct) + ' vs mes anterior</span>';
+    container.appendChild(totalCard);
+
+    (kpisData.por_segmento || []).forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'kpi-card';
+      card.innerHTML =
+        '<span class="kpi-label">' + s.segmento + '</span>' +
+        '<span class="kpi-value">' + fmtNum(s.pedidos_actual) + '</span>' +
+        '<span class="kpi-sublabel ' + claseVar(s.variacion_pct) + '">' +
+        fmtPct(s.variacion_pct) + '</span>';
+      container.appendChild(card);
+    });
+  }
+
   // ─── Bar estacionalidad típica (promedio por mes calendario) ────
   function renderBarMesCalendario(elId, rows) {
     const orden = window.SEGMENT_ORDER || [];
@@ -519,6 +621,7 @@ window.PulseCharts = (function () {
     LAYOUT_BASE, CONFIG_BASE, colorOf, orderSegmentos,
     renderDonut, renderBarRevenue, renderBarBundles, renderScatterBundles,
     renderHeatmapHoraDia, renderLineMensual, renderBarMesCalendario,
+    renderEvolucionDiaria, renderKpisVariacion,
     renderScatterCliente, renderClientePedidos, renderScatterAlertas,
     renderRadar, renderBoxMonetary, renderHeatmapBundles,
   };
