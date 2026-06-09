@@ -24,6 +24,7 @@ Uso típico
 """
 
 from __future__ import annotations
+import logging
 
 import json
 from dataclasses import dataclass
@@ -38,6 +39,7 @@ from sklearn.cluster import KMeans
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
+log = logging.getLogger(__name__)
 
 @dataclass
 class ModelMetadata:
@@ -172,7 +174,7 @@ class SegmentadorClientes:
     def load(cls, version: str, models_dir: Path | str = "") -> "SegmentadorClientes":
         """Carga un modelo congelado desde disco."""
         models_dir = _resolve_models_dir(models_dir) / version
-        print(models_dir)
+        log.info(models_dir)
 
         if not models_dir.exists():
             raise FileNotFoundError(
@@ -352,7 +354,7 @@ def _resolve_models_dir(models_dir: Path | str | None) -> Path:
 
     try:
         from pulse.config.paths import MODELS
-        print(Path(MODELS))
+        log.info(Path(MODELS))
         return Path(MODELS)
     except (ImportError, AttributeError) as e:
         raise ValueError(
