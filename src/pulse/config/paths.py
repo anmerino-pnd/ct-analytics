@@ -13,7 +13,7 @@ BASE_DIR = find_project_root(Path(__file__))
 DATA = BASE_DIR / "datos"
 PROCESSED = DATA / "processed"
 PROCESSED_PRUEBAS = DATA / "processed_pruebas"
-MODELS = DATA / "models"
+MODELS = DATA / "models" / "v1"
 SNAPSHOTS_DIR = PROCESSED / "snapshots"
 
 for path in [
