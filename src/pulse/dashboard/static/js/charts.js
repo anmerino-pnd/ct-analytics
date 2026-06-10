@@ -391,7 +391,7 @@ window.PulseCharts = (function () {
         line: { color: colorOf(seg), width: 2.5 },
         marker: { size: 6 },
         legendgroup: seg,
-        hovertemplate: '%{x|%d %b}<br>%{y:,} pedidos<extra>' + seg + ' · este mes</extra>',
+        hovertemplate: '%{y:,} pedidos<extra>' + seg + ' (este mes)</extra>',
       });
       // Mes anterior alineado al mismo día relativo del mes en curso (punteada).
       const ant = porSegAnterior[seg] || [];
@@ -404,7 +404,7 @@ window.PulseCharts = (function () {
         line: { color: colorOf(seg), width: 1.5, dash: 'dot' },
         legendgroup: seg,
         showlegend: false,
-        hovertemplate: '%{x|%d %b}<br>%{y:,} pedidos<extra>' + seg + ' · mes anterior</extra>',
+        hovertemplate: '%{y:,} pedidos<extra>' + seg + ' (mes anterior)</extra>',
       });
     });
     const layout = Object.assign({}, LAYOUT_BASE, {
