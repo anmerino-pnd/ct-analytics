@@ -171,35 +171,43 @@ class SegmentadorClientes:
     # Persistencia
     # ----------------------------------------------------------------
     @classmethod
-    def load(cls, version: str) -> "SegmentadorClientes":
-        """Carga un modelo congelado desde disco."""
-        models_dir = _resolve_models_dir() / version
-        log.info(models_dir)
+    def load(cls, version: str, models_dir: Path | str | None = None) -> "SegmentadorClientes":
+        """Carga un modelo congelado desde disco.
 
-        if not models_dir.exists():
+        models_dir: raíz de modelos. Si None, usa pulse.config.paths.MODELS.
+        """
+        base = Path(models_dir) if models_dir else _resolve_models_dir()
+        model_dir = base / version
+        log.info(model_dir)
+
+        if not model_dir.exists():
             raise FileNotFoundError(
-                f"No existe el directorio del modelo: {models_dir}. "
+                f"No existe el directorio del modelo: {model_dir}. "
                 f"¿Olvidaste correr el notebook 07?"
             )
 
-        pipeline = joblib.load(models_dir / "pipeline.pkl")
+        pipeline = joblib.load(model_dir / "pipeline.pkl")
 
-        with open(models_dir / "metadata.json", "r", encoding="utf-8") as f:
+        with open(model_dir / "metadata.json", "r", encoding="utf-8") as f:
             metadata = ModelMetadata.from_dict(json.load(f))
 
         return cls(pipeline=pipeline, metadata=metadata)
 
-    def save(self, models_dir: Path | str = "") -> Path:
-        """Guarda pipeline + metadata en `<models_dir>/<version>/`."""
-        models_dir = _resolve_models_dir() / self.metadata.version
-        models_dir.mkdir(parents=True, exist_ok=True)
+    def save(self, models_dir: Path | str | None = None) -> Path:
+        """Guarda pipeline + metadata en `<models_dir>/<version>/`.
 
-        joblib.dump(self.pipeline, models_dir / "pipeline.pkl")
+        models_dir: raíz de modelos. Si None, usa pulse.config.paths.MODELS.
+        """
+        base = Path(models_dir) if models_dir else _resolve_models_dir()
+        out_dir = base / self.metadata.version
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-        with open(models_dir / "metadata.json", "w", encoding="utf-8") as f:
+        joblib.dump(self.pipeline, out_dir / "pipeline.pkl")
+
+        with open(out_dir / "metadata.json", "w", encoding="utf-8") as f:
             json.dump(self.metadata.to_dict(), f, indent=2, ensure_ascii=False)
 
-        return models_dir
+        return out_dir
 
     # ----------------------------------------------------------------
     # Predicción
