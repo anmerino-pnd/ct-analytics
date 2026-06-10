@@ -27,7 +27,9 @@ Más allá del análisis, **lo crítico fue cerrar el ciclo de productización**
 - El pipeline corre todos los días a las 3am sin intervención, generando los siete parquets que consume el dashboard.
 - El servicio sobrevive reboots del servidor.
 - Las decisiones técnicas (filtrado de cargos no-producto, manejo de timezone, fórmula de ratio para alertas) están documentadas y validadas con tests automáticos.
+:::
 
+::: {style="text-align: justify"}
 ## 2. Iteración inmediata: cosas pendientes de la versión actual
 
 Antes de pasar a fases nuevas, hay un trabajo de pulido que vale la pena hacer una vez que marketing use Pulse en producción durante algunas semanas. Esto sale del feedback real, no de adivinanzas:
@@ -61,7 +63,9 @@ Hoy el pipeline registra distribuciones de segmentos en cada corrida y compara c
 - **Alertas automáticas** cuando la distribución se desvía más de un umbral (por ejemplo, ±5% en cualquier cluster).
 - **Dashboard de salud del modelo**: una vista extra en Pulse que grafique el drift mes a mes.
 - **Trigger de re-entrenamiento**: cuando drift supera otro umbral, generar automáticamente un PR con el modelo `v2` candidato.
+:::
 
+::: {style="text-align: justify"}
 ## 3. Hoja de ruta a mediano plazo
 
 Estas son las fases siguientes una vez Pulse esté validado y operando con CI/CD.
@@ -105,7 +109,9 @@ Cuando tengamos múltiples modelos en juego (segmentación + forecasting + CLV +
 - Reproducibilidad garantizada de cualquier modelo desplegado en cualquier momento.
 
 Hoy no se justifica (un modelo, una versión congelada). Se justifica cuando tengamos 3-4 modelos productivos.
+:::
 
+::: {style="text-align: justify"}
 ## 4. Reflexión final
 
 La diferencia entre un proyecto de Data Science que **genera valor** y uno que **genera reportes** está en la productización. Pulse no es un notebook: es un servicio que corre día a día, consume datos frescos, se mantiene solo y entrega información directamente al equipo que la usa.

@@ -24,7 +24,9 @@ La fase de productización consistió en cerrar esa brecha. El resultado es **Pu
 2. **El sistema debe operar sin desarrollador**: cron + systemd + quality checks automáticos.
 3. **Cualquier cambio debe ser auditable**: el snapshot del modelo congelado nos permite saber si las predicciones de hoy coinciden con las de hace 6 meses.
 :::
+:::
 
+::: {style="text-align: justify"}
 ## 2. Persistencia del modelo: MLOps minimalista
 
 ### 2.1 Por qué congelar el modelo
@@ -157,7 +159,9 @@ plt.show()
 ::: {.callout-note}
 **Por qué no usamos MLFlow desde el inicio**: MLFlow es excelente cuando tienes múltiples modelos en juego, tracking de runs, y un equipo experimentando en paralelo. Para un único modelo congelado con snapshot, agregaría infraestructura (servidor MLFlow, registry, UI) sin valor inmediato. La decisión es introducir MLFlow cuando lleguen más modelos (forecasting, CLV) — está documentado en "Visión y futuro".
 :::
+:::
 
+::: {style="text-align: justify"}
 ## 3. Pipeline ETL modular
 
 ### 3.1 La necesidad
@@ -264,7 +268,9 @@ def cross_check_temporalidad_rfm(df_temp, df_rfm):
 ```
 
 **El sistema actual reporta 0.00% en el cross-check** en cada corrida. Esto significa que cualquier número de la vista de Estacionalidad es perfectamente consistente con la vista de Overview — invariante validado automáticamente.
+:::
 
+::: {style="text-align: justify"}
 ## 4. El dashboard Pulse
 
 ### 4.1 Diseño general
@@ -359,7 +365,9 @@ datos/processed/
 ```
 
 DuckDB los registra como vistas SQL con nombres estables (`segmentos`, `orders`, `mba_accionables`, etc.). Las queries en `queries.py` consultan estas vistas usando parámetros (nunca interpolación de strings, para evitar SQL injection).
+:::
 
+::: {style="text-align: justify"}
 ## 5. El deployment final
 
 El dashboard corre como un servicio supervisado en un servidor on-premise AlmaLinux 9. Los detalles operativos completos están en la sección de **Documentación Técnica**, pero el resumen es:
@@ -375,7 +383,9 @@ El dashboard corre como un servicio supervisado en un servidor on-premise AlmaLi
 | Tests | 60+ pytest, ejecución manual antes de merge |
 
 El test de robustez crítico fue **reboot del servidor**: después de reiniciar, ¿el dashboard vuelve solo? La respuesta es sí — systemd lo levanta automáticamente cuando la red está disponible. Marketing puede entrar al dashboard sin que un desarrollador haya intervenido.
+:::
 
+::: {style="text-align: justify"}
 ## 6. La métrica final: ¿se usa?
 
 La pregunta de oro para cualquier proyecto de productización es **¿se usa?**. Las métricas técnicas (uptime, latencia, accuracy) son condiciones necesarias pero no suficientes.

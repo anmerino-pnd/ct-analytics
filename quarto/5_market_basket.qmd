@@ -55,7 +55,9 @@ $$
 Con `support absoluto = 30 pedidos` y `support relativo = 0.1%`, en MVPs prevalece el relativo (166 pedidos mínimo) y en Hibernando prevalece el absoluto (30 pedidos mínimo). Esto garantiza significancia estadística en segmentos grandes y posibilidad de descubrir patrones en segmentos chicos.
 
 **El rumbo que nos hizo tomar**: este umbral adaptativo permitió que el segmento Hibernando produjera 35 reglas. Sin él, hubiera producido cero. Ahora marketing tiene reglas accionables incluso para clientes en hibernación.
+:::
 
+::: {style="text-align: justify"}
 ## 2. El Market Basket Opportunity Map
 
 ### 2.1 Cuatro cuadrantes de oportunidad
@@ -138,7 +140,9 @@ plt.show()
 ### 2.3 La tabla detallada
 
 Debajo del mapa, el dashboard expone una tabla con todas las reglas filtradas por `confidence > 30%` y `lift > 1.5`. La ordenamos por **lift descendente**, no por confidence. La razón es que confidence alta puede ser engañosa: si un producto se vende en el 90% de los pedidos, cualquier regla que lo incluya tendrá confidence alta. Lift, en cambio, te dice qué tan inusual es la asociación vs el azar — esa es la información accionable.
+:::
 
+::: {style="text-align: justify"}
 ## 3. Tres tipos de reglas que producimos
 
 El pipeline genera tres parquets distintos con diferentes propósitos:
@@ -186,7 +190,9 @@ resumen = pd.DataFrame({
 })
 resumen
 ```
+:::
 
+::: {style="text-align: justify"}
 ## 4. Ejemplos ilustrativos del mapa
 
 Para no exponer claves reales del catálogo, los siguientes ejemplos usan familias ofuscadas. La estructura, los lifts y las confidences son auténticos de las reglas que produjo el pipeline.
@@ -232,7 +238,9 @@ Support: 1,752 pedidos
 **Interpretación**: confidence muy alta y volumen masivo, pero lift moderado. Es un patrón obvio (clientes de Alto Valor compran múltiples variantes de la misma familia juntos).
 
 **Acción de marketing**: no requiere campaña activa. Es información para optimizar el catálogo (mostrar variantes juntas en la página de producto) y para forecasting de inventario (pedir variantes en proporciones consistentes).
+:::
 
+::: {style="text-align: justify"}
 ## 5. Lo que el MBA segmentado nos enseñó
 
 Tres conclusiones que orientaron el resto del proyecto:

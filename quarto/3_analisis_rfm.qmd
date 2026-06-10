@@ -31,7 +31,9 @@ Castigar a un cliente B2B por una recency alta cuando su cadencia natural es sem
 2. **Falsos negativos**: ignorar a clientes recurrentes que de pronto se ralentizan, perdiendo la oportunidad de retenerlos.
 
 **El rumbo que nos hizo tomar**: necesitábamos una **cuarta dimensión** que capturara el ritmo natural de cada cliente individualmente. No basta con saber "cuánto tiempo desde la última compra" — necesitamos saber "cuánto tiempo es **mucho** para este cliente específico".
+:::
 
+::: {style="text-align: justify"}
 ## 2. La cuarta dimensión: cadencia personalizada
 
 ### 2.1 Definición
@@ -63,7 +65,9 @@ Elegimos la segunda opción con dos decisiones específicas:
 ::: {.callout-tip}
 **Por qué este diseño**: si un single-buyer regresa y se convierte en recurrente, su cadencia se recalcula automáticamente con datos reales. La imputación es solo para "darle un valor mientras tanto" que no rompa el modelo. El flag permite que análisis sensibles (como las alertas de retención) los excluyan explícitamente.
 :::
+:::
 
+::: {style="text-align: justify"}
 ## 3. El ratio de urgencia
 
 ### 3.1 La métrica
@@ -151,7 +155,9 @@ WHERE segmento IN ('MVPs', 'Alto Valor')
 ```
 
 **El rumbo que nos hizo tomar**: los datos del mundo real tienen casos extremos que rompen las fórmulas teóricas. Cualquier métrica derivada (como ratio) debe defenderse contra estos casos en el código, no en el análisis posterior.
+:::
 
+::: {style="text-align: justify"}
 ## 4. Las cuatro dimensiones del modelo
 
 Con todo lo anterior, el feature set final para el clustering quedó así:
@@ -168,7 +174,9 @@ Las cuatro pasan por la **misma transformación logarítmica + estandarización*
 1. Las distribuciones sesgadas no dominan los algoritmos de distancia.
 2. Las features están en escalas comparables (media 0, desviación 1).
 3. Al guardar el modelo, **estas transformaciones viajan con él** y se aplican idénticamente en cada predicción futura.
+:::
 
+::: {style="text-align: justify"}
 ## 5. Cierre de RFM, antesala del clustering
 
 El RFM clásico fue nuestro punto de partida pero no fue donde nos quedamos. Las decisiones de feature engineering tomadas en esta fase — agregar cadencia, manejar single-buyers, defender contra edge cases — son las que permitieron que el algoritmo de clustering descubriera **comportamientos reales** y no artefactos estadísticos.

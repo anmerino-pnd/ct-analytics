@@ -31,7 +31,9 @@ Esta fase del proyecto consistió en levantar la primera fotografía completa de
 | Periodo cubierto | Dic 2023 — May 2026 |
 
 La elección de ventana de 30 meses no fue arbitraria. Es lo suficientemente larga para capturar dos ciclos estacionales completos (Buen Fin, cierres fiscales) pero corta como para que no incluyamos comportamiento de clientes que ya no son relevantes para el negocio actual.
+:::
 
+::: {style="text-align: justify"}
 ## 2. Tres descubrimientos que cambiaron el rumbo del análisis
 
 ### 2.1 Distribución log-normal extrema del ticket
@@ -149,7 +151,9 @@ plt.show()
 ```
 
 **El rumbo que nos hizo tomar**: con 908 familias en lugar de 30,000 SKUs, el MBA pasó de "matemáticamente imposible" a "produce ~3,800 reglas accionables". Esta es la diferencia entre tener análisis o no tenerlo. La función `derivar_familia()` quedó como parte del módulo `analytics/familia.py` del pipeline.
+:::
 
+::: {style="text-align: justify"}
 ## 3. Calidad y limpieza de datos
 
 ### 3.1 El cargo financiero CARGO100
@@ -173,7 +177,9 @@ Decidimos integrar quality checks **dentro del pipeline**, no como scripts manua
 - En la temporalidad: la suma de pedidos por segmento debe coincidir exactamente con el conteo en RFM (cross-check). El sistema actual reporta **0.00% de divergencia**.
 
 **El rumbo que nos hizo tomar**: estas validaciones automáticas evitaron varios bugs durante el desarrollo. Por ejemplo, una versión preliminar del pipeline tenía un dedup defectuoso que perdía millones de items; el quality check del cross-check temporalidad-RFM marcó la inconsistencia antes de que llegara a producción.
+:::
 
+::: {style="text-align: justify"}
 ## 4. Lo que aprendimos en esta fase
 
 Esta fase parecía rutinaria — "explorar los datos antes de modelar" — pero generó tres de las decisiones más importantes del proyecto entero:

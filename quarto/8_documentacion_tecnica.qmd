@@ -287,6 +287,9 @@ ls -lt logs/cron_*.log | head -5
 | Pipeline falla en MongoDB | Credenciales o red | Verificar `.env` y `nc -zv <host> 27017` |
 | Servicio crashea en bucle | Error en código o config | `sudo journalctl -u pulse-dashboard -n 100` |
 
+:::
+
+::: {style="text-align: justify"}
 ## 2. Documentación técnica del código
 
 ### 2.1 Estructura de carpetas
@@ -430,7 +433,9 @@ Algunas decisiones específicas del proyecto que vale la pena conocer si se va a
 - **El log-transform vive dentro del Pipeline de sklearn**, no fuera. Importante para que `predict()` funcione idénticamente al `fit()`.
 - **Ratio de alertas**: `recency / GREATEST(dias_entre_compras, 1)` para evitar división por cero en clientes B2B que compran varias veces al día.
 - **Cuadrantes del scatter de bundles**: división por mediana dinámica (replica el notebook de referencia). No usamos umbrales fijos.
+:::
 
+::: {style="text-align: justify"}
 ## 3. Diagrama de arquitectura
 
 ### 3.1 Vista de alto nivel
@@ -510,6 +515,9 @@ sequenceDiagram
     FastAPI-->>Browser: JSON
 ```
 
+:::
+
+::: {style="text-align: justify"}
 ## 4. Suite de tests
 
 El proyecto incluye 60+ tests unitarios cubriendo cada módulo analítico y los componentes del pipeline. Para correrlos:

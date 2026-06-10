@@ -14,7 +14,9 @@ toc-depth: 3
 ## 1. Del feature set al algoritmo
 
 En la fase anterior construimos un dataset con cuatro features por cliente: `recency`, `frequency`, `monetary` y `dias_entre_compras`. En esta sección documentamos cómo seleccionamos el algoritmo, cómo determinamos $k=5$ matemáticamente, qué cinco perfiles emergieron y un bug temprano que casi nos hace tomar el camino equivocado.
+:::
 
+::: {style="text-align: justify"}
 ## 2. Elección del algoritmo y de k
 
 ### 2.1 K-Means: por qué y por qué no
@@ -81,7 +83,9 @@ plt.show()
 El codo de la inercia y el máximo de Silhouette coincidieron en $k=5$. Esto no garantiza que sea la mejor segmentación posible, pero sí que es matemáticamente defendible y reproducible.
 
 **El rumbo que nos hizo tomar**: fijar $k=5$ por evidencia cuantitativa, no por intuición de negocio. Esto evita el sesgo de "ya tenemos 4 segmentos en la cabeza, hagamos que el modelo los confirme".
+:::
 
+::: {style="text-align: justify"}
 ## 3. Un bug que casi cambia el modelo: log-transform fuera del pipeline
 
 Antes de mostrarte la distribución final, vale la pena documentar un error temprano que detectamos gracias a los quality checks del pipeline. Es la mejor anécdota de por qué la productización importa.
@@ -120,7 +124,9 @@ Con esto, **el log-transform viaja con el modelo**. Cualquier `predict()` futuro
 ::: {.callout-tip}
 Este bug fue el que más reforzó la importancia del **quality check de distribución** dentro del pipeline. Si no hubiéramos validado automáticamente "ningún cluster puede absorber más del 50%", el bug habría llegado a marketing y habrían visto un dashboard donde 92% de los clientes son MVPs — destruyendo cualquier credibilidad del proyecto.
 :::
+:::
 
+::: {style="text-align: justify"}
 ## 4. Distribución final de segmentos
 
 Con el log-transform correctamente encapsulado, el modelo `v1` produjo la siguiente distribución:
@@ -167,7 +173,9 @@ Tres observaciones:
 1. **MVPs es minoría (10.8%)**: alineado con la idea de "élite valiosa". Si MVPs fuera 30% del total, el segmento perdería su poder descriptivo.
 2. **Alto Valor + Hibernando dominan (>50% combinado)**: hay un eje claro entre clientes activos pero no premium, y clientes que han dejado de comprar pero antes lo hacían. Este eje es el que más le interesa al equipo de retención.
 3. **En Riesgo + Ocasionales suman ~36%**: estos son los segmentos donde marketing tiene más palanca. No están perdidos pero tampoco son leales — son el campo de batalla.
+:::
 
+::: {style="text-align: justify"}
 ## 5. Perfilando cada segmento
 
 Cada cluster tiene un centroide en 4D (después de log y scale). Para interpretarlos, recalculamos las medianas en las escalas originales:
@@ -204,7 +212,9 @@ Vale la pena explicarlo porque es contraintuitivo:
 Por eso las **alertas del dashboard solo incluyen clientes MVPs y Alto Valor** (los segmentos con cadencia natural baja). Es donde el ratio de urgencia tiene poder predictivo real.
 
 **El rumbo que nos hizo tomar**: la segmentación no es solo descriptiva. Cada segmento tiene una estrategia accionable asociada, y el dashboard expone esas acciones (la vista de Alertas vive arriba del segmento En Riesgo, no de Hibernando).
+:::
 
+::: {style="text-align: justify"}
 ## 6. Persistencia del modelo
 
 Una vez validada la distribución, el modelo `v1` se congeló:

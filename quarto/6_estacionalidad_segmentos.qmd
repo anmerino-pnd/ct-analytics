@@ -29,6 +29,9 @@ Construimos tres agregados temporales que viven como parquets en el pipeline:
 | `temp_mensual.parquet` | año-mes, por segmento | Serie temporal de volumen |
 | `temp_bundles.parquet` | año-mes × regla MBA top | Evolución temporal de bundles específicos |
 
+:::
+
+::: {style="text-align: justify"}
 ## 2. Un bug que importaba: el timezone
 
 Antes de mostrar los resultados, vale la pena documentar un bug que casi nos hace publicar análisis incorrectos.
@@ -62,7 +65,9 @@ def _agregar_features_temporales(df):
 La conversión se aplica **antes** de extraer hora/día/mes. Los pedidos se quedan en UTC en el parquet histórico (preservando la fuente), pero los agregados temporales viajan en hora local CDMX.
 
 **El rumbo que nos hizo tomar**: cualquier feature derivado de un timestamp con timezone debe pasar explícitamente por `tz_convert()`. Una vez aprendida la lección, agregamos un test que valida que el heatmap concentre actividad en horas 9-18 (horario laboral en CDMX). El test falla automáticamente si alguien revierte el fix.
+:::
 
+::: {style="text-align: justify"}
 ## 3. Heatmap hora × día por segmento
 
 Después del fix, el heatmap muestra el patrón esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Pero cada segmento tiene su propia firma.
@@ -131,7 +136,9 @@ Cada cluster tiene un patrón distinto. Resumimos las observaciones cualitativas
 - Campañas de reactivación para En Riesgo: enviar a las 14:30, interceptar el pico de las 15:00.
 
 Si marketing usara la misma hora para todos los segmentos, perdería eficiencia en al menos uno.
+:::
 
+::: {style="text-align: justify"}
 ## 4. Evolución mensual
 
 El segundo agregado es el volumen mensual por segmento. Es útil para detectar tendencias macro y validar que los modelos no se "rompan" silenciosamente.
@@ -197,7 +204,9 @@ Tres observaciones:
 3. **En Riesgo decae lentamente** con el tiempo. Es esperado por definición — son clientes que perdieron tracción. Pero la pendiente es un dato útil para evaluar campañas de retención.
 
 **El rumbo que nos hizo tomar**: este gráfico se convirtió en una herramienta de monitoreo. Si el equipo de retención ejecuta una campaña agresiva, esperamos ver la pendiente de En Riesgo aplanarse. Si no se aplana, la campaña no funcionó.
+:::
 
+::: {style="text-align: justify"}
 ## 5. Cruce temporalidad × bundles
 
 El tercer agregado es el más sofisticado: para los **top 20 bundles por segmento** (100 reglas en total), generamos su evolución mensual.
@@ -218,7 +227,9 @@ El dashboard expone una tabla auxiliar donde para cada bundle se calcula:
 Un bundle con `% del año = 25%` está fuertemente concentrado (la mitad del año aporta el 75% restante). Un bundle con `% del año = 9%` está distribuido uniformemente.
 
 **El rumbo que nos hizo tomar**: bundles con concentración alta son candidatos a **campañas estacionales dedicadas**. Si el bundle X tiene 25% de su volumen en marzo, marketing debe planear campañas para el bundle X específicamente en febrero (anticipación). Bundles con baja concentración son candidatos a **always-on cross-sell** (recomendación pasiva todo el año).
+:::
 
+::: {style="text-align: justify"}
 ## 6. La consistencia temporal-RFM: un cross-check crítico
 
 Una preocupación durante el desarrollo era: **¿los agregados temporales y los conteos de RFM cuentan los mismos pedidos?**
@@ -241,7 +252,9 @@ El sistema actual reporta:
 ```
 
 **Cero divergencia.** Esto significa que cualquier número que veas en la vista de Estacionalidad coincide exactamente con los conteos de la vista de Overview. La consistencia no es accidental — es validada automáticamente en cada corrida del pipeline.
+:::
 
+::: {style="text-align: justify"}
 ## 7. Lo que la dimensión temporal nos dejó
 
 La fase de estacionalidad cerró el ciclo descriptivo del proyecto. Con RFM, MBA y temporalidad combinados, podemos responder preguntas accionables como:
