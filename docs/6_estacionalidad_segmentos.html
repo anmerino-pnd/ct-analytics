@@ -177,8 +177,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#la-pregunta-temporal" id="toc-la-pregunta-temporal" class="nav-link active" data-scroll-target="#la-pregunta-temporal">1. La pregunta temporal</a></li>
+  <li><a href="#un-bug-que-importaba-el-timezone" id="toc-un-bug-que-importaba-el-timezone" class="nav-link" data-scroll-target="#un-bug-que-importaba-el-timezone">2. Un bug que importaba: el timezone</a>
+  <ul class="collapse">
+  <li><a href="#el-síntoma" id="toc-el-síntoma" class="nav-link" data-scroll-target="#el-síntoma">2.1 El síntoma</a></li>
+  <li><a href="#la-causa" id="toc-la-causa" class="nav-link" data-scroll-target="#la-causa">2.2 La causa</a></li>
+  <li><a href="#el-fix" id="toc-el-fix" class="nav-link" data-scroll-target="#el-fix">2.3 El fix</a></li>
+  </ul></li>
+  <li><a href="#heatmap-hora-día-por-segmento" id="toc-heatmap-hora-día-por-segmento" class="nav-link" data-scroll-target="#heatmap-hora-día-por-segmento">3. Heatmap hora × día por segmento</a>
+  <ul class="collapse">
+  <li><a href="#firmas-observadas-por-segmento" id="toc-firmas-observadas-por-segmento" class="nav-link" data-scroll-target="#firmas-observadas-por-segmento">3.1 Firmas observadas por segmento</a></li>
+  </ul></li>
+  <li><a href="#evolución-mensual" id="toc-evolución-mensual" class="nav-link" data-scroll-target="#evolución-mensual">4. Evolución mensual</a>
+  <ul class="collapse">
+  <li><a href="#lectura-del-gráfico" id="toc-lectura-del-gráfico" class="nav-link" data-scroll-target="#lectura-del-gráfico">4.1 Lectura del gráfico</a></li>
+  </ul></li>
+  <li><a href="#cruce-temporalidad-bundles" id="toc-cruce-temporalidad-bundles" class="nav-link" data-scroll-target="#cruce-temporalidad-bundles">5. Cruce temporalidad × bundles</a>
+  <ul class="collapse">
+  <li><a href="#mes-pico-por-bundle" id="toc-mes-pico-por-bundle" class="nav-link" data-scroll-target="#mes-pico-por-bundle">5.1 Mes pico por bundle</a></li>
+  </ul></li>
+  <li><a href="#la-consistencia-temporal-rfm-un-cross-check-crítico" id="toc-la-consistencia-temporal-rfm-un-cross-check-crítico" class="nav-link" data-scroll-target="#la-consistencia-temporal-rfm-un-cross-check-crítico">6. La consistencia temporal-RFM: un cross-check crítico</a></li>
+  <li><a href="#lo-que-la-dimensión-temporal-nos-dejó" id="toc-lo-que-la-dimensión-temporal-nos-dejó" class="nav-link" data-scroll-target="#lo-que-la-dimensión-temporal-nos-dejó">7. Lo que la dimensión temporal nos dejó</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -202,8 +228,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div style="text-align: justify">
-<section id="la-pregunta-temporal" class="level2">
+<section id="la-pregunta-temporal" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-pregunta-temporal">1. La pregunta temporal</h2>
 <p>Hasta esta fase del proyecto sabíamos <strong>qué compra cada segmento</strong> (RFM y segmentación) y <strong>qué se compra junto</strong> (MBA). Faltaba la dimensión temporal: <strong>cuándo compran</strong>.</p>
 <p>Esto importa para tres decisiones de marketing:</p>
@@ -245,7 +270,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="un-bug-que-importaba-el-timezone" class="level2">
+<section id="un-bug-que-importaba-el-timezone" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="un-bug-que-importaba-el-timezone">2. Un bug que importaba: el timezone</h2>
 <p>Antes de mostrar los resultados, vale la pena documentar un bug que casi nos hace publicar análisis incorrectos.</p>
 <section id="el-síntoma" class="level3">
@@ -273,7 +298,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>El rumbo que nos hizo tomar</strong>: cualquier feature derivado de un timestamp con timezone debe pasar explícitamente por <code>tz_convert()</code>. Una vez aprendida la lección, agregamos un test que valida que el heatmap concentre actividad en horas 9-18 (horario laboral en CDMX). El test falla automáticamente si alguien revierte el fix.</p>
 </section>
 </section>
-<section id="heatmap-hora-día-por-segmento" class="level2">
+<section id="heatmap-hora-día-por-segmento" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="heatmap-hora-día-por-segmento">3. Heatmap hora × día por segmento</h2>
 <p>Después del fix, el heatmap muestra el patrón esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Pero cada segmento tiene su propia firma.</p>
 <div id="cell-fig-heatmap-mvps" class="cell" data-execution_count="1">
@@ -385,7 +410,7 @@ Figura&nbsp;1: Heatmap hora × día para el segmento MVPs (% del segmento).
 <p>Si marketing usara la misma hora para todos los segmentos, perdería eficiencia en al menos uno.</p>
 </section>
 </section>
-<section id="evolución-mensual" class="level2">
+<section id="evolución-mensual" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="evolución-mensual">4. Evolución mensual</h2>
 <p>El segundo agregado es el volumen mensual por segmento. Es útil para detectar tendencias macro y validar que los modelos no se “rompan” silenciosamente.</p>
 <div id="cell-fig-mensual" class="cell" data-execution_count="2">
@@ -462,7 +487,7 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 <p><strong>El rumbo que nos hizo tomar</strong>: este gráfico se convirtió en una herramienta de monitoreo. Si el equipo de retención ejecuta una campaña agresiva, esperamos ver la pendiente de En Riesgo aplanarse. Si no se aplana, la campaña no funcionó.</p>
 </section>
 </section>
-<section id="cruce-temporalidad-bundles" class="level2">
+<section id="cruce-temporalidad-bundles" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="cruce-temporalidad-bundles">5. Cruce temporalidad × bundles</h2>
 <p>El tercer agregado es el más sofisticado: para los <strong>top 20 bundles por segmento</strong> (100 reglas en total), generamos su evolución mensual.</p>
 <p>Esto contesta preguntas concretas:</p>
@@ -482,7 +507,7 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 <p><strong>El rumbo que nos hizo tomar</strong>: bundles con concentración alta son candidatos a <strong>campañas estacionales dedicadas</strong>. Si el bundle X tiene 25% de su volumen en marzo, marketing debe planear campañas para el bundle X específicamente en febrero (anticipación). Bundles con baja concentración son candidatos a <strong>always-on cross-sell</strong> (recomendación pasiva todo el año).</p>
 </section>
 </section>
-<section id="la-consistencia-temporal-rfm-un-cross-check-crítico" class="level2">
+<section id="la-consistencia-temporal-rfm-un-cross-check-crítico" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-consistencia-temporal-rfm-un-cross-check-crítico">6. La consistencia temporal-RFM: un cross-check crítico</h2>
 <p>Una preocupación durante el desarrollo era: <strong>¿los agregados temporales y los conteos de RFM cuentan los mismos pedidos?</strong></p>
 <p>Es fácil que un módulo aplique un filtro distinto al otro (por ejemplo, uno excluya CARGO100 y el otro no, o usen ventanas temporales ligeramente diferentes). Si esto pasa, los KPIs del dashboard son inconsistentes con la segmentación, y nadie sabe en qué confiar.</p>
@@ -495,7 +520,7 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 <pre><code>✅ Cross-check temporalidad-RFM OK (diferencia 0.00%)</code></pre>
 <p><strong>Cero divergencia.</strong> Esto significa que cualquier número que veas en la vista de Estacionalidad coincide exactamente con los conteos de la vista de Overview. La consistencia no es accidental — es validada automáticamente en cada corrida del pipeline.</p>
 </section>
-<section id="lo-que-la-dimensión-temporal-nos-dejó" class="level2">
+<section id="lo-que-la-dimensión-temporal-nos-dejó" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="lo-que-la-dimensión-temporal-nos-dejó">7. Lo que la dimensión temporal nos dejó</h2>
 <p>La fase de estacionalidad cerró el ciclo descriptivo del proyecto. Con RFM, MBA y temporalidad combinados, podemos responder preguntas accionables como:</p>
 <ul>
@@ -505,7 +530,6 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 </ul>
 <p>En la siguiente sección documentamos cómo todo esto se persistió, automatizó y desplegó como un servicio operativo.</p>
 </section>
-</div>
 
 
 

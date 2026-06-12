@@ -180,8 +180,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#documentación-técnica-del-código" id="toc-documentación-técnica-del-código" class="nav-link active" data-scroll-target="#documentación-técnica-del-código">2. Documentación técnica del código</a>
+  <ul>
+  <li><a href="#estructura-de-carpetas" id="toc-estructura-de-carpetas" class="nav-link" data-scroll-target="#estructura-de-carpetas">2.1 Estructura de carpetas</a></li>
+  <li><a href="#módulos-principales" id="toc-módulos-principales" class="nav-link" data-scroll-target="#módulos-principales">2.2 Módulos principales</a>
+  <ul class="collapse">
+  <li><a href="#etl-srcpulseetl" id="toc-etl-srcpulseetl" class="nav-link" data-scroll-target="#etl-srcpulseetl">2.2.1 ETL (<code>src/pulse/etl/</code>)</a></li>
+  <li><a href="#analytics-srcpulseanalytics" id="toc-analytics-srcpulseanalytics" class="nav-link" data-scroll-target="#analytics-srcpulseanalytics">2.2.2 Analytics (<code>src/pulse/analytics/</code>)</a></li>
+  <li><a href="#modeling-srcpulsemodeling" id="toc-modeling-srcpulsemodeling" class="nav-link" data-scroll-target="#modeling-srcpulsemodeling">2.2.3 Modeling (<code>src/pulse/modeling/</code>)</a></li>
+  <li><a href="#pipeline-srcpulsepipeline" id="toc-pipeline-srcpulsepipeline" class="nav-link" data-scroll-target="#pipeline-srcpulsepipeline">2.2.4 Pipeline (<code>src/pulse/pipeline/</code>)</a></li>
+  <li><a href="#dashboard-srcpulsedashboard" id="toc-dashboard-srcpulsedashboard" class="nav-link" data-scroll-target="#dashboard-srcpulsedashboard">2.2.5 Dashboard (<code>src/pulse/dashboard/</code>)</a></li>
+  </ul></li>
+  <li><a href="#decisiones-técnicas-importantes" id="toc-decisiones-técnicas-importantes" class="nav-link" data-scroll-target="#decisiones-técnicas-importantes">2.3 Decisiones técnicas importantes</a></li>
+  </ul></li>
+  <li><a href="#diagrama-de-arquitectura" id="toc-diagrama-de-arquitectura" class="nav-link" data-scroll-target="#diagrama-de-arquitectura">3. Diagrama de arquitectura</a>
+  <ul>
+  <li><a href="#vista-de-alto-nivel" id="toc-vista-de-alto-nivel" class="nav-link" data-scroll-target="#vista-de-alto-nivel">3.1 Vista de alto nivel</a></li>
+  <li><a href="#componentes-clave" id="toc-componentes-clave" class="nav-link" data-scroll-target="#componentes-clave">3.2 Componentes clave</a></li>
+  <li><a href="#flujo-de-interacción-principal" id="toc-flujo-de-interacción-principal" class="nav-link" data-scroll-target="#flujo-de-interacción-principal">3.3 Flujo de interacción principal</a></li>
+  <li><a href="#flujo-de-datos" id="toc-flujo-de-datos" class="nav-link" data-scroll-target="#flujo-de-datos">3.4 Flujo de datos</a></li>
+  </ul></li>
+  <li><a href="#suite-de-tests" id="toc-suite-de-tests" class="nav-link" data-scroll-target="#suite-de-tests">4. Suite de tests</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -555,7 +581,8 @@ Nota
 </table>
 </section>
 </section>
-<section id="documentación-técnica-del-código" class="level2">
+</div>
+<section id="documentación-técnica-del-código" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="documentación-técnica-del-código">2. Documentación técnica del código</h2>
 <section id="estructura-de-carpetas" class="level3">
 <h3 class="anchored" data-anchor-id="estructura-de-carpetas">2.1 Estructura de carpetas</h3>
@@ -688,7 +715,7 @@ Nota
 </ul>
 </section>
 </section>
-<section id="diagrama-de-arquitectura" class="level2">
+<section id="diagrama-de-arquitectura" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="diagrama-de-arquitectura">3. Diagrama de arquitectura</h2>
 <section id="vista-de-alto-nivel" class="level3">
 <h3 class="anchored" data-anchor-id="vista-de-alto-nivel">3.1 Vista de alto nivel</h3>
@@ -879,7 +906,7 @@ Nota
 </div>
 </section>
 </section>
-<section id="suite-de-tests" class="level2">
+<section id="suite-de-tests" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="suite-de-tests">4. Suite de tests</h2>
 <p>El proyecto incluye 60+ tests unitarios cubriendo cada módulo analítico y los componentes del pipeline. Para correrlos:</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run pytest</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -907,7 +934,6 @@ Tip
 </div>
 </div>
 </section>
-</div>
 
 
 

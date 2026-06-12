@@ -183,8 +183,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#la-brecha-entre-notebook-y-producción" id="toc-la-brecha-entre-notebook-y-producción" class="nav-link active" data-scroll-target="#la-brecha-entre-notebook-y-producción">1. La brecha entre notebook y producción</a></li>
+  <li><a href="#persistencia-del-modelo-mlops-minimalista" id="toc-persistencia-del-modelo-mlops-minimalista" class="nav-link" data-scroll-target="#persistencia-del-modelo-mlops-minimalista">2. Persistencia del modelo: MLOps minimalista</a>
+  <ul class="collapse">
+  <li><a href="#por-qué-congelar-el-modelo" id="toc-por-qué-congelar-el-modelo" class="nav-link" data-scroll-target="#por-qué-congelar-el-modelo">2.1 Por qué congelar el modelo</a></li>
+  <li><a href="#la-clase-wrapper-segmentadorclientes" id="toc-la-clase-wrapper-segmentadorclientes" class="nav-link" data-scroll-target="#la-clase-wrapper-segmentadorclientes">2.2 La clase wrapper <code>SegmentadorClientes</code></a></li>
+  <li><a href="#tres-artefactos-congelados-en-modelsv1" id="toc-tres-artefactos-congelados-en-modelsv1" class="nav-link" data-scroll-target="#tres-artefactos-congelados-en-modelsv1">2.3 Tres artefactos congelados en <code>models/v1/</code></a></li>
+  <li><a href="#control-de-drift-por-snapshot" id="toc-control-de-drift-por-snapshot" class="nav-link" data-scroll-target="#control-de-drift-por-snapshot">2.4 Control de drift por snapshot</a></li>
+  </ul></li>
+  <li><a href="#pipeline-etl-modular" id="toc-pipeline-etl-modular" class="nav-link" data-scroll-target="#pipeline-etl-modular">3. Pipeline ETL modular</a>
+  <ul class="collapse">
+  <li><a href="#la-necesidad" id="toc-la-necesidad" class="nav-link" data-scroll-target="#la-necesidad">3.1 La necesidad</a></li>
+  <li><a href="#arquitectura-por-capas" id="toc-arquitectura-por-capas" class="nav-link" data-scroll-target="#arquitectura-por-capas">3.2 Arquitectura por capas</a></li>
+  <li><a href="#los-tres-modos-de-ejecución" id="toc-los-tres-modos-de-ejecución" class="nav-link" data-scroll-target="#los-tres-modos-de-ejecución">3.3 Los tres modos de ejecución</a></li>
+  <li><a href="#ingest-incremental-con-watermark" id="toc-ingest-incremental-con-watermark" class="nav-link" data-scroll-target="#ingest-incremental-con-watermark">3.4 Ingest incremental con watermark</a></li>
+  <li><a href="#quality-checks-el-sistema-de-defensa" id="toc-quality-checks-el-sistema-de-defensa" class="nav-link" data-scroll-target="#quality-checks-el-sistema-de-defensa">3.5 Quality checks: el sistema de defensa</a></li>
+  </ul></li>
+  <li><a href="#el-dashboard-pulse" id="toc-el-dashboard-pulse" class="nav-link" data-scroll-target="#el-dashboard-pulse">4. El dashboard Pulse</a>
+  <ul class="collapse">
+  <li><a href="#diseño-general" id="toc-diseño-general" class="nav-link" data-scroll-target="#diseño-general">4.1 Diseño general</a></li>
+  <li><a href="#siete-vistas-una-para-cada-pregunta" id="toc-siete-vistas-una-para-cada-pregunta" class="nav-link" data-scroll-target="#siete-vistas-una-para-cada-pregunta">4.2 Siete vistas, una para cada pregunta</a></li>
+  <li><a href="#tres-decisiones-de-ux-que-valieron-la-pena" id="toc-tres-decisiones-de-ux-que-valieron-la-pena" class="nav-link" data-scroll-target="#tres-decisiones-de-ux-que-valieron-la-pena">4.3 Tres decisiones de UX que valieron la pena</a></li>
+  <li><a href="#pipeline-dashboard-el-contrato-de-los-7-parquets" id="toc-pipeline-dashboard-el-contrato-de-los-7-parquets" class="nav-link" data-scroll-target="#pipeline-dashboard-el-contrato-de-los-7-parquets">4.4 Pipeline → dashboard: el contrato de los 7 parquets</a></li>
+  </ul></li>
+  <li><a href="#el-deployment-final" id="toc-el-deployment-final" class="nav-link" data-scroll-target="#el-deployment-final">5. El deployment final</a></li>
+  <li><a href="#la-métrica-final-se-usa" id="toc-la-métrica-final-se-usa" class="nav-link" data-scroll-target="#la-métrica-final-se-usa">6. La métrica final: ¿se usa?</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -208,8 +238,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div style="text-align: justify">
-<section id="la-brecha-entre-notebook-y-producción" class="level2">
+<section id="la-brecha-entre-notebook-y-producción" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-brecha-entre-notebook-y-producción">1. La brecha entre notebook y producción</h2>
 <p>Hasta este punto del proyecto, todo vivía en notebooks: análisis exploratorios, RFM, K-Means, MBA y estacionalidad. Esto está bien para descubrir patrones, pero <strong>no es operativo</strong>. Si marketing necesita los resultados, alguien tiene que abrir Jupyter, recordar el orden de las celdas, ejecutarlas, exportar gráficas y mandarlas por correo. Esa fricción mata cualquier adopción.</p>
 <p>La fase de productización consistió en cerrar esa brecha. El resultado es <strong>Pulse</strong>: una plataforma operativa que corre todos los días, mantiene los datos frescos y expone los resultados como un servicio web que cualquier persona del equipo de marketing puede abrir en su navegador. Esta sección documenta cómo se construyó.</p>
@@ -232,7 +261,7 @@ Tip
 </div>
 </div>
 </section>
-<section id="persistencia-del-modelo-mlops-minimalista" class="level2">
+<section id="persistencia-del-modelo-mlops-minimalista" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="persistencia-del-modelo-mlops-minimalista">2. Persistencia del modelo: MLOps minimalista</h2>
 <section id="por-qué-congelar-el-modelo" class="level3">
 <h3 class="anchored" data-anchor-id="por-qué-congelar-el-modelo">2.1 Por qué congelar el modelo</h3>
@@ -371,7 +400,7 @@ Nota
 </div>
 </section>
 </section>
-<section id="pipeline-etl-modular" class="level2">
+<section id="pipeline-etl-modular" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="pipeline-etl-modular">3. Pipeline ETL modular</h2>
 <section id="la-necesidad" class="level3">
 <h3 class="anchored" data-anchor-id="la-necesidad">3.1 La necesidad</h3>
@@ -541,7 +570,7 @@ Advertencia
 <p><strong>El sistema actual reporta 0.00% en el cross-check</strong> en cada corrida. Esto significa que cualquier número de la vista de Estacionalidad es perfectamente consistente con la vista de Overview — invariante validado automáticamente.</p>
 </section>
 </section>
-<section id="el-dashboard-pulse" class="level2">
+<section id="el-dashboard-pulse" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="el-dashboard-pulse">4. El dashboard Pulse</h2>
 <section id="diseño-general" class="level3">
 <h3 class="anchored" data-anchor-id="diseño-general">4.1 Diseño general</h3>
@@ -726,7 +755,7 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 <p>DuckDB los registra como vistas SQL con nombres estables (<code>segmentos</code>, <code>orders</code>, <code>mba_accionables</code>, etc.). Las queries en <code>queries.py</code> consultan estas vistas usando parámetros (nunca interpolación de strings, para evitar SQL injection).</p>
 </section>
 </section>
-<section id="el-deployment-final" class="level2">
+<section id="el-deployment-final" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="el-deployment-final">5. El deployment final</h2>
 <p>El dashboard corre como un servicio supervisado en un servidor on-premise AlmaLinux 9. Los detalles operativos completos están en la sección de <strong>Documentación Técnica</strong>, pero el resumen es:</p>
 <table class="caption-top table">
@@ -769,7 +798,7 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 </table>
 <p>El test de robustez crítico fue <strong>reboot del servidor</strong>: después de reiniciar, ¿el dashboard vuelve solo? La respuesta es sí — systemd lo levanta automáticamente cuando la red está disponible. Marketing puede entrar al dashboard sin que un desarrollador haya intervenido.</p>
 </section>
-<section id="la-métrica-final-se-usa" class="level2">
+<section id="la-métrica-final-se-usa" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-métrica-final-se-usa">6. La métrica final: ¿se usa?</h2>
 <p>La pregunta de oro para cualquier proyecto de productización es <strong>¿se usa?</strong>. Las métricas técnicas (uptime, latencia, accuracy) son condiciones necesarias pero no suficientes.</p>
 <p>A la fecha de este escrito:</p>
@@ -780,7 +809,6 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 </ul>
 <p>Cuando marketing reporte que <strong>abandonan una reunión de planeación abriendo Pulse</strong> en lugar de pedir reportes ad-hoc, sabremos que la productización tuvo éxito real.</p>
 </section>
-</div>
 
 
 

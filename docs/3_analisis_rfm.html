@@ -206,8 +206,29 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#el-rfm-clásico-no-funciona-en-b2b" id="toc-el-rfm-clásico-no-funciona-en-b2b" class="nav-link active" data-scroll-target="#el-rfm-clásico-no-funciona-en-b2b">1. El RFM clásico no funciona en B2B</a>
+  <ul class="collapse">
+  <li><a href="#el-problema-concreto" id="toc-el-problema-concreto" class="nav-link" data-scroll-target="#el-problema-concreto">1.1 El problema concreto</a></li>
+  </ul></li>
+  <li><a href="#la-cuarta-dimensión-cadencia-personalizada" id="toc-la-cuarta-dimensión-cadencia-personalizada" class="nav-link" data-scroll-target="#la-cuarta-dimensión-cadencia-personalizada">2. La cuarta dimensión: cadencia personalizada</a>
+  <ul class="collapse">
+  <li><a href="#definición" id="toc-definición" class="nav-link" data-scroll-target="#definición">2.1 Definición</a></li>
+  <li><a href="#el-problema-de-los-single-buyers" id="toc-el-problema-de-los-single-buyers" class="nav-link" data-scroll-target="#el-problema-de-los-single-buyers">2.2 El problema de los single-buyers</a></li>
+  </ul></li>
+  <li><a href="#el-ratio-de-urgencia" id="toc-el-ratio-de-urgencia" class="nav-link" data-scroll-target="#el-ratio-de-urgencia">3. El ratio de urgencia</a>
+  <ul class="collapse">
+  <li><a href="#la-métrica" id="toc-la-métrica" class="nav-link" data-scroll-target="#la-métrica">3.1 La métrica</a></li>
+  <li><a href="#un-edge-case-real-clientes-b2b-con-cadencia-cero" id="toc-un-edge-case-real-clientes-b2b-con-cadencia-cero" class="nav-link" data-scroll-target="#un-edge-case-real-clientes-b2b-con-cadencia-cero">3.2 Un edge case real: clientes B2B con cadencia cero</a></li>
+  </ul></li>
+  <li><a href="#las-cuatro-dimensiones-del-modelo" id="toc-las-cuatro-dimensiones-del-modelo" class="nav-link" data-scroll-target="#las-cuatro-dimensiones-del-modelo">4. Las cuatro dimensiones del modelo</a></li>
+  <li><a href="#cierre-de-rfm-antesala-del-clustering" id="toc-cierre-de-rfm-antesala-del-clustering" class="nav-link" data-scroll-target="#cierre-de-rfm-antesala-del-clustering">5. Cierre de RFM, antesala del clustering</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -231,8 +252,7 @@ window.Quarto = {
 </header>
 
 
-<div style="text-align: justify">
-<section id="el-rfm-clásico-no-funciona-en-b2b" class="level2">
+<section id="el-rfm-clásico-no-funciona-en-b2b" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="el-rfm-clásico-no-funciona-en-b2b">1. El RFM clásico no funciona en B2B</h2>
 <p>El análisis <strong>RFM</strong> (Recency, Frequency, Monetary) es una técnica clásica de segmentación que evalúa a cada cliente en tres dimensiones:</p>
 <ul>
@@ -252,7 +272,7 @@ window.Quarto = {
 <p><strong>El rumbo que nos hizo tomar</strong>: necesitábamos una <strong>cuarta dimensión</strong> que capturara el ritmo natural de cada cliente individualmente. No basta con saber “cuánto tiempo desde la última compra” — necesitamos saber “cuánto tiempo es <strong>mucho</strong> para este cliente específico”.</p>
 </section>
 </section>
-<section id="la-cuarta-dimensión-cadencia-personalizada" class="level2">
+<section id="la-cuarta-dimensión-cadencia-personalizada" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-cuarta-dimensión-cadencia-personalizada">2. La cuarta dimensión: cadencia personalizada</h2>
 <section id="definición" class="level3">
 <h3 class="anchored" data-anchor-id="definición">2.1 Definición</h3>
@@ -291,7 +311,7 @@ Tip
 </div>
 </section>
 </section>
-<section id="el-ratio-de-urgencia" class="level2">
+<section id="el-ratio-de-urgencia" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="el-ratio-de-urgencia">3. El ratio de urgencia</h2>
 <section id="la-métrica" class="level3">
 <h3 class="anchored" data-anchor-id="la-métrica">3.1 La métrica</h3>
@@ -402,7 +422,7 @@ Figura&nbsp;1: Distribución del ratio de urgencia en clientes recurrentes.
 <p><strong>El rumbo que nos hizo tomar</strong>: los datos del mundo real tienen casos extremos que rompen las fórmulas teóricas. Cualquier métrica derivada (como ratio) debe defenderse contra estos casos en el código, no en el análisis posterior.</p>
 </section>
 </section>
-<section id="las-cuatro-dimensiones-del-modelo" class="level2">
+<section id="las-cuatro-dimensiones-del-modelo" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="las-cuatro-dimensiones-del-modelo">4. Las cuatro dimensiones del modelo</h2>
 <p>Con todo lo anterior, el feature set final para el clustering quedó así:</p>
 <table class="caption-top table">
@@ -443,12 +463,11 @@ Figura&nbsp;1: Distribución del ratio de urgencia en clientes recurrentes.
 <li>Al guardar el modelo, <strong>estas transformaciones viajan con él</strong> y se aplican idénticamente en cada predicción futura.</li>
 </ol>
 </section>
-<section id="cierre-de-rfm-antesala-del-clustering" class="level2">
+<section id="cierre-de-rfm-antesala-del-clustering" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="cierre-de-rfm-antesala-del-clustering">5. Cierre de RFM, antesala del clustering</h2>
 <p>El RFM clásico fue nuestro punto de partida pero no fue donde nos quedamos. Las decisiones de feature engineering tomadas en esta fase — agregar cadencia, manejar single-buyers, defender contra edge cases — son las que permitieron que el algoritmo de clustering descubriera <strong>comportamientos reales</strong> y no artefactos estadísticos.</p>
 <p>En la siguiente sección documentamos cómo K-Means procesó estas cuatro dimensiones y qué cinco perfiles de cliente emergieron.</p>
 </section>
-</div>
 
 
 

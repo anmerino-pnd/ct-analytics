@@ -206,8 +206,35 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#del-feature-set-al-algoritmo" id="toc-del-feature-set-al-algoritmo" class="nav-link active" data-scroll-target="#del-feature-set-al-algoritmo">1. Del feature set al algoritmo</a></li>
+  <li><a href="#elección-del-algoritmo-y-de-k" id="toc-elección-del-algoritmo-y-de-k" class="nav-link" data-scroll-target="#elección-del-algoritmo-y-de-k">2. Elección del algoritmo y de k</a>
+  <ul class="collapse">
+  <li><a href="#k-means-por-qué-y-por-qué-no" id="toc-k-means-por-qué-y-por-qué-no" class="nav-link" data-scroll-target="#k-means-por-qué-y-por-qué-no">2.1 K-Means: por qué y por qué no</a></li>
+  <li><a href="#selección-de-k-con-el-método-del-codo-silhouette" id="toc-selección-de-k-con-el-método-del-codo-silhouette" class="nav-link" data-scroll-target="#selección-de-k-con-el-método-del-codo-silhouette">2.2 Selección de <span class="math inline">\(k\)</span> con el método del codo + Silhouette</a></li>
+  </ul></li>
+  <li><a href="#un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline" id="toc-un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline" class="nav-link" data-scroll-target="#un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline">3. Un bug que casi cambia el modelo: log-transform fuera del pipeline</a>
+  <ul class="collapse">
+  <li><a href="#el-síntoma" id="toc-el-síntoma" class="nav-link" data-scroll-target="#el-síntoma">3.1 El síntoma</a></li>
+  <li><a href="#la-causa" id="toc-la-causa" class="nav-link" data-scroll-target="#la-causa">3.2 La causa</a></li>
+  <li><a href="#el-fix" id="toc-el-fix" class="nav-link" data-scroll-target="#el-fix">3.3 El fix</a></li>
+  </ul></li>
+  <li><a href="#distribución-final-de-segmentos" id="toc-distribución-final-de-segmentos" class="nav-link" data-scroll-target="#distribución-final-de-segmentos">4. Distribución final de segmentos</a>
+  <ul class="collapse">
+  <li><a href="#por-qué-esta-distribución-tiene-sentido" id="toc-por-qué-esta-distribución-tiene-sentido" class="nav-link" data-scroll-target="#por-qué-esta-distribución-tiene-sentido">4.1 Por qué esta distribución tiene sentido</a></li>
+  </ul></li>
+  <li><a href="#perfilando-cada-segmento" id="toc-perfilando-cada-segmento" class="nav-link" data-scroll-target="#perfilando-cada-segmento">5. Perfilando cada segmento</a>
+  <ul class="collapse">
+  <li><a href="#interpretación-de-cada-perfil" id="toc-interpretación-de-cada-perfil" class="nav-link" data-scroll-target="#interpretación-de-cada-perfil">5.1 Interpretación de cada perfil</a></li>
+  <li><a href="#la-diferencia-entre-en-riesgo-y-hibernando" id="toc-la-diferencia-entre-en-riesgo-y-hibernando" class="nav-link" data-scroll-target="#la-diferencia-entre-en-riesgo-y-hibernando">5.2 La diferencia entre En Riesgo y Hibernando</a></li>
+  </ul></li>
+  <li><a href="#persistencia-del-modelo" id="toc-persistencia-del-modelo" class="nav-link" data-scroll-target="#persistencia-del-modelo">6. Persistencia del modelo</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -231,12 +258,11 @@ window.Quarto = {
 </header>
 
 
-<div style="text-align: justify">
-<section id="del-feature-set-al-algoritmo" class="level2">
+<section id="del-feature-set-al-algoritmo" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="del-feature-set-al-algoritmo">1. Del feature set al algoritmo</h2>
 <p>En la fase anterior construimos un dataset con cuatro features por cliente: <code>recency</code>, <code>frequency</code>, <code>monetary</code> y <code>dias_entre_compras</code>. En esta sección documentamos cómo seleccionamos el algoritmo, cómo determinamos <span class="math inline">\(k=5\)</span> matemáticamente, qué cinco perfiles emergieron y un bug temprano que casi nos hace tomar el camino equivocado.</p>
 </section>
-<section id="elección-del-algoritmo-y-de-k" class="level2">
+<section id="elección-del-algoritmo-y-de-k" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="elección-del-algoritmo-y-de-k">2. Elección del algoritmo y de k</h2>
 <section id="k-means-por-qué-y-por-qué-no" class="level3">
 <h3 class="anchored" data-anchor-id="k-means-por-qué-y-por-qué-no">2.1 K-Means: por qué y por qué no</h3>
@@ -315,7 +341,7 @@ Figura&nbsp;1: Método del codo e índice Silhouette para k=2..10.
 <p><strong>El rumbo que nos hizo tomar</strong>: fijar <span class="math inline">\(k=5\)</span> por evidencia cuantitativa, no por intuición de negocio. Esto evita el sesgo de “ya tenemos 4 segmentos en la cabeza, hagamos que el modelo los confirme”.</p>
 </section>
 </section>
-<section id="un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline" class="level2">
+<section id="un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="un-bug-que-casi-cambia-el-modelo-log-transform-fuera-del-pipeline">3. Un bug que casi cambia el modelo: log-transform fuera del pipeline</h2>
 <p>Antes de mostrarte la distribución final, vale la pena documentar un error temprano que detectamos gracias a los quality checks del pipeline. Es la mejor anécdota de por qué la productización importa.</p>
 <section id="el-síntoma" class="level3">
@@ -357,7 +383,7 @@ Tip
 </div>
 </section>
 </section>
-<section id="distribución-final-de-segmentos" class="level2">
+<section id="distribución-final-de-segmentos" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="distribución-final-de-segmentos">4. Distribución final de segmentos</h2>
 <p>Con el log-transform correctamente encapsulado, el modelo <code>v1</code> produjo la siguiente distribución:</p>
 <div id="cell-fig-distribucion-final" class="cell" data-execution_count="2">
@@ -416,7 +442,7 @@ Figura&nbsp;2: Distribución final de los 18,638 clientes en 5 segmentos.
 </ol>
 </section>
 </section>
-<section id="perfilando-cada-segmento" class="level2">
+<section id="perfilando-cada-segmento" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="perfilando-cada-segmento">5. Perfilando cada segmento</h2>
 <p>Cada cluster tiene un centroide en 4D (después de log y scale). Para interpretarlos, recalculamos las medianas en las escalas originales:</p>
 <table class="caption-top table">
@@ -503,7 +529,7 @@ Figura&nbsp;2: Distribución final de los 18,638 clientes en 5 segmentos.
 <p><strong>El rumbo que nos hizo tomar</strong>: la segmentación no es solo descriptiva. Cada segmento tiene una estrategia accionable asociada, y el dashboard expone esas acciones (la vista de Alertas vive arriba del segmento En Riesgo, no de Hibernando).</p>
 </section>
 </section>
-<section id="persistencia-del-modelo" class="level2">
+<section id="persistencia-del-modelo" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="persistencia-del-modelo">6. Persistencia del modelo</h2>
 <p>Una vez validada la distribución, el modelo <code>v1</code> se congeló:</p>
 <ul>
@@ -514,7 +540,6 @@ Figura&nbsp;2: Distribución final de los 18,638 clientes en 5 segmentos.
 <p>El snapshot es la base para detección de drift: cada vez que el pipeline reasigna segmentos, compara la distribución actual contra el snapshot. Cambios mayores indican que los hábitos de compra se desplazaron y el modelo debería re-entrenarse (versión <code>v2</code>).</p>
 <p>Los detalles técnicos de persistencia y drift los documentamos en la sección <strong>“De investigación a producción”</strong>.</p>
 </section>
-</div>
 
 
 

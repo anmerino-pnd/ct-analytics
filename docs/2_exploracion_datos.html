@@ -177,8 +177,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#la-base-transaccional" id="toc-la-base-transaccional" class="nav-link active" data-scroll-target="#la-base-transaccional">1. La base transaccional</a>
+  <ul class="collapse">
+  <li><a href="#cifras-del-universo-analizado" id="toc-cifras-del-universo-analizado" class="nav-link" data-scroll-target="#cifras-del-universo-analizado">1.1 Cifras del universo analizado</a></li>
+  </ul></li>
+  <li><a href="#tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis" id="toc-tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis" class="nav-link" data-scroll-target="#tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis">2. Tres descubrimientos que cambiaron el rumbo del análisis</a>
+  <ul class="collapse">
+  <li><a href="#distribución-log-normal-extrema-del-ticket" id="toc-distribución-log-normal-extrema-del-ticket" class="nav-link" data-scroll-target="#distribución-log-normal-extrema-del-ticket">2.1 Distribución log-normal extrema del ticket</a></li>
+  <li><a href="#concentración-del-revenue-principio-de-pareto" id="toc-concentración-del-revenue-principio-de-pareto" class="nav-link" data-scroll-target="#concentración-del-revenue-principio-de-pareto">2.2 Concentración del revenue: principio de Pareto</a></li>
+  <li><a href="#el-problema-de-las-claves-908-familias-en-lugar-de-30000-skus" id="toc-el-problema-de-las-claves-908-familias-en-lugar-de-30000-skus" class="nav-link" data-scroll-target="#el-problema-de-las-claves-908-familias-en-lugar-de-30000-skus">2.3 El problema de las claves: 908 familias en lugar de 30,000 SKUs</a></li>
+  </ul></li>
+  <li><a href="#calidad-y-limpieza-de-datos" id="toc-calidad-y-limpieza-de-datos" class="nav-link" data-scroll-target="#calidad-y-limpieza-de-datos">3. Calidad y limpieza de datos</a>
+  <ul class="collapse">
+  <li><a href="#el-cargo-financiero-cargo100" id="toc-el-cargo-financiero-cargo100" class="nav-link" data-scroll-target="#el-cargo-financiero-cargo100">3.1 El cargo financiero CARGO100</a></li>
+  <li><a href="#validación-de-calidad-sistemática" id="toc-validación-de-calidad-sistemática" class="nav-link" data-scroll-target="#validación-de-calidad-sistemática">3.2 Validación de calidad sistemática</a></li>
+  </ul></li>
+  <li><a href="#lo-que-aprendimos-en-esta-fase" id="toc-lo-que-aprendimos-en-esta-fase" class="nav-link" data-scroll-target="#lo-que-aprendimos-en-esta-fase">4. Lo que aprendimos en esta fase</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -202,8 +223,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div style="text-align: justify">
-<section id="la-base-transaccional" class="level2">
+<section id="la-base-transaccional" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="la-base-transaccional">1. La base transaccional</h2>
 <p>Esta fase del proyecto consistió en levantar la primera fotografía completa de la base transaccional de CT Internacional para definir el alcance real del análisis y detectar problemas estructurales antes de cualquier modelado.</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -258,7 +278,7 @@ Nota
 <p>La elección de ventana de 30 meses no fue arbitraria. Es lo suficientemente larga para capturar dos ciclos estacionales completos (Buen Fin, cierres fiscales) pero corta como para que no incluyamos comportamiento de clientes que ya no son relevantes para el negocio actual.</p>
 </section>
 </section>
-<section id="tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis" class="level2">
+<section id="tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="tres-descubrimientos-que-cambiaron-el-rumbo-del-análisis">2. Tres descubrimientos que cambiaron el rumbo del análisis</h2>
 <section id="distribución-log-normal-extrema-del-ticket" class="level3">
 <h3 class="anchored" data-anchor-id="distribución-log-normal-extrema-del-ticket">2.1 Distribución log-normal extrema del ticket</h3>
@@ -415,7 +435,7 @@ Figura&nbsp;3: Reducción dramática de cardinalidad: de SKUs únicos a familias
 <p><strong>El rumbo que nos hizo tomar</strong>: con 908 familias en lugar de 30,000 SKUs, el MBA pasó de “matemáticamente imposible” a “produce ~3,800 reglas accionables”. Esta es la diferencia entre tener análisis o no tenerlo. La función <code>derivar_familia()</code> quedó como parte del módulo <code>analytics/familia.py</code> del pipeline.</p>
 </section>
 </section>
-<section id="calidad-y-limpieza-de-datos" class="level2">
+<section id="calidad-y-limpieza-de-datos" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="calidad-y-limpieza-de-datos">3. Calidad y limpieza de datos</h2>
 <section id="el-cargo-financiero-cargo100" class="level3">
 <h3 class="anchored" data-anchor-id="el-cargo-financiero-cargo100">3.1 El cargo financiero CARGO100</h3>
@@ -439,7 +459,7 @@ Figura&nbsp;3: Reducción dramática de cardinalidad: de SKUs únicos a familias
 <p><strong>El rumbo que nos hizo tomar</strong>: estas validaciones automáticas evitaron varios bugs durante el desarrollo. Por ejemplo, una versión preliminar del pipeline tenía un dedup defectuoso que perdía millones de items; el quality check del cross-check temporalidad-RFM marcó la inconsistencia antes de que llegara a producción.</p>
 </section>
 </section>
-<section id="lo-que-aprendimos-en-esta-fase" class="level2">
+<section id="lo-que-aprendimos-en-esta-fase" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="lo-que-aprendimos-en-esta-fase">4. Lo que aprendimos en esta fase</h2>
 <p>Esta fase parecía rutinaria — “explorar los datos antes de modelar” — pero generó tres de las decisiones más importantes del proyecto entero:</p>
 <ol type="1">
@@ -449,7 +469,6 @@ Figura&nbsp;3: Reducción dramática de cardinalidad: de SKUs únicos a familias
 </ol>
 <p>Las tres decisiones quedaron codificadas en el pipeline como código, no como notas. Esto significa que cualquier desarrollador futuro las aplica automáticamente sin tener que recordarlas.</p>
 </section>
-</div>
 
 
 

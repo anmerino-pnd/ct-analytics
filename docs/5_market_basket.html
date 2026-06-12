@@ -209,8 +209,37 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#reglas-de-asociación-por-segmento" id="toc-reglas-de-asociación-por-segmento" class="nav-link active" data-scroll-target="#reglas-de-asociación-por-segmento">1. Reglas de asociación por segmento</a>
+  <ul class="collapse">
+  <li><a href="#por-qué-segmentado-y-no-global" id="toc-por-qué-segmentado-y-no-global" class="nav-link" data-scroll-target="#por-qué-segmentado-y-no-global">1.1 Por qué segmentado y no global</a></li>
+  <li><a href="#umbral-adaptativo-de-support" id="toc-umbral-adaptativo-de-support" class="nav-link" data-scroll-target="#umbral-adaptativo-de-support">1.2 Umbral adaptativo de support</a></li>
+  </ul></li>
+  <li><a href="#el-market-basket-opportunity-map" id="toc-el-market-basket-opportunity-map" class="nav-link" data-scroll-target="#el-market-basket-opportunity-map">2. El Market Basket Opportunity Map</a>
+  <ul class="collapse">
+  <li><a href="#cuatro-cuadrantes-de-oportunidad" id="toc-cuatro-cuadrantes-de-oportunidad" class="nav-link" data-scroll-target="#cuatro-cuadrantes-de-oportunidad">2.1 Cuatro cuadrantes de oportunidad</a></li>
+  <li><a href="#cómo-se-lee-el-mapa" id="toc-cómo-se-lee-el-mapa" class="nav-link" data-scroll-target="#cómo-se-lee-el-mapa">2.2 Cómo se lee el mapa</a></li>
+  <li><a href="#la-tabla-detallada" id="toc-la-tabla-detallada" class="nav-link" data-scroll-target="#la-tabla-detallada">2.3 La tabla detallada</a></li>
+  </ul></li>
+  <li><a href="#tres-tipos-de-reglas-que-producimos" id="toc-tres-tipos-de-reglas-que-producimos" class="nav-link" data-scroll-target="#tres-tipos-de-reglas-que-producimos">3. Tres tipos de reglas que producimos</a>
+  <ul class="collapse">
+  <li><a href="#mba_por_segmento.parquet-vista-exploratoria" id="toc-mba_por_segmento.parquet-vista-exploratoria" class="nav-link" data-scroll-target="#mba_por_segmento.parquet-vista-exploratoria">3.1 <code>mba_por_segmento.parquet</code> — Vista exploratoria</a></li>
+  <li><a href="#mba_accionables.parquet-vista-marketing" id="toc-mba_accionables.parquet-vista-marketing" class="nav-link" data-scroll-target="#mba_accionables.parquet-vista-marketing">3.2 <code>mba_accionables.parquet</code> — Vista marketing</a></li>
+  <li><a href="#mba_exclusivas.parquet-reglas-únicas-por-segmento" id="toc-mba_exclusivas.parquet-reglas-únicas-por-segmento" class="nav-link" data-scroll-target="#mba_exclusivas.parquet-reglas-únicas-por-segmento">3.3 <code>mba_exclusivas.parquet</code> — Reglas únicas por segmento</a></li>
+  </ul></li>
+  <li><a href="#ejemplos-ilustrativos-del-mapa" id="toc-ejemplos-ilustrativos-del-mapa" class="nav-link" data-scroll-target="#ejemplos-ilustrativos-del-mapa">4. Ejemplos ilustrativos del mapa</a>
+  <ul class="collapse">
+  <li><a href="#oportunidad-fuerte-en-mvps" id="toc-oportunidad-fuerte-en-mvps" class="nav-link" data-scroll-target="#oportunidad-fuerte-en-mvps">4.1 Oportunidad fuerte en MVPs</a></li>
+  <li><a href="#nicho-interesante-en-en-riesgo" id="toc-nicho-interesante-en-en-riesgo" class="nav-link" data-scroll-target="#nicho-interesante-en-en-riesgo">4.2 Nicho interesante en En Riesgo</a></li>
+  <li><a href="#co-compra-frecuente-en-alto-valor" id="toc-co-compra-frecuente-en-alto-valor" class="nav-link" data-scroll-target="#co-compra-frecuente-en-alto-valor">4.3 Co-compra frecuente en Alto Valor</a></li>
+  </ul></li>
+  <li><a href="#lo-que-el-mba-segmentado-nos-enseñó" id="toc-lo-que-el-mba-segmentado-nos-enseñó" class="nav-link" data-scroll-target="#lo-que-el-mba-segmentado-nos-enseñó">5. Lo que el MBA segmentado nos enseñó</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -234,8 +263,7 @@ window.Quarto = {
 </header>
 
 
-<div style="text-align: justify">
-<section id="reglas-de-asociación-por-segmento" class="level2">
+<section id="reglas-de-asociación-por-segmento" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="reglas-de-asociación-por-segmento">1. Reglas de asociación por segmento</h2>
 <p>El <strong>Market Basket Analysis (MBA)</strong> descubre qué productos se compran juntos en una misma orden. La técnica clásica produce reglas del tipo “quien compró A también compró B” con tres métricas asociadas: support, confidence y lift.</p>
 <p>En este proyecto aplicamos MBA con una variante importante: <strong>lo corremos por segmento, no sobre todo el universo combinado</strong>. Esta decisión cambió radicalmente el tipo de reglas que emergen.</p>
@@ -338,7 +366,7 @@ Tabla&nbsp;1: Reglas generadas por segmento (pipeline weekly)
 <p><strong>El rumbo que nos hizo tomar</strong>: este umbral adaptativo permitió que el segmento Hibernando produjera 35 reglas. Sin él, hubiera producido cero. Ahora marketing tiene reglas accionables incluso para clientes en hibernación.</p>
 </section>
 </section>
-<section id="el-market-basket-opportunity-map" class="level2">
+<section id="el-market-basket-opportunity-map" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="el-market-basket-opportunity-map">2. El Market Basket Opportunity Map</h2>
 <section id="cuatro-cuadrantes-de-oportunidad" class="level3">
 <h3 class="anchored" data-anchor-id="cuatro-cuadrantes-de-oportunidad">2.1 Cuatro cuadrantes de oportunidad</h3>
@@ -467,7 +495,7 @@ Figura&nbsp;1: Market Basket Opportunity Map: distribución de reglas en los 4 c
 <p>Debajo del mapa, el dashboard expone una tabla con todas las reglas filtradas por <code>confidence &gt; 30%</code> y <code>lift &gt; 1.5</code>. La ordenamos por <strong>lift descendente</strong>, no por confidence. La razón es que confidence alta puede ser engañosa: si un producto se vende en el 90% de los pedidos, cualquier regla que lo incluya tendrá confidence alta. Lift, en cambio, te dice qué tan inusual es la asociación vs el azar — esa es la información accionable.</p>
 </section>
 </section>
-<section id="tres-tipos-de-reglas-que-producimos" class="level2">
+<section id="tres-tipos-de-reglas-que-producimos" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="tres-tipos-de-reglas-que-producimos">3. Tres tipos de reglas que producimos</h2>
 <p>El pipeline genera tres parquets distintos con diferentes propósitos:</p>
 <section id="mba_por_segmento.parquet-vista-exploratoria" class="level3">
@@ -566,7 +594,7 @@ Tabla&nbsp;2: Inventario de reglas según tipo (pipeline weekly)
 </div>
 </section>
 </section>
-<section id="ejemplos-ilustrativos-del-mapa" class="level2">
+<section id="ejemplos-ilustrativos-del-mapa" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="ejemplos-ilustrativos-del-mapa">4. Ejemplos ilustrativos del mapa</h2>
 <p>Para no exponer claves reales del catálogo, los siguientes ejemplos usan familias ofuscadas. La estructura, los lifts y las confidences son auténticos de las reglas que produjo el pipeline.</p>
 <section id="oportunidad-fuerte-en-mvps" class="level3">
@@ -600,7 +628,7 @@ Support: 1,752 pedidos</code></pre>
 <p><strong>Acción de marketing</strong>: no requiere campaña activa. Es información para optimizar el catálogo (mostrar variantes juntas en la página de producto) y para forecasting de inventario (pedir variantes en proporciones consistentes).</p>
 </section>
 </section>
-<section id="lo-que-el-mba-segmentado-nos-enseñó" class="level2">
+<section id="lo-que-el-mba-segmentado-nos-enseñó" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="lo-que-el-mba-segmentado-nos-enseñó">5. Lo que el MBA segmentado nos enseñó</h2>
 <p>Tres conclusiones que orientaron el resto del proyecto:</p>
 <ol type="1">
@@ -610,7 +638,6 @@ Support: 1,752 pedidos</code></pre>
 </ol>
 <p>En la siguiente sección documentamos cómo cruzamos estas reglas con el <strong>eje temporal</strong> para descubrir cuándo se materializa cada bundle.</p>
 </section>
-</div>
 
 
 

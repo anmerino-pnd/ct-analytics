@@ -9,7 +9,7 @@ author:
     email: "acedeno00@gmail.com"
     url: "https://www.linkedin.com/in/anmerino-pnd"
     affiliations:
-        - name : "[📄 CV](https://unisonmx-my.sharepoint.com/:w:/g/personal/a218204710_unison_mx/EYLVn5p-js9Hh7hr8HmUKOgBZq5L1wHwtZzyjEZG_SeUGA?e=Q7U9pP)"
+        - name : "[📄 CV](https://docs.google.com/document/d/1bPJBc2WOGYZBIv6eyDXUrEm27WVeQLJP/edit?usp=sharing&ouid=113551267922364851191&rtpof=true&sd=true)"
   - name: "Gerardo Leyva Conde"
   - name: "Roberto Navarro Bartolini"
   - name: "Abraham Rojo Salazar"

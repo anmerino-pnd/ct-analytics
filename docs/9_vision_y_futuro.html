@@ -143,8 +143,28 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Tabla de Contenidos</h2>
+   
+  <ul>
+  <li><a href="#lo-que-se-completó" id="toc-lo-que-se-completó" class="nav-link active" data-scroll-target="#lo-que-se-completó">1. Lo que se completó</a></li>
+  <li><a href="#iteración-inmediata-cosas-pendientes-de-la-versión-actual" id="toc-iteración-inmediata-cosas-pendientes-de-la-versión-actual" class="nav-link" data-scroll-target="#iteración-inmediata-cosas-pendientes-de-la-versión-actual">2. Iteración inmediata: cosas pendientes de la versión actual</a>
+  <ul class="collapse">
+  <li><a href="#sesión-de-validación-con-marketing" id="toc-sesión-de-validación-con-marketing" class="nav-link" data-scroll-target="#sesión-de-validación-con-marketing">2.1 Sesión de validación con marketing</a></li>
+  <li><a href="#cicd-con-github-actions" id="toc-cicd-con-github-actions" class="nav-link" data-scroll-target="#cicd-con-github-actions">2.2 CI/CD con GitHub Actions</a></li>
+  <li><a href="#drift-monitoring-activo" id="toc-drift-monitoring-activo" class="nav-link" data-scroll-target="#drift-monitoring-activo">2.3 Drift monitoring activo</a></li>
+  </ul></li>
+  <li><a href="#hoja-de-ruta-a-mediano-plazo" id="toc-hoja-de-ruta-a-mediano-plazo" class="nav-link" data-scroll-target="#hoja-de-ruta-a-mediano-plazo">3. Hoja de ruta a mediano plazo</a>
+  <ul class="collapse">
+  <li><a href="#pronóstico-de-demanda-por-segmento" id="toc-pronóstico-de-demanda-por-segmento" class="nav-link" data-scroll-target="#pronóstico-de-demanda-por-segmento">3.1 Pronóstico de demanda por segmento</a></li>
+  <li><a href="#customer-lifetime-value-clv-predictivo" id="toc-customer-lifetime-value-clv-predictivo" class="nav-link" data-scroll-target="#customer-lifetime-value-clv-predictivo">3.2 Customer Lifetime Value (CLV) predictivo</a></li>
+  <li><a href="#sistema-de-recomendación-integrado" id="toc-sistema-de-recomendación-integrado" class="nav-link" data-scroll-target="#sistema-de-recomendación-integrado">3.3 Sistema de recomendación integrado</a></li>
+  <li><a href="#mlflow-para-tracking-de-experimentos" id="toc-mlflow-para-tracking-de-experimentos" class="nav-link" data-scroll-target="#mlflow-para-tracking-de-experimentos">3.4 MLFlow para tracking de experimentos</a></li>
+  </ul></li>
+  <li><a href="#reflexión-final" id="toc-reflexión-final" class="nav-link" data-scroll-target="#reflexión-final">4. Reflexión final</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -168,8 +188,7 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<div style="text-align: justify">
-<section id="lo-que-se-completó" class="level2">
+<section id="lo-que-se-completó" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="lo-que-se-completó">1. Lo que se completó</h2>
 <p>Con el dashboard Pulse desplegado en el servidor de CT y el pipeline ETL corriendo diariamente, cerramos la primera iteración de Customer Intelligence. La plataforma transita por los cuatro niveles clásicos de madurez analítica:</p>
 <table class="caption-top table">
@@ -216,7 +235,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Las decisiones técnicas (filtrado de cargos no-producto, manejo de timezone, fórmula de ratio para alertas) están documentadas y validadas con tests automáticos.</li>
 </ul>
 </section>
-<section id="iteración-inmediata-cosas-pendientes-de-la-versión-actual" class="level2">
+<section id="iteración-inmediata-cosas-pendientes-de-la-versión-actual" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="iteración-inmediata-cosas-pendientes-de-la-versión-actual">2. Iteración inmediata: cosas pendientes de la versión actual</h2>
 <p>Antes de pasar a fases nuevas, hay un trabajo de pulido que vale la pena hacer una vez que marketing use Pulse en producción durante algunas semanas. Esto sale del feedback real, no de adivinanzas:</p>
 <section id="sesión-de-validación-con-marketing" class="level3">
@@ -250,7 +269,7 @@ ul.task-list li input[type="checkbox"] {
 </ul>
 </section>
 </section>
-<section id="hoja-de-ruta-a-mediano-plazo" class="level2">
+<section id="hoja-de-ruta-a-mediano-plazo" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="hoja-de-ruta-a-mediano-plazo">3. Hoja de ruta a mediano plazo</h2>
 <p>Estas son las fases siguientes una vez Pulse esté validado y operando con CI/CD.</p>
 <section id="pronóstico-de-demanda-por-segmento" class="level3">
@@ -294,12 +313,11 @@ ul.task-list li input[type="checkbox"] {
 <p>Hoy no se justifica (un modelo, una versión congelada). Se justifica cuando tengamos 3-4 modelos productivos.</p>
 </section>
 </section>
-<section id="reflexión-final" class="level2">
+<section id="reflexión-final" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="reflexión-final">4. Reflexión final</h2>
 <p>La diferencia entre un proyecto de Data Science que <strong>genera valor</strong> y uno que <strong>genera reportes</strong> está en la productización. Pulse no es un notebook: es un servicio que corre día a día, consume datos frescos, se mantiene solo y entrega información directamente al equipo que la usa.</p>
 <p>Cada iteración futura debe pasar por esa prueba: <strong>¿esto se usa, o solo se ve bonito en una presentación?</strong></p>
 </section>
-</div>
 
 
 
