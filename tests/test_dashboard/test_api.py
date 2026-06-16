@@ -173,7 +173,14 @@ def test_cliente_drilldown_inexistente_devuelve_404(client) -> None:
     assert "no encontrado" in r.json()["detail"].lower()
 
 
-def test_cliente_pedidos_limitados_a_50(client, cliente_real: str) -> None:
-    """El endpoint cap a 50 pedidos por cliente (SPEC §6.4)."""
+def test_cliente_pedidos_historial_completo(client, cliente_real: str) -> None:
+    """El endpoint devuelve el historial completo (sin cap), en orden cronológico,
+    con num_productos (únicos) y unidades_totales por pedido."""
     d = client.get(f"/api/cliente/{cliente_real}").json()
-    assert len(d["pedidos"]) <= 50
+    pedidos = d["pedidos"]
+    assert len(pedidos) >= 1
+    for o in pedidos:
+        assert "num_productos" in o
+        assert o["unidades_totales"] >= 0
+    fechas = [o["fecha"] for o in pedidos]
+    assert fechas == sorted(fechas), "los pedidos deben venir en orden cronológico ascendente"

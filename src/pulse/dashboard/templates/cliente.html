@@ -54,22 +54,8 @@
 
   <section class="chart-card">
     <h2>Historial de pedidos</h2>
+    <p class="subtitle">Todo el histórico del cliente. Pasa el cursor sobre cada punto para ver fecha, monto, productos únicos y unidades.</p>
     <div id="line-pedidos" class="chart"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Últimos 50 pedidos</h2>
-    <table class="data-table" id="tabla-pedidos">
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Fecha</th>
-          <th>Pago total</th>
-          <th>N° productos</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </section>
 
   <section class="chart-card">
@@ -130,9 +116,9 @@
   <summary>¿Qué estoy viendo?</summary>
   <div class="explainer-content">
     <p><strong>Pregunta de negocio:</strong> Cuéntame todo lo que sabes sobre este cliente.</p>
-    <p><strong>Cómo leer esto:</strong> El header muestra el segmento asignado y si es single-buyer. Las KPI cards son las métricas RFM básicas. El historial es una serie temporal con el monto de cada pedido. El scatter al final ubica al cliente (punto coloreado) dentro de los demás clientes de su segmento (puntos grises) usando recency y monetary.</p>
+    <p><strong>Cómo leer esto:</strong> El header muestra el segmento asignado y si es single-buyer. Las KPI cards son las métricas RFM básicas. El historial es una serie temporal con el monto de cada pedido (todo el histórico); el hover detalla fecha, monto, productos únicos y unidades. El scatter al final ubica al cliente (punto coloreado) dentro de los demás clientes de su segmento (puntos grises) usando recency y monetary.</p>
     <p><strong>Acciones sugeridas:</strong> Si el cliente está por encima del centro de su segmento en monetary, vale la pena un trato VIP. Si su recency creció demasiado, es candidato a campaña de reactivación.</p>
-    <p><strong>Notas técnicas:</strong> El monetary se grafica en log para acomodar el sesgo (3 órdenes de magnitud típicos). Los últimos 50 pedidos se traen ordenados por fecha descendente.</p>
+    <p><strong>Notas técnicas:</strong> El monetary se grafica en log para acomodar el sesgo (3 órdenes de magnitud típicos). "Productos únicos" es el número de familias/claves distintas del pedido; "unidades" es la suma de cantidades (excluye el cargo CARGO100).</p>
   </div>
 </details>
 
@@ -174,19 +160,6 @@
       document.getElementById('kpi-c-cadencia').textContent  = fmtNum(p.dias_entre_compras, 1);
 
       PulseCharts.renderClientePedidos('line-pedidos', data.pedidos);
-
-      const tbody = document.querySelector('#tabla-pedidos tbody');
-      tbody.innerHTML = '';
-      data.pedidos.forEach(o => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><code>${o.order_id}</code></td>
-          <td>${o.fecha}</td>
-          <td>${fmtMoneda(o.pago_total)}</td>
-          <td>${fmtNum(o.num_productos)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
 
       PulseCharts.renderScatterCliente('scatter-posicion', data.posicion, p.segmento);
 

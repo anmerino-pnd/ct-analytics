@@ -274,14 +274,6 @@ details.explainer .explainer-content p { margin: 0 0 8px 0; }
   font-size: 13px;
 }
 
-/* ─── Heatmap grid (estacionalidad multi-segmento) ────────── */
-.heatmap-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.heatmap-grid .chart-card { margin-bottom: 0; }
-
 /* ─── Badge segmento (cliente view) ───────────────────────── */
 .badge {
   display: inline-block;

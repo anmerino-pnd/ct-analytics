@@ -290,36 +290,56 @@ window.PulseCharts = (function () {
     Plotly.react(elId, traces, layout, CONFIG_BASE);
   }
 
-  // ─── Heatmap hora × día por segmento ────────────────────────────
-  function renderHeatmapHoraDia(elId, rows, segmento) {
-    // rows filtradas a UN solo segmento
-    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    const horas = [...Array(24).keys()];
-    const z = dias.map((_, d) => horas.map(() => 0));
-    rows.forEach(r => {
-      const di = r.dia_semana;
-      const hi = r.hora;
-      if (di >= 0 && di < 7 && hi >= 0 && hi < 24) {
-        z[di][hi] = r.pct * 100;
-      }
+  // ─── Líneas de estacionalidad (% del segmento) ──────────────────
+  // Reemplazan los heatmaps hora×día. Consumen el mismo payload
+  // (temporalidad_hora_dia): {segmento, dia_semana, dia_nombre, hora, pct},
+  // donde `pct` es fracción (0-1) que suma 1 por segmento sobre hora×día.
+  // Se agrega por la clave pedida → % del segmento, una línea por segmento.
+  function _lineasEstacional(elId, rows, opts) {
+    const orden = window.SEGMENT_ORDER || [];
+    const segmentos = orden.filter(s => rows.some(r => r.segmento === s));
+    const traces = segmentos.map(seg => {
+      const acc = {};
+      rows.filter(r => r.segmento === seg).forEach(r => {
+        const k = r[opts.clave];
+        acc[k] = (acc[k] || 0) + (r.pct || 0);
+      });
+      return {
+        type: 'scatter', mode: 'lines+markers',
+        name: seg,
+        x: opts.xLabels || opts.xCategorias,
+        y: opts.xCategorias.map(k => (acc[k] || 0) * 100),
+        line: { color: colorOf(seg), width: 2.2 },
+        marker: { size: 5 },
+        hovertemplate: '%{x}<br>%{y:.1f}% del segmento<extra>' + seg + '</extra>',
+      };
     });
-    const trace = {
-      type: 'heatmap',
-      z, x: horas, y: dias,
-      colorscale: [[0, '#f7f7f7'], [1, colorOf(segmento)]],
-      hovertemplate: '%{y} %{x}:00<br>%{z:.2f}% del segmento<extra></extra>',
-      colorbar: { thickness: 10, len: 0.8, tickformat: '.2f', ticksuffix: '%' },
-    };
     const layout = Object.assign({}, LAYOUT_BASE, {
-      template: 'plotly',  // heatmap: conserva el template default (excluido del tema global)
-      title: { text: segmento, font: { size: 14 } },
-      xaxis: { title: 'Hora', dtick: 2, tickfont: { size: 11 } },
-      yaxis: { autorange: 'reversed', tickfont: { size: 11 } },
-      showlegend: false,
-      height: 280,
-      margin: { t: 40, r: 20, b: 40, l: 80 },
+      xaxis: Object.assign({ title: opts.etiquetaEje, tickangle: 0 }, opts.xaxis || {}),
+      yaxis: { title: '% del segmento', ticksuffix: '%' },
+      hovermode: 'closest',
+      margin: { t: 20, r: 20, b: 50, l: 60 },
     });
-    Plotly.react(elId, [trace], layout, CONFIG_BASE);
+    Plotly.react(elId, traces, layout, CONFIG_BASE);
+  }
+
+  function renderLineHora(elId, rows) {
+    _lineasEstacional(elId, rows, {
+      clave: 'hora',
+      xCategorias: [...Array(24).keys()],
+      etiquetaEje: 'Hora del día (local CDMX)',
+      xaxis: { dtick: 2 },
+    });
+  }
+
+  function renderLineDiaSemana(elId, rows) {
+    _lineasEstacional(elId, rows, {
+      clave: 'dia_semana',
+      xCategorias: [0, 1, 2, 3, 4, 5, 6],
+      xLabels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+      etiquetaEje: '',
+      xaxis: { type: 'category' },
+    });
   }
 
   // ─── Line chart mensual ─────────────────────────────────────────
@@ -518,8 +538,11 @@ window.PulseCharts = (function () {
       y: pedidos.map(p => p.pago_total),
       marker: { size: 7, color: '#0B3C5D' },
       line: { color: '#0B3C5D', width: 1 },
-      hovertemplate: '%{x}<br>$%{y:,.0f}<br>%{customdata} productos<extra></extra>',
-      customdata: pedidos.map(p => p.num_productos),
+      hovertemplate:
+        '%{x|%d %b %Y}<br>$%{y:,.0f}' +
+        '<br>%{customdata[0]:,} productos únicos' +
+        '<br>%{customdata[1]:,} unidades<extra></extra>',
+      customdata: pedidos.map(p => [p.num_productos, p.unidades_totales]),
     };
     const layout = Object.assign({}, LAYOUT_BASE, {
       xaxis: { title: '', type: 'date', tickangle: 0, dtick: 'M6', tickformat: '%b %y' },
@@ -596,45 +619,53 @@ window.PulseCharts = (function () {
     Plotly.react(elId, traces, layout, CONFIG_BASE);
   }
 
-  // ─── Heatmap bundles × meses ────────────────────────────────────
-  function renderHeatmapBundles(elId, rows, segmento) {
-    // rows: [{regla, ano_mes, pedidos, revenue}]
-    const reglas = [...new Set(rows.map(r => r.regla))];
-    const meses  = [...new Set(rows.map(r => r.ano_mes))].sort();
-    const idxR = Object.fromEntries(reglas.map((r, i) => [r, i]));
-    const idxM = Object.fromEntries(meses.map((m, i) => [m, i]));
-    const z = reglas.map(() => meses.map(() => 0));
-    const rev = reglas.map(() => meses.map(() => 0));
-    rows.forEach(r => {
-      z[idxR[r.regla]][idxM[r.ano_mes]] = r.pedidos;
-      rev[idxR[r.regla]][idxM[r.ano_mes]] = r.revenue;
-    });
+  // ─── Líneas: evolución mensual de bundles ───────────────────────
+  // Paleta categórica por bundle (no por segmento: todos son del mismo segmento).
+  const BUNDLE_PALETTE = [
+    '#0B3C5D', '#328CC1', '#D82822', '#1B998B', '#E07A5F',
+    '#6A4C93', '#F2A104', '#3D5A80', '#9AA0A6', '#8338EC',
+  ];
 
-    const trace = {
-      type: 'heatmap',
-      z, x: meses, y: reglas,
-      customdata: rev,
-      colorscale: [[0, '#f7f7f7'], [1, colorOf(segmento)]],
-      hovertemplate: '%{y}<br>%{x}<br>%{z:,} pedidos<br>$%{customdata:,.0f} revenue<extra></extra>',
-      colorbar: { thickness: 10, len: 0.8 },
-    };
-    const layout = Object.assign({}, LAYOUT_BASE, {
-      template: 'plotly',  // heatmap: conserva el template default (excluido del tema global)
-      xaxis: { title: 'Año-Mes', type: 'category' },
-      yaxis: { autorange: 'reversed', automargin: true, tickfont: { size: 11 } },
-      margin: { t: 30, r: 20, b: 60, l: 180 },
-      height: Math.max(320, 26 * reglas.length + 80),
-      showlegend: false,
+  // serie: [{regla, ano_mes, pedidos, revenue}]. `activos` = reglas a mostrar.
+  // El color de cada regla es estable (según su orden en la serie completa),
+  // así no cambia al activar/desactivar otras.
+  function renderLineBundles(elId, serie, activos) {
+    const todas = [...new Set(serie.map(r => r.regla))];
+    const colorIdx = {};
+    todas.forEach((rg, i) => { colorIdx[rg] = i; });
+    const reglas = (activos && activos.length) ? activos : todas;
+
+    const traces = reglas.map(rg => {
+      const pts = serie
+        .filter(r => r.regla === rg)
+        .sort((a, b) => (a.ano_mes < b.ano_mes ? -1 : 1));
+      return {
+        type: 'scatter', mode: 'lines+markers',
+        name: rg,
+        x: pts.map(r => r.ano_mes + '-01'),
+        y: pts.map(r => r.pedidos),
+        customdata: pts.map(r => r.revenue),
+        line: { color: BUNDLE_PALETTE[colorIdx[rg] % BUNDLE_PALETTE.length], width: 2 },
+        marker: { size: 5 },
+        hovertemplate:
+          '%{x|%b %Y}<br>%{y:,} pedidos<br>$%{customdata:,.0f} revenue<extra>' + rg + '</extra>',
+      };
     });
-    Plotly.react(elId, [trace], layout, CONFIG_BASE);
+    const layout = Object.assign({}, LAYOUT_BASE, {
+      xaxis: { title: '', type: 'date', tickangle: 0, dtick: 'M6', tickformat: '%b %y' },
+      yaxis: { title: 'Pedidos', tickformat: ',.0f' },
+      legend: { orientation: 'h', y: -0.18 },
+      margin: { t: 20, r: 20, b: 80, l: 60 },
+    });
+    Plotly.react(elId, traces, layout, CONFIG_BASE);
   }
 
   return {
     LAYOUT_BASE, CONFIG_BASE, colorOf, orderSegmentos,
     renderDonut, renderBarRevenue, renderBarBundles, renderScatterBundles,
-    renderHeatmapHoraDia, renderLineMensual, renderBarMesCalendario,
+    renderLineHora, renderLineDiaSemana, renderLineMensual, renderBarMesCalendario,
     renderEvolucionDiaria, renderKpisVariacion,
     renderScatterCliente, renderClientePedidos, renderScatterAlertas,
-    renderRadar, renderBoxMonetary, renderHeatmapBundles,
+    renderRadar, renderBoxMonetary, renderLineBundles,
   };
 })();
