@@ -37,7 +37,7 @@ El alcance no es teórico. El sistema corre hoy sobre un servidor on-premise, ej
 **Capa de productización**
 
 - **Pipeline ETL modular** con ingesta incremental desde MongoDB, watermarks, validaciones de calidad cruzadas, manejo de drift y outputs persistidos en Parquet.
-- **Dashboard web** (FastAPI + DuckDB + Plotly) con siete vistas operativas: distribución de segmentos, mapa de oportunidades de bundles, estacionalidad por segmento, comparador, heatmap de bundles, alertas de clientes en riesgo, y drill-down individual.
+- **Dashboard web** (FastAPI + DuckDB + Plotly) con ocho vistas operativas: distribución de segmentos, mapa de oportunidades de bundles, estacionalidad por segmento, comparador, evolución de bundles por mes, alertas de clientes en riesgo, movimientos entre segmentos, y drill-down individual.
 - **Deployment** sobre AlmaLinux con systemd, firewalld, cron diario y supervivencia a reboot validada.
 
 ## Cifras clave del proyecto

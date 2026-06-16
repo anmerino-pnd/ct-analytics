@@ -207,9 +207,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#el-dashboard-pulse" id="toc-el-dashboard-pulse" class="nav-link" data-scroll-target="#el-dashboard-pulse">4. El dashboard Pulse</a>
   <ul class="collapse">
   <li><a href="#diseño-general" id="toc-diseño-general" class="nav-link" data-scroll-target="#diseño-general">4.1 Diseño general</a></li>
-  <li><a href="#siete-vistas-una-para-cada-pregunta" id="toc-siete-vistas-una-para-cada-pregunta" class="nav-link" data-scroll-target="#siete-vistas-una-para-cada-pregunta">4.2 Siete vistas, una para cada pregunta</a></li>
+  <li><a href="#ocho-vistas-una-para-cada-pregunta" id="toc-ocho-vistas-una-para-cada-pregunta" class="nav-link" data-scroll-target="#ocho-vistas-una-para-cada-pregunta">4.2 Ocho vistas, una para cada pregunta</a></li>
   <li><a href="#tres-decisiones-de-ux-que-valieron-la-pena" id="toc-tres-decisiones-de-ux-que-valieron-la-pena" class="nav-link" data-scroll-target="#tres-decisiones-de-ux-que-valieron-la-pena">4.3 Tres decisiones de UX que valieron la pena</a></li>
-  <li><a href="#pipeline-dashboard-el-contrato-de-los-7-parquets" id="toc-pipeline-dashboard-el-contrato-de-los-7-parquets" class="nav-link" data-scroll-target="#pipeline-dashboard-el-contrato-de-los-7-parquets">4.4 Pipeline → dashboard: el contrato de los 7 parquets</a></li>
+  <li><a href="#pipeline-dashboard-el-contrato-de-los-8-parquets" id="toc-pipeline-dashboard-el-contrato-de-los-8-parquets" class="nav-link" data-scroll-target="#pipeline-dashboard-el-contrato-de-los-8-parquets">4.4 Pipeline → dashboard: el contrato de los 8 parquets</a></li>
+  <li><a href="#una-vista-por-dentro-el-historial-del-cliente" id="toc-una-vista-por-dentro-el-historial-del-cliente" class="nav-link" data-scroll-target="#una-vista-por-dentro-el-historial-del-cliente">4.5 Una vista por dentro: el historial del cliente</a></li>
   </ul></li>
   <li><a href="#el-deployment-final" id="toc-el-deployment-final" class="nav-link" data-scroll-target="#el-deployment-final">5. El deployment final</a></li>
   <li><a href="#la-métrica-final-se-usa" id="toc-la-métrica-final-se-usa" class="nav-link" data-scroll-target="#la-métrica-final-se-usa">6. La métrica final: ¿se usa?</a></li>
@@ -613,8 +614,8 @@ Advertencia
 </table>
 <p>No usamos React, Vue ni un frontend SPA porque la complejidad no se justifica. Cada vista es una página HTML con un payload <code>initial_data</code> embebido para evitar fetches en la primera pintura. Cuando el usuario interactúa con filtros, JavaScript hace fetch a endpoints <code>/api/*</code> y Plotly actualiza las gráficas.</p>
 </section>
-<section id="siete-vistas-una-para-cada-pregunta" class="level3">
-<h3 class="anchored" data-anchor-id="siete-vistas-una-para-cada-pregunta">4.2 Siete vistas, una para cada pregunta</h3>
+<section id="ocho-vistas-una-para-cada-pregunta" class="level3">
+<h3 class="anchored" data-anchor-id="ocho-vistas-una-para-cada-pregunta">4.2 Ocho vistas, una para cada pregunta</h3>
 <div class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Código</summary>
@@ -622,32 +623,34 @@ Advertencia
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>vistas <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Vista'</span>: [<span class="st">'Overview'</span>, <span class="st">'Bundles'</span>, <span class="st">'Estacionalidad'</span>, <span class="st">'Comparador'</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>              <span class="st">'Heatmap Bundles'</span>, <span class="st">'Alertas'</span>, <span class="st">'Cliente'</span>],</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>              <span class="st">'Bundles × mes'</span>, <span class="st">'Alertas'</span>, <span class="st">'Movimientos'</span>, <span class="st">'Cliente'</span>],</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Pregunta de negocio'</span>: [</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Cómo está distribuida nuestra base de clientes?'</span>,</span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Qué productos puedo agrupar y a quién?'</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Cuándo lanzar campañas?'</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Cuándo (hora/día/mes) compra cada segmento?'</span>,</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Cómo se diferencian dos segmentos?'</span>,</span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Cuándo se venden los bundles principales?'</span>,</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Qué clientes valiosos están en riesgo?'</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Quién es este cliente específico?'</span>,</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Output del pipeline consumido'</span>: [</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados'</span>,</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">'mba_accionables + mba_por_segmento'</span>,</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">'temp_hora_dia + temp_mensual'</span>,</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados + mba_accionables'</span>,</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">'temp_bundles'</span>,</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados'</span>,</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados + orders + items'</span>,</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>vistas</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Qué clientes están cambiando de segmento?'</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">'¿Quién es este cliente específico?'</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Output del pipeline consumido'</span>: [</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados'</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">'mba_accionables + mba_por_segmento'</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">'temp_hora_dia + temp_mensual + temp_diario'</span>,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados + mba_accionables'</span>,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">'temp_bundles'</span>,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados'</span>,</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados + snapshots'</span>,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">'clientes_segmentados + orders + items'</span>,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>vistas</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div id="tbl-vistas" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="2">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-vistas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
+Tabla&nbsp;1: Las ocho vistas del dashboard y su pregunta de negocio.
 </figcaption>
 <div aria-describedby="tbl-vistas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-display" data-execution_count="2">
@@ -679,8 +682,8 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 <tr class="odd">
 <td data-quarto-table-cell-role="th">2</td>
 <td>Estacionalidad</td>
-<td>¿Cuándo lanzar campañas?</td>
-<td>temp_hora_dia + temp_mensual</td>
+<td>¿Cuándo (hora/día/mes) compra cada segmento?</td>
+<td>temp_hora_dia + temp_mensual + temp_diario</td>
 </tr>
 <tr class="even">
 <td data-quarto-table-cell-role="th">3</td>
@@ -690,7 +693,7 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">4</td>
-<td>Heatmap Bundles</td>
+<td>Bundles × mes</td>
 <td>¿Cuándo se venden los bundles principales?</td>
 <td>temp_bundles</td>
 </tr>
@@ -702,6 +705,12 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 </tr>
 <tr class="odd">
 <td data-quarto-table-cell-role="th">6</td>
+<td>Movimientos</td>
+<td>¿Qué clientes están cambiando de segmento?</td>
+<td>clientes_segmentados + snapshots</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
 <td>Cliente</td>
 <td>¿Quién es este cliente específico?</td>
 <td>clientes_segmentados + orders + items</td>
@@ -735,15 +744,15 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 <p><strong>(c) Ratio de urgencia defendido contra cadencia cero</strong></p>
 <p>Documentado en la sección de RFM, pero vale repetir: el query de alertas usa <code>GREATEST(dias_entre_compras, 1)</code> y excluye <code>dias_entre_compras &lt; 1</code>. Esto evita que un cliente B2B automatizado aparezca con ratio infinito. Es un caso edge real que vivimos.</p>
 </section>
-<section id="pipeline-dashboard-el-contrato-de-los-7-parquets" class="level3">
-<h3 class="anchored" data-anchor-id="pipeline-dashboard-el-contrato-de-los-7-parquets">4.4 Pipeline → dashboard: el contrato de los 7 parquets</h3>
+<section id="pipeline-dashboard-el-contrato-de-los-8-parquets" class="level3">
+<h3 class="anchored" data-anchor-id="pipeline-dashboard-el-contrato-de-los-8-parquets">4.4 Pipeline → dashboard: el contrato de los 8 parquets</h3>
 <p>El dashboard <strong>no se conecta a MongoDB</strong>. Solo lee Parquets. Esto es deliberado:</p>
 <ul>
 <li><strong>Latencia</strong>: las queries SQL sobre Parquet con DuckDB tardan milisegundos. Conectarse a MongoDB introduciría latencia variable.</li>
 <li><strong>Aislamiento</strong>: si MongoDB se cae, el dashboard sigue funcionando con los últimos parquets generados.</li>
 <li><strong>Reproducibilidad</strong>: el dashboard de hoy muestra exactamente lo que el pipeline generó la última vez. No hay deriva entre datos vistos en el dashboard y datos analizados.</li>
 </ul>
-<p>El contrato entre pipeline y dashboard son los <strong>siete parquets</strong> generados en <code>datos/processed/</code>:</p>
+<p>El contrato entre pipeline y dashboard son los <strong>ocho parquets</strong> generados en <code>datos/processed/</code>:</p>
 <pre class="text"><code>datos/processed/
 ├── clientes_segmentados.parquet     # 18,638 filas, 1 por cliente
 ├── mba_accionables.parquet          # 141 reglas, 1→1 y 1→2 con revenue
@@ -751,8 +760,104 @@ Tabla&nbsp;1: Las siete vistas del dashboard y su pregunta de negocio.
 ├── mba_exclusivas.parquet           # 1,516 reglas, exclusivas por segmento
 ├── temp_hora_dia.parquet            # 827 filas (24h × 7d × 5 segmentos aprox)
 ├── temp_mensual.parquet             # 150 filas (30 meses × 5 segmentos)
-└── temp_bundles.parquet             # 2,849 filas (top bundles × meses)</code></pre>
+├── temp_bundles.parquet             # 2,849 filas (top bundles × meses)
+└── temp_diario.parquet              # ~320 filas (90 días × 5 segmentos) — vista "Último mes"</code></pre>
 <p>DuckDB los registra como vistas SQL con nombres estables (<code>segmentos</code>, <code>orders</code>, <code>mba_accionables</code>, etc.). Las queries en <code>queries.py</code> consultan estas vistas usando parámetros (nunca interpolación de strings, para evitar SQL injection).</p>
+</section>
+<section id="una-vista-por-dentro-el-historial-del-cliente" class="level3">
+<h3 class="anchored" data-anchor-id="una-vista-por-dentro-el-historial-del-cliente">4.5 Una vista por dentro: el historial del cliente</h3>
+<p>Para aterrizar cómo se ve una vista, reproducimos (con datos simulados) el <strong>drill-down de cliente</strong>: su historial <strong>completo</strong> de pedidos. Antes la gráfica se truncaba a los últimos 50 pedidos; ahora muestra toda la vida del cliente, y el detalle de cada pedido —monto, <strong>productos únicos</strong> y <strong>unidades</strong>— vive en el hover en lugar de una tabla aparte.</p>
+<div class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Código</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.graph_objects <span class="im">as</span> go</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">7</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ~40 pedidos de un cliente a lo largo de ~3 años (historial completo, sin truncar a 50)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>pool <span class="op">=</span> pd.date_range(<span class="st">"2023-05-01"</span>, <span class="st">"2026-05-20"</span>, freq<span class="op">=</span><span class="st">"D"</span>).to_numpy()</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>fechas <span class="op">=</span> np.sort(rng.choice(pool, size<span class="op">=</span><span class="dv">40</span>, replace<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>pago <span class="op">=</span> np.<span class="bu">round</span>(rng.lognormal(mean<span class="op">=</span><span class="fl">10.8</span>, sigma<span class="op">=</span><span class="fl">0.9</span>, size<span class="op">=</span><span class="dv">40</span>), <span class="dv">2</span>)   <span class="co"># MXN</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>prod_unicos <span class="op">=</span> rng.integers(<span class="dv">1</span>, <span class="dv">6</span>, size<span class="op">=</span><span class="dv">40</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>unidades <span class="op">=</span> prod_unicos <span class="op">*</span> rng.integers(<span class="dv">5</span>, <span class="dv">40</span>, size<span class="op">=</span><span class="dv">40</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> go.Figure(go.Scatter(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span>fechas, y<span class="op">=</span>pago, mode<span class="op">=</span><span class="st">"lines+markers"</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    line<span class="op">=</span><span class="bu">dict</span>(color<span class="op">=</span><span class="st">"#0B3C5D"</span>, width<span class="op">=</span><span class="dv">1</span>), marker<span class="op">=</span><span class="bu">dict</span>(size<span class="op">=</span><span class="dv">7</span>, color<span class="op">=</span><span class="st">"#0B3C5D"</span>),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    customdata<span class="op">=</span>np.stack([prod_unicos, unidades], axis<span class="op">=</span><span class="dv">1</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    hovertemplate<span class="op">=</span>(<span class="st">"%{x|</span><span class="sc">%d</span><span class="st"> %b %Y}&lt;br&gt;$%</span><span class="sc">{y:,.0f}</span><span class="st">"</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"&lt;br&gt;%</span><span class="sc">{customdata[0]}</span><span class="st"> productos únicos"</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"&lt;br&gt;%</span><span class="sc">{customdata[1]}</span><span class="st"> unidades&lt;extra&gt;&lt;/extra&gt;"</span>),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>fig.update_layout(</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    template<span class="op">=</span><span class="st">"simple_white"</span>, height<span class="op">=</span><span class="dv">380</span>, showlegend<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    xaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">""</span>, <span class="bu">type</span><span class="op">=</span><span class="st">"date"</span>, dtick<span class="op">=</span><span class="st">"M6"</span>, tickformat<span class="op">=</span><span class="st">"%b %y"</span>, tickangle<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    yaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">"Pago total (MXN)"</span>, tickformat<span class="op">=</span><span class="st">",.0f"</span>),</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    margin<span class="op">=</span><span class="bu">dict</span>(t<span class="op">=</span><span class="dv">20</span>, r<span class="op">=</span><span class="dv">20</span>, b<span class="op">=</span><span class="dv">50</span>, l<span class="op">=</span><span class="dv">70</span>),</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="fig-cliente-historial" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="3">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cliente-historial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="fig-cliente-historial-1" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cliente-historial-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+        <script>
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        </script>
+        <script type="module">import "https://cdn.plot.ly/plotly-3.6.0.min"</script>
+        
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cliente-historial-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Historial de pedidos de un cliente — réplica de la vista de drill-down (datos simulados). El hover muestra monto, productos únicos y unidades.
+</figcaption>
+</figure>
+</div>
+<div id="fig-cliente-historial-2" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-cliente-historial-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div style="height:380px; width:100%;">            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script>if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.6.0.min.js" integrity="sha256-QaOVwtVY0T02VaHrr6pnoHLCwayMJp4O5n4YyaE3rJk=" crossorigin="anonymous"></script>                <div id="1413861f-827d-4fbd-93b1-a5cfa381e01d" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("1413861f-827d-4fbd-93b1-a5cfa381e01d")) {                    Plotly.newPlot(                        "1413861f-827d-4fbd-93b1-a5cfa381e01d",                        [{"customdata":{"dtype":"i2","bdata":"AQAJAAMAOQABACYABAAgAAUAjAACADwAAwA5AAEABwABABcAAgAoAAUArwAFAIwABABEAAMAFQADAEsAAQAOAAIAOAAFAK8AAwAzAAIASAACAC4ABABcAAEAHwAFAKAABQC0AAMAdQADAB4ABABMAAMAbwADAC0AAgAKAAMASwAEAHwAAQAfAAEAIQAEAGwAAgASAAUAqgABABMABQCqAA==","shape":"40, 2"},"hovertemplate":"%{x|%d %b %Y}\u003cbr\u003e$%{y:,.0f}\u003cbr\u003e%{customdata[0]} productos \u00fanicos\u003cbr\u003e%{customdata[1]} unidades\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"#0B3C5D","width":1},"marker":{"color":"#0B3C5D","size":7},"mode":"lines+markers","x":["2023-05-06T00:00:00.000000","2023-06-30T00:00:00.000000","2023-09-08T00:00:00.000000","2023-09-21T00:00:00.000000","2023-12-31T00:00:00.000000","2024-02-05T00:00:00.000000","2024-03-02T00:00:00.000000","2024-03-05T00:00:00.000000","2024-03-21T00:00:00.000000","2024-03-28T00:00:00.000000","2024-05-10T00:00:00.000000","2024-05-15T00:00:00.000000","2024-09-03T00:00:00.000000","2024-09-24T00:00:00.000000","2024-10-10T00:00:00.000000","2024-10-27T00:00:00.000000","2024-11-09T00:00:00.000000","2024-11-15T00:00:00.000000","2025-01-03T00:00:00.000000","2025-01-15T00:00:00.000000","2025-02-03T00:00:00.000000","2025-03-04T00:00:00.000000","2025-03-24T00:00:00.000000","2025-05-08T00:00:00.000000","2025-06-18T00:00:00.000000","2025-07-01T00:00:00.000000","2025-08-17T00:00:00.000000","2025-09-18T00:00:00.000000","2025-09-28T00:00:00.000000","2025-10-12T00:00:00.000000","2025-10-13T00:00:00.000000","2025-10-14T00:00:00.000000","2025-10-19T00:00:00.000000","2025-12-06T00:00:00.000000","2025-12-24T00:00:00.000000","2026-01-18T00:00:00.000000","2026-02-11T00:00:00.000000","2026-04-27T00:00:00.000000","2026-05-08T00:00:00.000000","2026-05-10T00:00:00.000000"],"y":{"dtype":"f8","bdata":"PQrXo4il5UD2KFyPGnDqQFK4HoWjWelAZmZmZgbKz0Bcj8L1OKLpQClcj8IdVARBCtejcB3Kx0AfhetR7O\u002f5QD0K16N4pupAhetRuA7g2kCkcD0KdxsSQfYoXI8qxPdAmpmZmXlE0EBSuB6Fo5jpQEjhehRaHPRAMzMzMyMy5EBI4XoU0iD2QB+F61GIi+ZAFK5H4YbR9UBI4XoUHtcFQT0K16OQD9pA16NwPdK87ECF61G4nozfQClcj8I91+pACtejcA1y0EBSuB6F+2vcQHsUrkfBD+RA4XoUrnvf+kBcj8L19MUAQa5H4XrUF81ArkfhehRq10CPwvUoMGz1QM3MzMyM3r9Aw\u002fUoXJ+N30AK16Nw5e3lQI\u002fC9Sh4jAJB16NwPQZC9kD2KFyPgtThQIXrUbi2LeFAPQrXoyAc40A="},"type":"scatter"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"rgb(36,36,36)"},"error_y":{"color":"rgb(36,36,36)"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"baxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2d"}],"histogram":[{"marker":{"line":{"color":"white","width":0.6}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"rgb(237,237,237)"},"line":{"color":"white"}},"header":{"fill":{"color":"rgb(217,217,217)"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"colorscale":{"diverging":[[0.0,"rgb(103,0,31)"],[0.1,"rgb(178,24,43)"],[0.2,"rgb(214,96,77)"],[0.3,"rgb(244,165,130)"],[0.4,"rgb(253,219,199)"],[0.5,"rgb(247,247,247)"],[0.6,"rgb(209,229,240)"],[0.7,"rgb(146,197,222)"],[0.8,"rgb(67,147,195)"],[0.9,"rgb(33,102,172)"],[1.0,"rgb(5,48,97)"]],"sequential":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"sequentialminus":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]]},"colorway":["#1F77B4","#FF7F0E","#2CA02C","#D62728","#9467BD","#8C564B","#E377C2","#7F7F7F","#BCBD22","#17BECF"],"font":{"color":"rgb(36,36,36)"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","radialaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"zaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"}},"shapedefaults":{"fillcolor":"black","line":{"width":0},"opacity":0.3},"ternary":{"aaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"baxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","caxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"}}},"xaxis":{"title":{"text":""},"type":"date","dtick":"M6","tickformat":"%b %y","tickangle":0},"yaxis":{"title":{"text":"Pago total (MXN)"},"tickformat":",.0f"},"margin":{"t":20,"r":20,"b":50,"l":70},"height":380,"showlegend":false},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('1413861f-827d-4fbd-93b1-a5cfa381e01d');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-cliente-historial-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b)
+</figcaption>
+</figure>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-cliente-historial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;2
+</figcaption>
+</figure>
+</div>
+</div>
 </section>
 </section>
 <section id="el-deployment-final" class="level2" style="text-align: justify">
