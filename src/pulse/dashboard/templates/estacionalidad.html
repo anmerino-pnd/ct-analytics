@@ -4,7 +4,7 @@
 {% block content %}
 <header class="page-header">
   <h1>Estacionalidad por segmento</h1>
-  <p class="subtitle">Cuándo compra cada segmento — heatmap hora × día, serie mensual y patrón típico de año.</p>
+  <p class="subtitle">Cuándo compra cada segmento — actividad por hora y por día, serie mensual y patrón típico de año.</p>
 </header>
 
 <section class="filters">
@@ -19,8 +19,13 @@
 </section>
 
 <section class="chart-card">
-  <h2 title="Volumen de pedidos por hora y día de la semana en hora local CDMX (UTC-6). Más oscuro = más actividad. L-V típicamente concentra actividad B2B.">Heatmap hora × día (% del segmento)</h2>
-  <div id="heatmaps-grid" class="heatmap-grid"></div>
+  <h2 title="Distribución horaria de los pedidos de cada segmento, en hora local CDMX (UTC-6). Normalizado a % del segmento para comparar segmentos de distinto tamaño.">Actividad por hora del día (% del segmento)</h2>
+  <div id="line-hora" class="chart"></div>
+</section>
+
+<section class="chart-card">
+  <h2 title="Distribución de los pedidos de cada segmento por día de la semana. Normalizado a % del segmento.">Actividad por día de la semana (% del segmento)</h2>
+  <div id="line-dia" class="chart"></div>
 </section>
 
 <section class="chart-card">
@@ -58,9 +63,9 @@
   <summary>¿Qué estoy viendo?</summary>
   <div class="explainer-content">
     <p><strong>Pregunta de negocio:</strong> ¿Cuándo compra cada segmento? ¿Cuándo lanzo campañas?</p>
-    <p><strong>Cómo leer esto:</strong> El heatmap muestra <em>qué porcentaje</em> de pedidos de cada segmento ocurren en cada hora-día (normalizado para poder comparar segmentos de tamaños distintos). La línea mensual es el volumen real; el bar chart del año típico promedia los años disponibles por mes calendario, útil para detectar picos cíclicos.</p>
+    <p><strong>Cómo leer esto:</strong> Las gráficas de hora y de día de la semana muestran <em>qué porcentaje</em> de los pedidos de cada segmento ocurren en cada hora / día (normalizado para poder comparar segmentos de tamaños distintos). La línea mensual es el volumen real; el bar chart del año típico promedia los años disponibles por mes calendario, útil para detectar picos cíclicos.</p>
     <p><strong>Acciones sugeridas:</strong> Programar campañas de email/push en los horarios y días pico de cada segmento. Aprovechar los picos estacionales típicos (p.ej., back-to-school, fin de año) para acciones específicas en MVPs y Alto Valor.</p>
-    <p><strong>Notas técnicas:</strong> Heatmap normalizado a % del segmento, no volumen absoluto. La serie mensual usa pedidos brutos.</p>
+    <p><strong>Notas técnicas:</strong> Las curvas de hora y día están normalizadas a % del segmento (cada una suma 100%), no a volumen absoluto. La serie mensual usa pedidos brutos.</p>
   </div>
 </details>
 
@@ -73,24 +78,9 @@
     const initial = JSON.parse(document.getElementById('initial-data').textContent);
     const state = { seleccion: new Set(initial.seleccion_inicial) };
 
-    function renderHeatmaps(rows, seleccion) {
-      const grid = document.getElementById('heatmaps-grid');
-      grid.innerHTML = '';
-      const orden = window.SEGMENT_ORDER || [];
-      orden.filter(s => seleccion.has(s)).forEach(seg => {
-        const sub = rows.filter(r => r.segmento === seg);
-        if (!sub.length) return;
-        const card = document.createElement('div');
-        card.className = 'chart-card';
-        const elId = 'hm-' + seg.replace(/\W+/g, '_');
-        card.innerHTML = `<div id="${elId}" class="chart" style="min-height:280px"></div>`;
-        grid.appendChild(card);
-        PulseCharts.renderHeatmapHoraDia(elId, sub, seg);
-      });
-    }
-
     function renderAll(data) {
-      renderHeatmaps(data.hora_dia, state.seleccion);
+      PulseCharts.renderLineHora('line-hora', data.hora_dia);
+      PulseCharts.renderLineDiaSemana('line-dia', data.hora_dia);
       PulseCharts.renderLineMensual('line-mensual', data.mensual);
       PulseCharts.renderBarMesCalendario('bar-mes-cal', data.tipica);
     }
@@ -99,7 +89,8 @@
       const segs = [...state.seleccion];
       if (!segs.length) {
         // sin selección: limpiar
-        document.getElementById('heatmaps-grid').innerHTML = '';
+        Plotly.purge('line-hora');
+        Plotly.purge('line-dia');
         Plotly.purge('line-mensual');
         Plotly.purge('bar-mes-cal');
         return;

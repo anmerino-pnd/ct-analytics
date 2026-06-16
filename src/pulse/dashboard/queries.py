@@ -361,20 +361,27 @@ def cliente_perfil(cliente_id: str) -> dict | None:
     return rows[0] if rows else None
 
 
-def cliente_pedidos(cliente_id: str, limit: int = 50) -> list[dict]:
-    """Últimos N pedidos del cliente, más recientes primero."""
+def cliente_pedidos(cliente_id: str) -> list[dict]:
+    """Historial COMPLETO de pedidos del cliente, en orden cronológico (ASC).
+
+    Sin límite: alimenta la gráfica de historial completo. Por pedido devuelve
+    `num_productos` (productos únicos) y `unidades_totales` (suma de cantidad de
+    items, excluyendo CARGO100).
+    """
     return fetch_dicts(
         """
-        SELECT order_id,
-               strftime(fecha, '%Y-%m-%d %H:%M:%S') AS fecha,
-               pago_total,
-               num_productos
-        FROM orders
-        WHERE cliente_id = ?
-        ORDER BY fecha DESC
-        LIMIT ?
+        SELECT o.order_id,
+               strftime(o.fecha, '%Y-%m-%d %H:%M:%S')                            AS fecha,
+               o.pago_total,
+               o.num_productos,
+               COALESCE(SUM(i.cantidad) FILTER (WHERE i.clave != 'CARGO100'), 0) AS unidades_totales
+        FROM orders o
+        LEFT JOIN items i USING (order_id)
+        WHERE o.cliente_id = ?
+        GROUP BY o.order_id, o.fecha, o.pago_total, o.num_productos
+        ORDER BY o.fecha
         """,
-        [cliente_id, limit],
+        [cliente_id],
     )
 
 

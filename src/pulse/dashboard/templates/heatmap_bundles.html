@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Heatmap bundles · Pulse{% endblock %}
+{% block title %}Bundles × mes · Pulse{% endblock %}
 
 {% block content %}
 <header class="page-header">
-  <h1>Heatmap de bundles × mes</h1>
-  <p class="subtitle">Cuándo se venden los top bundles de cada segmento durante el año.</p>
+  <h1>Bundles × mes</h1>
+  <p class="subtitle">Cuándo se venden los top bundles de cada segmento a lo largo del tiempo.</p>
 </header>
 
 <section class="filters">
@@ -14,11 +14,15 @@
       {% for s in segment_order %}<option value="{{ s }}" {% if s == 'MVPs' %}selected{% endif %}>{{ s }}</option>{% endfor %}
     </select>
   </div>
+  <div class="filter-group" style="flex:1">
+    <label>Bundles (clic para mostrar/ocultar)</label>
+    <div class="toggle-group" id="f-bundles" role="tablist" style="flex-wrap:wrap; max-width:100%"></div>
+  </div>
 </section>
 
 <section class="chart-card">
-  <h2 title="Para cada bundle top, evolución mensual de pedidos. Útil para identificar bundles estacionales vs always-on.">Heatmap: top 10 bundles del segmento × meses</h2>
-  <div id="heatmap-bundles" class="chart"></div>
+  <h2 title="Para cada bundle, evolución mensual de pedidos. Útil para identificar bundles estacionales vs always-on.">Evolución mensual de los top bundles del segmento</h2>
+  <div id="line-bundles" class="chart"></div>
 </section>
 
 <section class="chart-card">
@@ -40,9 +44,9 @@
   <summary>¿Qué estoy viendo?</summary>
   <div class="explainer-content">
     <p><strong>Pregunta de negocio:</strong> ¿Cuándo se venden los bundles principales del segmento? ¿Hay temporadas dominantes?</p>
-    <p><strong>Cómo leer esto:</strong> Cada fila del heatmap es un bundle (los 10 más fuertes por revenue del segmento). Las columnas son meses (año-mes). La intensidad de color indica volumen de pedidos. La tabla resume el mes pico de cada bundle y cuánta concentración tiene ahí.</p>
+    <p><strong>Cómo leer esto:</strong> Cada línea es un bundle (los más fuertes por revenue del segmento); el eje X son los meses. Por defecto se muestran los 5 principales; usa los botones de arriba para añadir o quitar bundles. La tabla resume el mes pico de cada bundle y cuánta concentración tiene ahí.</p>
     <p><strong>Acciones sugeridas:</strong> Adelantar inventario o campañas a las semanas antes del mes pico. Si un bundle concentra mucho en un mes (&gt;25% del año), es candidato a campaña estacional dirigida.</p>
-    <p><strong>Notas técnicas:</strong> Top 10 elegidos por revenue total acumulado del bundle dentro del segmento. La columna "% del año" es (pedidos en mes pico) / (pedidos anuales totales del bundle).</p>
+    <p><strong>Notas técnicas:</strong> Los bundles disponibles son el top 10 por revenue total acumulado dentro del segmento; activos por defecto los 5 primeros. La columna "% del año" es (pedidos en mes pico) / (pedidos anuales totales del bundle).</p>
   </div>
 </details>
 
@@ -55,11 +59,43 @@
     const fmtNum = (v, d = 0) => v == null ? '—' : Number(v).toLocaleString('es-MX', { maximumFractionDigits: d });
     const fmtPct = (v) => v == null ? '—' : (v * 100).toFixed(1) + '%';
 
-    function renderAll(data) {
-      PulseCharts.renderHeatmapBundles('heatmap-bundles', data.serie, data.segmento);
+    const segSel     = document.getElementById('f-segmento-hm');
+    const toggleWrap = document.getElementById('f-bundles');
+    let serie   = [];
+    let activos = new Set();
+
+    // Reglas del segmento ordenadas por revenue total (desc) → para el top 5 y el selector.
+    function reglasOrdenadas(s) {
+      const tot = {};
+      s.forEach(r => { tot[r.regla] = (tot[r.regla] || 0) + (r.revenue || 0); });
+      return Object.keys(tot).sort((a, b) => tot[b] - tot[a]);
+    }
+
+    function dibujar() {
+      PulseCharts.renderLineBundles('line-bundles', serie, [...activos]);
+    }
+
+    function pintarToggle(reglas) {
+      toggleWrap.innerHTML = '';
+      reglas.forEach(rg => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.regla = rg;
+        btn.textContent = rg;
+        btn.classList.toggle('active', activos.has(rg));
+        btn.addEventListener('click', () => {
+          if (activos.has(rg)) { activos.delete(rg); btn.classList.remove('active'); }
+          else { activos.add(rg); btn.classList.add('active'); }
+          dibujar();
+        });
+        toggleWrap.appendChild(btn);
+      });
+    }
+
+    function renderMesPico(mesPico) {
       const tbody = document.querySelector('#tabla-mes-pico tbody');
       tbody.innerHTML = '';
-      data.mes_pico.forEach(r => {
+      mesPico.forEach(r => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${r.regla}</td>
@@ -71,15 +107,24 @@
       });
     }
 
-    async function reload() {
-      const segmento = document.getElementById('f-segmento-hm').value;
-      const url = `/api/heatmap-bundles?segmento=${encodeURIComponent(segmento)}&top_n=10`;
-      const data = await PulseFilters.fetchJSON(url);
-      renderAll(data);
+    function aplicar(data) {
+      serie = data.serie || [];
+      const reglas = reglasOrdenadas(serie);
+      activos = new Set(reglas.slice(0, 5));   // top 5 por revenue activos por defecto
+      pintarToggle(reglas);
+      dibujar();
+      renderMesPico(data.mes_pico || []);
     }
 
-    renderAll(JSON.parse(document.getElementById('initial-data').textContent));
-    document.getElementById('f-segmento-hm').addEventListener('change', reload);
+    async function reload() {
+      const segmento = segSel.value;
+      const url = `/api/heatmap-bundles?segmento=${encodeURIComponent(segmento)}&top_n=10`;
+      const data = await PulseFilters.fetchJSON(url);
+      aplicar(data);
+    }
+
+    aplicar(JSON.parse(document.getElementById('initial-data').textContent));
+    segSel.addEventListener('change', reload);
   })();
 </script>
 {% endblock %}

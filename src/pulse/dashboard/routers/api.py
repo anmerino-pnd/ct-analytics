@@ -109,7 +109,7 @@ async def cliente_drilldown(cliente_id: str) -> dict:
         )
     return {
         "perfil": perfil,
-        "pedidos": q.cliente_pedidos(cliente_id, limit=50),
+        "pedidos": q.cliente_pedidos(cliente_id),
         "posicion": q.cliente_posicion_segmento(cliente_id),
         "productos_top": q.cliente_productos_top(cliente_id, limit=10),
         "bundles_propios": q.cliente_bundles_propios(cliente_id, limit=10),
