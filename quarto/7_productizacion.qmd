@@ -286,33 +286,35 @@ El dashboard es una aplicación web construida con un stack ligero:
 
 No usamos React, Vue ni un frontend SPA porque la complejidad no se justifica. Cada vista es una página HTML con un payload `initial_data` embebido para evitar fetches en la primera pintura. Cuando el usuario interactúa con filtros, JavaScript hace fetch a endpoints `/api/*` y Plotly actualiza las gráficas.
 
-### 4.2 Siete vistas, una para cada pregunta
+### 4.2 Ocho vistas, una para cada pregunta
 
 ```{python}
 #| label: tbl-vistas
-#| tbl-cap: "Las siete vistas del dashboard y su pregunta de negocio."
+#| tbl-cap: "Las ocho vistas del dashboard y su pregunta de negocio."
 
 import pandas as pd
 
 vistas = pd.DataFrame({
     'Vista': ['Overview', 'Bundles', 'Estacionalidad', 'Comparador',
-              'Heatmap Bundles', 'Alertas', 'Cliente'],
+              'Bundles × mes', 'Alertas', 'Movimientos', 'Cliente'],
     'Pregunta de negocio': [
         '¿Cómo está distribuida nuestra base de clientes?',
         '¿Qué productos puedo agrupar y a quién?',
-        '¿Cuándo lanzar campañas?',
+        '¿Cuándo (hora/día/mes) compra cada segmento?',
         '¿Cómo se diferencian dos segmentos?',
         '¿Cuándo se venden los bundles principales?',
         '¿Qué clientes valiosos están en riesgo?',
+        '¿Qué clientes están cambiando de segmento?',
         '¿Quién es este cliente específico?',
     ],
     'Output del pipeline consumido': [
         'clientes_segmentados',
         'mba_accionables + mba_por_segmento',
-        'temp_hora_dia + temp_mensual',
+        'temp_hora_dia + temp_mensual + temp_diario',
         'clientes_segmentados + mba_accionables',
         'temp_bundles',
         'clientes_segmentados',
+        'clientes_segmentados + snapshots',
         'clientes_segmentados + orders + items',
     ],
 })
@@ -343,7 +345,7 @@ El Market Basket Opportunity Map (sección 5 de MBA) divide el plano en cuatro c
 
 Documentado en la sección de RFM, pero vale repetir: el query de alertas usa `GREATEST(dias_entre_compras, 1)` y excluye `dias_entre_compras < 1`. Esto evita que un cliente B2B automatizado aparezca con ratio infinito. Es un caso edge real que vivimos.
 
-### 4.4 Pipeline → dashboard: el contrato de los 7 parquets
+### 4.4 Pipeline → dashboard: el contrato de los 8 parquets
 
 El dashboard **no se conecta a MongoDB**. Solo lee Parquets. Esto es deliberado:
 
@@ -351,7 +353,7 @@ El dashboard **no se conecta a MongoDB**. Solo lee Parquets. Esto es deliberado:
 - **Aislamiento**: si MongoDB se cae, el dashboard sigue funcionando con los últimos parquets generados.
 - **Reproducibilidad**: el dashboard de hoy muestra exactamente lo que el pipeline generó la última vez. No hay deriva entre datos vistos en el dashboard y datos analizados.
 
-El contrato entre pipeline y dashboard son los **siete parquets** generados en `datos/processed/`:
+El contrato entre pipeline y dashboard son los **ocho parquets** generados en `datos/processed/`:
 
 ```text
 datos/processed/
@@ -361,10 +363,48 @@ datos/processed/
 ├── mba_exclusivas.parquet           # 1,516 reglas, exclusivas por segmento
 ├── temp_hora_dia.parquet            # 827 filas (24h × 7d × 5 segmentos aprox)
 ├── temp_mensual.parquet             # 150 filas (30 meses × 5 segmentos)
-└── temp_bundles.parquet             # 2,849 filas (top bundles × meses)
+├── temp_bundles.parquet             # 2,849 filas (top bundles × meses)
+└── temp_diario.parquet              # ~320 filas (90 días × 5 segmentos) — vista "Último mes"
 ```
 
 DuckDB los registra como vistas SQL con nombres estables (`segmentos`, `orders`, `mba_accionables`, etc.). Las queries en `queries.py` consultan estas vistas usando parámetros (nunca interpolación de strings, para evitar SQL injection).
+
+### 4.5 Una vista por dentro: el historial del cliente
+
+Para aterrizar cómo se ve una vista, reproducimos (con datos simulados) el **drill-down de cliente**: su historial **completo** de pedidos. Antes la gráfica se truncaba a los últimos 50 pedidos; ahora muestra toda la vida del cliente, y el detalle de cada pedido —monto, **productos únicos** y **unidades**— vive en el hover en lugar de una tabla aparte.
+
+```{python}
+#| label: fig-cliente-historial
+#| fig-cap: "Historial de pedidos de un cliente — réplica de la vista de drill-down (datos simulados). El hover muestra monto, productos únicos y unidades."
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+
+rng = np.random.default_rng(7)
+# ~40 pedidos de un cliente a lo largo de ~3 años (historial completo, sin truncar a 50)
+pool = pd.date_range("2023-05-01", "2026-05-20", freq="D").to_numpy()
+fechas = np.sort(rng.choice(pool, size=40, replace=False))
+pago = np.round(rng.lognormal(mean=10.8, sigma=0.9, size=40), 2)   # MXN
+prod_unicos = rng.integers(1, 6, size=40)
+unidades = prod_unicos * rng.integers(5, 40, size=40)
+
+fig = go.Figure(go.Scatter(
+    x=fechas, y=pago, mode="lines+markers",
+    line=dict(color="#0B3C5D", width=1), marker=dict(size=7, color="#0B3C5D"),
+    customdata=np.stack([prod_unicos, unidades], axis=1),
+    hovertemplate=("%{x|%d %b %Y}<br>$%{y:,.0f}"
+                   "<br>%{customdata[0]} productos únicos"
+                   "<br>%{customdata[1]} unidades<extra></extra>"),
+))
+fig.update_layout(
+    template="simple_white", height=380, showlegend=False,
+    xaxis=dict(title="", type="date", dtick="M6", tickformat="%b %y", tickangle=0),
+    yaxis=dict(title="Pago total (MXN)", tickformat=",.0f"),
+    margin=dict(t=20, r=20, b=50, l=70),
+)
+fig.show()
+```
 :::
 
 ::: {style="text-align: justify"}

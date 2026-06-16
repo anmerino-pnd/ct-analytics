@@ -57,7 +57,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -103,6 +103,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Buscar"
   }
 }</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 <link rel="stylesheet" href="styles.css">
@@ -189,13 +192,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#la-causa" id="toc-la-causa" class="nav-link" data-scroll-target="#la-causa">2.2 La causa</a></li>
   <li><a href="#el-fix" id="toc-el-fix" class="nav-link" data-scroll-target="#el-fix">2.3 El fix</a></li>
   </ul></li>
-  <li><a href="#heatmap-hora-día-por-segmento" id="toc-heatmap-hora-día-por-segmento" class="nav-link" data-scroll-target="#heatmap-hora-día-por-segmento">3. Heatmap hora × día por segmento</a>
+  <li><a href="#actividad-por-hora-y-por-día-por-segmento" id="toc-actividad-por-hora-y-por-día-por-segmento" class="nav-link" data-scroll-target="#actividad-por-hora-y-por-día-por-segmento">3. Actividad por hora y por día por segmento</a>
   <ul class="collapse">
   <li><a href="#firmas-observadas-por-segmento" id="toc-firmas-observadas-por-segmento" class="nav-link" data-scroll-target="#firmas-observadas-por-segmento">3.1 Firmas observadas por segmento</a></li>
   </ul></li>
   <li><a href="#evolución-mensual" id="toc-evolución-mensual" class="nav-link" data-scroll-target="#evolución-mensual">4. Evolución mensual</a>
   <ul class="collapse">
   <li><a href="#lectura-del-gráfico" id="toc-lectura-del-gráfico" class="nav-link" data-scroll-target="#lectura-del-gráfico">4.1 Lectura del gráfico</a></li>
+  <li><a href="#el-modo-último-mes" id="toc-el-modo-último-mes" class="nav-link" data-scroll-target="#el-modo-último-mes">4.2 El modo “Último mes”</a></li>
   </ul></li>
   <li><a href="#cruce-temporalidad-bundles" id="toc-cruce-temporalidad-bundles" class="nav-link" data-scroll-target="#cruce-temporalidad-bundles">5. Cruce temporalidad × bundles</a>
   <ul class="collapse">
@@ -255,7 +259,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>temp_hora_dia.parquet</code></td>
 <td>hora × día de la semana, por segmento</td>
-<td>Heatmap de actividad intradiaria</td>
+<td>Curvas de actividad por hora y por día</td>
 </tr>
 <tr class="even">
 <td><code>temp_mensual.parquet</code></td>
@@ -263,6 +267,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Serie temporal de volumen</td>
 </tr>
 <tr class="odd">
+<td><code>temp_diario.parquet</code></td>
+<td>día, por segmento (ventana 90 días)</td>
+<td>Vista “Último mes”: tendencia diaria reciente</td>
+</tr>
+<tr class="even">
 <td><code>temp_bundles.parquet</code></td>
 <td>año-mes × regla MBA top</td>
 <td>Evolución temporal de bundles específicos</td>
@@ -298,64 +307,184 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>El rumbo que nos hizo tomar</strong>: cualquier feature derivado de un timestamp con timezone debe pasar explícitamente por <code>tz_convert()</code>. Una vez aprendida la lección, agregamos un test que valida que el heatmap concentre actividad en horas 9-18 (horario laboral en CDMX). El test falla automáticamente si alguien revierte el fix.</p>
 </section>
 </section>
-<section id="heatmap-hora-día-por-segmento" class="level2" style="text-align: justify">
-<h2 class="anchored" data-anchor-id="heatmap-hora-día-por-segmento">3. Heatmap hora × día por segmento</h2>
-<p>Después del fix, el heatmap muestra el patrón esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Pero cada segmento tiene su propia firma.</p>
-<div id="cell-fig-heatmap-mvps" class="cell" data-execution_count="1">
+<section id="actividad-por-hora-y-por-día-por-segmento" class="level2" style="text-align: justify">
+<h2 class="anchored" data-anchor-id="actividad-por-hora-y-por-día-por-segmento">3. Actividad por hora y por día por segmento</h2>
+<p>Después del fix, el patrón es el esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Cada segmento tiene su propia firma.</p>
+<p>En el dashboard esta vista evolucionó de heatmaps hora×día (uno por segmento) a <strong>dos gráficas de líneas</strong>: el porcentaje de pedidos de cada segmento por <strong>hora del día</strong> y por <strong>día de la semana</strong>. Las líneas dejan comparar todos los segmentos de un vistazo —algo difícil con varios heatmaps lado a lado—. Aquí reproducimos esas dos vistas con datos simulados que preservan las firmas reales.</p>
+<div class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Código</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>dias <span class="op">=</span> [<span class="st">'Lun'</span>, <span class="st">'Mar'</span>, <span class="st">'Mié'</span>, <span class="st">'Jue'</span>, <span class="st">'Vie'</span>, <span class="st">'Sáb'</span>, <span class="st">'Dom'</span>]</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>horas <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">24</span>))</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Patrón sintético que preserva la firma real:</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># - Pico principal 10-12, secundario 15-18</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># - Lunes a viernes mucho más activos</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># - Sábado muy bajo, domingo casi cero</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>matriz <span class="op">=</span> np.zeros((<span class="dv">7</span>, <span class="dv">24</span>))</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):  <span class="co"># L-V</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> horas:</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        base <span class="op">=</span> <span class="fl">0.05</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">9</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">12</span>: base <span class="op">=</span> <span class="fl">1.8</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">13</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">14</span>: base <span class="op">=</span> <span class="fl">0.8</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">15</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">18</span>: base <span class="op">=</span> <span class="fl">1.2</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">19</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">21</span>: base <span class="op">=</span> <span class="fl">0.4</span> <span class="op">+</span> np.random.uniform(<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.1</span>)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="dv">7</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">8</span>: base <span class="op">=</span> <span class="fl">0.3</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        matriz[d, h] <span class="op">=</span> base</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h <span class="kw">in</span> horas:</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    matriz[<span class="dv">5</span>, h] <span class="op">=</span> <span class="fl">0.2</span> <span class="op">+</span> np.random.uniform(<span class="dv">0</span>, <span class="fl">0.1</span>) <span class="cf">if</span> <span class="dv">10</span> <span class="op">&lt;=</span> h <span class="op">&lt;=</span> <span class="dv">14</span> <span class="cf">else</span> <span class="fl">0.05</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    matriz[<span class="dv">6</span>, h] <span class="op">=</span> <span class="fl">0.05</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>df_heatmap <span class="op">=</span> pd.DataFrame(matriz, index<span class="op">=</span>dias, columns<span class="op">=</span>horas)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>))</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>sns.heatmap(df_heatmap, cmap<span class="op">=</span><span class="st">"Blues"</span>, cbar_kws<span class="op">=</span>{<span class="st">'label'</span>: <span class="st">'</span><span class="sc">% d</span><span class="st">el segmento'</span>},</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>            linewidths<span class="op">=</span><span class="fl">0.5</span>, ax<span class="op">=</span>ax, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="fl">2.0</span>)</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"MVPs — actividad por hora y día (hora local CDMX)"</span>)</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Hora del día"</span>)</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">""</span>)</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>plt.yticks(rotation<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.graph_objects <span class="im">as</span> go</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>sns.set_theme(style<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        <span class="st">"#0B3C5D"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  <span class="st">"#328CC1"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   <span class="st">"#D82822"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  <span class="st">"#9AA0A6"</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>ORDEN <span class="op">=</span> <span class="bu">list</span>(SEGMENT_COLORS)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>horas <span class="op">=</span> np.arange(<span class="dv">24</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>dias  <span class="op">=</span> [<span class="st">"Lunes"</span>, <span class="st">"Martes"</span>, <span class="st">"Miércoles"</span>, <span class="st">"Jueves"</span>, <span class="st">"Viernes"</span>, <span class="st">"Sábado"</span>, <span class="st">"Domingo"</span>]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Pesos horarios sintéticos por segmento: pico matutino en premium,</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># vespertino en En Riesgo, sin pico claro en Hibernando.</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _campana(pico, ancho, base<span class="op">=</span><span class="fl">0.05</span>):</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> base <span class="op">+</span> np.exp(<span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> ((horas <span class="op">-</span> pico) <span class="op">/</span> ancho) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>perf_h <span class="op">=</span> {</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        _campana(<span class="dv">11</span>, <span class="fl">2.2</span>),</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  _campana(<span class="dv">11</span>, <span class="fl">1.8</span>),</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: _campana(<span class="dv">12</span>, <span class="fl">3.0</span>),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   _campana(<span class="dv">16</span>, <span class="fl">2.2</span>),</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  _campana(<span class="dv">13</span>, <span class="fl">5.0</span>, base<span class="op">=</span><span class="fl">0.25</span>),</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Pesos por día de la semana: L-V altos, fin de semana bajo.</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>perf_d <span class="op">=</span> {</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        np.array([<span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">0.95</span>, <span class="fl">0.25</span>, <span class="fl">0.05</span>]),</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  np.array([<span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">0.95</span>, <span class="fl">0.90</span>, <span class="fl">0.15</span>, <span class="fl">0.04</span>]),</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: np.array([<span class="fl">0.90</span>, <span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">0.95</span>, <span class="fl">1.00</span>, <span class="fl">0.30</span>, <span class="fl">0.08</span>]),</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   np.array([<span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">1.00</span>, <span class="fl">1.00</span>, <span class="fl">0.95</span>, <span class="fl">0.35</span>, <span class="fl">0.10</span>]),</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  np.array([<span class="fl">0.70</span>, <span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">0.85</span>, <span class="fl">0.90</span>, <span class="fl">0.50</span>, <span class="fl">0.30</span>]),</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _pct(v):</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Ruido leve + normalización a % (suma 100 por segmento)."""</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> v <span class="op">*</span> (<span class="dv">1</span> <span class="op">+</span> rng.uniform(<span class="op">-</span><span class="fl">0.04</span>, <span class="fl">0.04</span>, size<span class="op">=</span>v.shape))</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> v <span class="op">/</span> v.<span class="bu">sum</span>() <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> go.Figure()</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> seg <span class="kw">in</span> ORDEN:</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    fig.add_trace(go.Scatter(</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span>horas, y<span class="op">=</span>_pct(perf_h[seg]), mode<span class="op">=</span><span class="st">"lines+markers"</span>, name<span class="op">=</span>seg,</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>        line<span class="op">=</span><span class="bu">dict</span>(color<span class="op">=</span>SEGMENT_COLORS[seg], width<span class="op">=</span><span class="fl">2.2</span>), marker<span class="op">=</span><span class="bu">dict</span>(size<span class="op">=</span><span class="dv">5</span>),</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>fig.update_layout(</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    template<span class="op">=</span><span class="st">"simple_white"</span>, height<span class="op">=</span><span class="dv">380</span>,</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    xaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">"Hora del día (local CDMX)"</span>, dtick<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    yaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">"</span><span class="sc">% d</span><span class="st">el segmento"</span>, ticksuffix<span class="op">=</span><span class="st">"%"</span>),</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    margin<span class="op">=</span><span class="bu">dict</span>(t<span class="op">=</span><span class="dv">20</span>, r<span class="op">=</span><span class="dv">20</span>, b<span class="op">=</span><span class="dv">50</span>, l<span class="op">=</span><span class="dv">60</span>),</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display">
-<div id="fig-heatmap-mvps" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-lineas-hora" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="1">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-heatmap-mvps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="6_estacionalidad_segmentos_files/figure-html/fig-heatmap-mvps-output-1.png" class="img-fluid figure-img">
+<div aria-describedby="fig-lineas-hora-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="fig-lineas-hora-1" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-lineas-hora-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+        <script>
+        window.PlotlyConfig = {MathJaxConfig: 'local'};
+        if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}
+        </script>
+        <script type="module">import "https://cdn.plot.ly/plotly-3.6.0.min"</script>
+        
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-heatmap-mvps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;1: Heatmap hora × día para el segmento MVPs (% del segmento).
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-lineas-hora-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Actividad por hora del día — % de pedidos de cada segmento (réplica de la vista del dashboard, datos simulados).
 </figcaption>
 </figure>
 </div>
+<div id="fig-lineas-hora-2" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-lineas-hora-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div style="height:380px; width:100%;">            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script>if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.6.0.min.js" integrity="sha256-QaOVwtVY0T02VaHrr6pnoHLCwayMJp4O5n4YyaE3rJk=" crossorigin="anonymous"></script>                <div id="67497364-3b61-43a1-9642-f35de1128d36" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("67497364-3b61-43a1-9642-f35de1128d36")) {                    Plotly.newPlot(                        "67497364-3b61-43a1-9642-f35de1128d36",                        [{"line":{"color":"#0B3C5D","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"MVPs","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX"},"y":{"dtype":"f8","bdata":"EV7eu\u002fAt6D8D4o2SDY\u002fnP+NnmQtuc+g\u002fT6c6VNWt6D\u002fvsmSfVsrpP9CjGtu+PPI\u002faO5aDJJU\u002fj\u002f6pOQ9uzgNQMp9RfyIhBlA5X37rnD1JEDslbdE59srQPN7BYRvDjBAHRhnYlR5LECJPejy6ZUlQLCeTlldLhpA7\u002fVFosfxC0AATmYq5Nb9P+0PKHyr9PA\u002fumQWD71a6z\u002fQG9MhJI3oPzYDW6iAQug\u002f\u002fobsfydm5z8UmoHQRo3oPzgTfy5DZ+g\u002f"},"type":"scatter"},{"line":{"color":"#328CC1","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Alto Valor","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX"},"y":{"dtype":"f8","bdata":"U0JZTTr37D8pRUTBgqTrP09ygOToQuw\u002fDw3HPyJU6z+ECsitatbrPx6oUOX1+O4\u002f6heLhhGL9D8gttOGfcoDQNRBI6nf6BRAkngSx9WoJEAMTqj65gUwQP3qAFP5ITJAwG5tWVssL0DBiPnS1NUkQDPBrZPqvRRAZJ7lvS1WA0DwarBtIgz0P8gB6MeAVu8\u002fbUstyokW7T+hURW0I\u002fDrP86yw7QLF+0\u002fTLzQlJAG7T\u002fAtAk5YxTsPwvxlqLZ2us\u002f"},"type":"scatter"},{"line":{"color":"#6CA6C1","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Ocasionales","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX"},"y":{"dtype":"f8","bdata":"5TC+nMnF4j+EtbfgfEfiPzQNxVgqU+M\u002fGe1wxs6T5T\u002fwo93t0YrtPx1hD0XqjPU\u002feg68L6NPAUDUn1I9hSAMQNrxkV4VHhVACHQtMgVVHkCMjS0PSvsiQO2hVMLvLCZAlAgQxphyKEBw3HODBtQmQHhPL0OVpSNA0eo040TOHkAuh\u002fzPXWoVQJVdOgGMoAtAvL0Y8rkcAUCs3C4ntO\u002f0Pzgm4Aafy+s\u002f7GoOfVNZ5j8Zm9TpHVnjP\u002fSu0qoXr+I\u002f"},"type":"scatter"},{"line":{"color":"#D82822","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"En Riesgo","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX"},"y":{"dtype":"f8","bdata":"lF04bxS76D\u002f3WOTb9InnP300euZxM+c\u002fEtyTMVSh5z+4CWO6YafnPwbxz9Y5Xeg\u002fP90WZiIt6D97YS1YF7boP14cMhS1Bek\u002f3MKF2ebk6j9\u002fyY3k7U7yP8xpJzubZf0\u002fsovDr5HuC0AGYdAO19sZQGb6cpZpxSVAtm2a6VmHLECBgrLXFrYuQD36HjpOnixAvboJpK\u002fLJEBxUZMhzScbQP5MZihq6gxAu65ESQDq\u002fT9n16KneJPxP0a9HfwmYes\u002f"},"type":"scatter"},{"line":{"color":"#9AA0A6","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Hibernando","x":{"dtype":"i1","bdata":"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX"},"y":{"dtype":"f8","bdata":"h8vHc2eT+D+4CO2kPOb5P4vB7ezDvvw\u002f2Y7Md5N6AUBtAubArTsEQDCSRxKgdwdAA7keQE3XCkAQ3yixC7gQQJvUZKLRJhNAqeaQlni4FUDzPAIMAqQXQDZRVRrPMBlAELZZkLIJGkB5Kha5ZjgcQAxDdnq8zxpAztcg5hYMGUCgENZpS14XQI+vd0JGfBVA1Disr9s\u002fEkC\u002fq5T25ZIQQHGTxlFI6wtA8ftbh\u002fiAB0DFHk7le3wDQEqZjZkSBwFA"},"type":"scatter"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"rgb(36,36,36)"},"error_y":{"color":"rgb(36,36,36)"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"baxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2d"}],"histogram":[{"marker":{"line":{"color":"white","width":0.6}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"rgb(237,237,237)"},"line":{"color":"white"}},"header":{"fill":{"color":"rgb(217,217,217)"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"colorscale":{"diverging":[[0.0,"rgb(103,0,31)"],[0.1,"rgb(178,24,43)"],[0.2,"rgb(214,96,77)"],[0.3,"rgb(244,165,130)"],[0.4,"rgb(253,219,199)"],[0.5,"rgb(247,247,247)"],[0.6,"rgb(209,229,240)"],[0.7,"rgb(146,197,222)"],[0.8,"rgb(67,147,195)"],[0.9,"rgb(33,102,172)"],[1.0,"rgb(5,48,97)"]],"sequential":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"sequentialminus":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]]},"colorway":["#1F77B4","#FF7F0E","#2CA02C","#D62728","#9467BD","#8C564B","#E377C2","#7F7F7F","#BCBD22","#17BECF"],"font":{"color":"rgb(36,36,36)"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","radialaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"zaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"}},"shapedefaults":{"fillcolor":"black","line":{"width":0},"opacity":0.3},"ternary":{"aaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"baxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","caxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"}}},"xaxis":{"title":{"text":"Hora del d\u00eda (local CDMX)"},"dtick":2},"yaxis":{"title":{"text":"% del segmento"},"ticksuffix":"%"},"margin":{"t":20,"r":20,"b":50,"l":60},"height":380},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('67497364-3b61-43a1-9642-f35de1128d36');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-lineas-hora-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b)
+</figcaption>
+</figure>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-lineas-hora-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;1
+</figcaption>
+</figure>
+</div>
+</div>
+<div id="cell-fig-lineas-dia" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Código</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> go.Figure()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> seg <span class="kw">in</span> ORDEN:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    fig.add_trace(go.Scatter(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        x<span class="op">=</span>dias, y<span class="op">=</span>_pct(perf_d[seg]), mode<span class="op">=</span><span class="st">"lines+markers"</span>, name<span class="op">=</span>seg,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        line<span class="op">=</span><span class="bu">dict</span>(color<span class="op">=</span>SEGMENT_COLORS[seg], width<span class="op">=</span><span class="fl">2.2</span>), marker<span class="op">=</span><span class="bu">dict</span>(size<span class="op">=</span><span class="dv">5</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>fig.update_layout(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    template<span class="op">=</span><span class="st">"simple_white"</span>, height<span class="op">=</span><span class="dv">380</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    xaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">""</span>),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    yaxis<span class="op">=</span><span class="bu">dict</span>(title<span class="op">=</span><span class="st">"</span><span class="sc">% d</span><span class="st">el segmento"</span>, ticksuffix<span class="op">=</span><span class="st">"%"</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    margin<span class="op">=</span><span class="bu">dict</span>(t<span class="op">=</span><span class="dv">20</span>, r<span class="op">=</span><span class="dv">20</span>, b<span class="op">=</span><span class="dv">50</span>, l<span class="op">=</span><span class="dv">60</span>),</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="fig-lineas-dia" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lineas-dia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div style="height:380px; width:100%;">            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script>if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.6.0.min.js" integrity="sha256-QaOVwtVY0T02VaHrr6pnoHLCwayMJp4O5n4YyaE3rJk=" crossorigin="anonymous"></script>                <div id="242350f6-b3c5-4416-9f19-3708e8e22359" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("242350f6-b3c5-4416-9f19-3708e8e22359")) {                    Plotly.newPlot(                        "242350f6-b3c5-4416-9f19-3708e8e22359",                        [{"line":{"color":"#0B3C5D","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"MVPs","x":["Lunes","Martes","Mi\u00e9rcoles","Jueves","Viernes","S\u00e1bado","Domingo"],"y":{"dtype":"f8","bdata":"GPPqO8liM0A4hikgt3wzQI4JeOO8nTJAZ1CJ2WogM0AE1DCTZ58xQIAD3CNAPxNA4fpKWAlk7j8="},"type":"scatter"},{"line":{"color":"#328CC1","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Alto Valor","x":["Lunes","Martes","Mi\u00e9rcoles","Jueves","Viernes","S\u00e1bado","Domingo"],"y":{"dtype":"f8","bdata":"wntA+Hd1M0DsK633mWQzQMiuGZA6KzRAvhNyso2GMkBMvKZefaMyQKLzcU+iMAhAn2EznoRS6T8="},"type":"scatter"},{"line":{"color":"#6CA6C1","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Ocasionales","x":["Lunes","Martes","Mi\u00e9rcoles","Jueves","Viernes","S\u00e1bado","Domingo"],"y":{"dtype":"f8","bdata":"zCCDBKtHMUA+W7XmaFUyQAxXYLO0wjNAOE5X2SUVMkC4haWGEX4zQE6GwQYqHBZAXnaf+1df+D8="},"type":"scatter"},{"line":{"color":"#D82822","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"En Riesgo","x":["Lunes","Martes","Mi\u00e9rcoles","Jueves","Viernes","S\u00e1bado","Domingo"],"y":{"dtype":"f8","bdata":"dy14jB1GL0A\u002fmLVUpTgyQJxzMItHrDNACqXVueyEM0C3VjsefDwyQHC53WcZBBtAnzRXfVJZ\u002fz8="},"type":"scatter"},{"line":{"color":"#9AA0A6","width":2.2},"marker":{"size":5},"mode":"lines+markers","name":"Hibernando","x":["Lunes","Martes","Mi\u00e9rcoles","Jueves","Viernes","S\u00e1bado","Domingo"],"y":{"dtype":"f8","bdata":"limkIXg9LEBVHjHFETEvQP2pu3hAuDJAXqgnlqvGMUD3Tbp07bcxQKT1ORuzWyRAnwNr7R+QF0A="},"type":"scatter"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"rgb(36,36,36)"},"error_y":{"color":"rgb(36,36,36)"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"baxis":{"endlinecolor":"rgb(36,36,36)","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"rgb(36,36,36)"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"histogram2d"}],"histogram":[{"marker":{"line":{"color":"white","width":0.6}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermapbox"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"},"colorscale":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"rgb(237,237,237)"},"line":{"color":"white"}},"header":{"fill":{"color":"rgb(217,217,217)"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":1,"tickcolor":"rgb(36,36,36)","ticks":"outside"}},"colorscale":{"diverging":[[0.0,"rgb(103,0,31)"],[0.1,"rgb(178,24,43)"],[0.2,"rgb(214,96,77)"],[0.3,"rgb(244,165,130)"],[0.4,"rgb(253,219,199)"],[0.5,"rgb(247,247,247)"],[0.6,"rgb(209,229,240)"],[0.7,"rgb(146,197,222)"],[0.8,"rgb(67,147,195)"],[0.9,"rgb(33,102,172)"],[1.0,"rgb(5,48,97)"]],"sequential":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]],"sequentialminus":[[0.0,"#440154"],[0.1111111111111111,"#482878"],[0.2222222222222222,"#3e4989"],[0.3333333333333333,"#31688e"],[0.4444444444444444,"#26828e"],[0.5555555555555556,"#1f9e89"],[0.6666666666666666,"#35b779"],[0.7777777777777778,"#6ece58"],[0.8888888888888888,"#b5de2b"],[1.0,"#fde725"]]},"colorway":["#1F77B4","#FF7F0E","#2CA02C","#D62728","#9467BD","#8C564B","#E377C2","#7F7F7F","#BCBD22","#17BECF"],"font":{"color":"rgb(36,36,36)"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","radialaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"zaxis":{"backgroundcolor":"white","gridcolor":"rgb(232,232,232)","gridwidth":2,"linecolor":"rgb(36,36,36)","showbackground":true,"showgrid":false,"showline":true,"ticks":"outside","zeroline":false,"zerolinecolor":"rgb(36,36,36)"}},"shapedefaults":{"fillcolor":"black","line":{"width":0},"opacity":0.3},"ternary":{"aaxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"baxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"},"bgcolor":"white","caxis":{"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside"}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"},"yaxis":{"automargin":true,"gridcolor":"rgb(232,232,232)","linecolor":"rgb(36,36,36)","showgrid":false,"showline":true,"ticks":"outside","title":{"standoff":15},"zeroline":false,"zerolinecolor":"rgb(36,36,36)"}}},"yaxis":{"title":{"text":"% del segmento"},"ticksuffix":"%"},"margin":{"t":20,"r":20,"b":50,"l":60},"height":380,"xaxis":{"title":{"text":""}}},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('242350f6-b3c5-4416-9f19-3708e8e22359');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };            </script>        </div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lineas-dia-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;2: Actividad por día de la semana — % de pedidos de cada segmento (datos simulados).
+</figcaption>
+</figure>
 </div>
 </div>
 <section id="firmas-observadas-por-segmento" class="level3">
@@ -413,55 +542,55 @@ Figura&nbsp;1: Heatmap hora × día para el segmento MVPs (% del segmento).
 <section id="evolución-mensual" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="evolución-mensual">4. Evolución mensual</h2>
 <p>El segundo agregado es el volumen mensual por segmento. Es útil para detectar tendencias macro y validar que los modelos no se “rompan” silenciosamente.</p>
-<div id="cell-fig-mensual" class="cell" data-execution_count="2">
+<div id="cell-fig-mensual" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Código</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        <span class="st">"#0B3C5D"</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  <span class="st">"#328CC1"</span>,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   <span class="st">"#D82822"</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  <span class="st">"#9AA0A6"</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Generación de series que reproducen el comportamiento real:</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># MVPs y Alto Valor estables con pico Buen Fin (Nov)</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># En Riesgo y Hibernando caen con el tiempo</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>meses <span class="op">=</span> pd.date_range(start<span class="op">=</span><span class="st">"2024-01-01"</span>, end<span class="op">=</span><span class="st">"2026-05-01"</span>, freq<span class="op">=</span><span class="st">"MS"</span>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(meses)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>serie_mvp <span class="op">=</span> <span class="dv">100</span> <span class="op">+</span> <span class="dv">8</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">4</span>, n)</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>serie_av <span class="op">=</span> <span class="dv">75</span> <span class="op">+</span> <span class="dv">6</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">3</span>, n)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>serie_oc <span class="op">=</span> <span class="dv">25</span> <span class="op">+</span> <span class="dv">2</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>serie_riesgo <span class="op">=</span> <span class="dv">30</span> <span class="op">-</span> <span class="fl">0.4</span><span class="op">*</span>np.arange(n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>serie_hib <span class="op">=</span> <span class="dv">6</span> <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.6</span>, n)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Pico Buen Fin (Nov 2024 = idx 10, Nov 2025 = idx 22)</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> [<span class="dv">10</span>, <span class="dv">22</span>]:</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i <span class="op">&lt;</span> n:</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        serie_mvp[i] <span class="op">*=</span> <span class="fl">1.18</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        serie_av[i] <span class="op">*=</span> <span class="fl">1.15</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>df_mensual <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Mes'</span>: <span class="bu">list</span>(meses) <span class="op">*</span> <span class="dv">5</span>,</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'MVPs'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Alto Valor'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Ocasionales'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'En Riesgo'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Hibernando'</span>]<span class="op">*</span>n,</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Pedidos'</span>: np.concatenate([serie_mvp, serie_av, serie_oc, serie_riesgo, serie_hib]),</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> seg, sub <span class="kw">in</span> df_mensual.groupby(<span class="st">'Segmento'</span>):</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    plt.plot(sub[<span class="st">'Mes'</span>], sub[<span class="st">'Pedidos'</span>], color<span class="op">=</span>SEGMENT_COLORS[seg],</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>             linewidth<span class="op">=</span><span class="dv">2</span>, marker<span class="op">=</span><span class="st">'o'</span>, markersize<span class="op">=</span><span class="dv">4</span>, label<span class="op">=</span>seg)</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Evolución mensual de pedidos por segmento (índice relativo)"</span>)</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">""</span>)</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Pedidos (índice)"</span>)</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>plt.legend(loc<span class="op">=</span><span class="st">'center left'</span>, bbox_to_anchor<span class="op">=</span>(<span class="fl">1.01</span>, <span class="fl">0.5</span>))</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">'right'</span>)</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>SEGMENT_COLORS <span class="op">=</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MVPs"</span>:        <span class="st">"#0B3C5D"</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Alto Valor"</span>:  <span class="st">"#328CC1"</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ocasionales"</span>: <span class="st">"#6CA6C1"</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"En Riesgo"</span>:   <span class="st">"#D82822"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Hibernando"</span>:  <span class="st">"#9AA0A6"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Generación de series que reproducen el comportamiento real:</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># MVPs y Alto Valor estables con pico Buen Fin (Nov)</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># En Riesgo y Hibernando caen con el tiempo</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>meses <span class="op">=</span> pd.date_range(start<span class="op">=</span><span class="st">"2024-01-01"</span>, end<span class="op">=</span><span class="st">"2026-05-01"</span>, freq<span class="op">=</span><span class="st">"MS"</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(meses)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">42</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>serie_mvp <span class="op">=</span> <span class="dv">100</span> <span class="op">+</span> <span class="dv">8</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">4</span>, n)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>serie_av <span class="op">=</span> <span class="dv">75</span> <span class="op">+</span> <span class="dv">6</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">3</span>, n)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>serie_oc <span class="op">=</span> <span class="dv">25</span> <span class="op">+</span> <span class="dv">2</span><span class="op">*</span>np.sin(np.linspace(<span class="dv">0</span>, <span class="dv">4</span><span class="op">*</span>np.pi, n)) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>serie_riesgo <span class="op">=</span> <span class="dv">30</span> <span class="op">-</span> <span class="fl">0.4</span><span class="op">*</span>np.arange(n) <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="dv">2</span>, n)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>serie_hib <span class="op">=</span> <span class="dv">6</span> <span class="op">+</span> np.random.normal(<span class="dv">0</span>, <span class="fl">0.6</span>, n)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Pico Buen Fin (Nov 2024 = idx 10, Nov 2025 = idx 22)</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> [<span class="dv">10</span>, <span class="dv">22</span>]:</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i <span class="op">&lt;</span> n:</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        serie_mvp[i] <span class="op">*=</span> <span class="fl">1.18</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        serie_av[i] <span class="op">*=</span> <span class="fl">1.15</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>df_mensual <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Mes'</span>: <span class="bu">list</span>(meses) <span class="op">*</span> <span class="dv">5</span>,</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Segmento'</span>: [<span class="st">'MVPs'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Alto Valor'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Ocasionales'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'En Riesgo'</span>]<span class="op">*</span>n <span class="op">+</span> [<span class="st">'Hibernando'</span>]<span class="op">*</span>n,</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Pedidos'</span>: np.concatenate([serie_mvp, serie_av, serie_oc, serie_riesgo, serie_hib]),</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> seg, sub <span class="kw">in</span> df_mensual.groupby(<span class="st">'Segmento'</span>):</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    plt.plot(sub[<span class="st">'Mes'</span>], sub[<span class="st">'Pedidos'</span>], color<span class="op">=</span>SEGMENT_COLORS[seg],</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>             linewidth<span class="op">=</span><span class="dv">2</span>, marker<span class="op">=</span><span class="st">'o'</span>, markersize<span class="op">=</span><span class="dv">4</span>, label<span class="op">=</span>seg)</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Evolución mensual de pedidos por segmento (índice relativo)"</span>)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">""</span>)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Pedidos (índice)"</span>)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>plt.legend(loc<span class="op">=</span><span class="st">'center left'</span>, bbox_to_anchor<span class="op">=</span>(<span class="fl">1.01</span>, <span class="fl">0.5</span>))</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">45</span>, ha<span class="op">=</span><span class="st">'right'</span>)</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>sns.despine()</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-mensual" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -470,7 +599,7 @@ Figura&nbsp;1: Heatmap hora × día para el segmento MVPs (% del segmento).
 <img src="6_estacionalidad_segmentos_files/figure-html/fig-mensual-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mensual-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
+Figura&nbsp;3: Evolución mensual de pedidos por segmento (índice relativo).
 </figcaption>
 </figure>
 </div>
@@ -486,6 +615,15 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 </ol>
 <p><strong>El rumbo que nos hizo tomar</strong>: este gráfico se convirtió en una herramienta de monitoreo. Si el equipo de retención ejecuta una campaña agresiva, esperamos ver la pendiente de En Riesgo aplanarse. Si no se aplana, la campaña no funcionó.</p>
 </section>
+<section id="el-modo-último-mes" class="level3">
+<h3 class="anchored" data-anchor-id="el-modo-último-mes">4.2 El modo “Último mes”</h3>
+<p>La serie mensual responde a tendencias macro, pero es ciega a la pregunta operativa “¿cómo vamos <strong>este</strong> mes?”: el mes en curso aparece como un punto bajo porque solo lleva unos días. Por eso la vista de evolución del dashboard incorpora un toggle <strong>“Último mes”</strong> que cambia a granularidad diaria y superpone:</p>
+<ul>
+<li>la línea diaria del <strong>mes en curso</strong>, y</li>
+<li>la del <strong>mismo rango del mes anterior</strong> (si hoy es día 9, compara los días 1–9 de ambos meses),</li>
+</ul>
+<p>más tarjetas de variación por segmento (% arriba/abajo vs el mes anterior). Se alimenta de un agregado diario nuevo, <code>temp_diario.parquet</code> (ventana de 90 días) que el pipeline regenera en cada corrida. Así marketing distingue un mal mes real de la simple estacionalidad de inicio de mes.</p>
+</section>
 </section>
 <section id="cruce-temporalidad-bundles" class="level2" style="text-align: justify">
 <h2 class="anchored" data-anchor-id="cruce-temporalidad-bundles">5. Cruce temporalidad × bundles</h2>
@@ -495,6 +633,7 @@ Figura&nbsp;2: Evolución mensual de pedidos por segmento (índice relativo).
 <li>“El bundle <code>Familia_PK → Familia_MSF</code> tiene lift 134. ¿Es siempre? ¿O solo en cierta época?”</li>
 <li>“Si lanzo una campaña en septiembre, ¿qué bundles están históricamente fuertes en septiembre?”</li>
 </ul>
+<p>En el dashboard (vista <strong>“Bundles × mes”</strong>) esto se visualiza como <strong>gráficas de líneas</strong>: cada bundle es una línea de pedidos a lo largo de los meses, con el eje X marcado cada 6 meses para que las fechas se lean horizontales. Se muestran los <strong>5 bundles más fuertes por revenue</strong> por defecto y un selector permite añadir u ocultar cualquiera del top 10. Antes era un heatmap, pero las líneas comunican mejor la tendencia de cada bundle.</p>
 <section id="mes-pico-por-bundle" class="level3">
 <h3 class="anchored" data-anchor-id="mes-pico-por-bundle">5.1 Mes pico por bundle</h3>
 <p>El dashboard expone una tabla auxiliar donde para cada bundle se calcula:</p>

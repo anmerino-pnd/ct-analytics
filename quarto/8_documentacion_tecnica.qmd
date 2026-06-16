@@ -470,7 +470,7 @@ flowchart LR
 | **Segmentación** | Asignar cluster a cada cliente | scikit-learn (KMeans) |
 | **MBA** | Generar reglas de asociación por segmento | mlxtend (FP-Growth) |
 | **Temporalidad** | Agregar por hora-día-mes | pandas |
-| **Dashboard** | Servir 7 vistas interactivas | FastAPI + DuckDB + Plotly |
+| **Dashboard** | Servir 8 vistas interactivas | FastAPI + DuckDB + Plotly |
 | **systemd** | Supervisar el proceso del dashboard | OS |
 | **cron** | Ejecutar el pipeline diariamente | OS |
 

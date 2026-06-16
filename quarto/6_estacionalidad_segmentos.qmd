@@ -25,8 +25,9 @@ Construimos tres agregados temporales que viven como parquets en el pipeline:
 
 | Output | Granularidad | Uso |
 |---|---|---|
-| `temp_hora_dia.parquet` | hora × día de la semana, por segmento | Heatmap de actividad intradiaria |
+| `temp_hora_dia.parquet` | hora × día de la semana, por segmento | Curvas de actividad por hora y por día |
 | `temp_mensual.parquet` | año-mes, por segmento | Serie temporal de volumen |
+| `temp_diario.parquet` | día, por segmento (ventana 90 días) | Vista "Último mes": tendencia diaria reciente |
 | `temp_bundles.parquet` | año-mes × regla MBA top | Evolución temporal de bundles específicos |
 
 :::
@@ -68,54 +69,94 @@ La conversión se aplica **antes** de extraer hora/día/mes. Los pedidos se qued
 :::
 
 ::: {style="text-align: justify"}
-## 3. Heatmap hora × día por segmento
+## 3. Actividad por hora y por día por segmento
 
-Después del fix, el heatmap muestra el patrón esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Pero cada segmento tiene su propia firma.
+Después del fix, el patrón es el esperado: actividad concentrada en horario laboral, con un pico a media mañana y otro a media tarde. Cada segmento tiene su propia firma.
+
+En el dashboard esta vista evolucionó de heatmaps hora×día (uno por segmento) a **dos gráficas de líneas**: el porcentaje de pedidos de cada segmento por **hora del día** y por **día de la semana**. Las líneas dejan comparar todos los segmentos de un vistazo —algo difícil con varios heatmaps lado a lado—. Aquí reproducimos esas dos vistas con datos simulados que preservan las firmas reales.
 
 ```{python}
-#| label: fig-heatmap-mvps
-#| fig-cap: "Heatmap hora × día para el segmento MVPs (% del segmento)."
+#| label: fig-lineas-hora
+#| fig-cap: "Actividad por hora del día — % de pedidos de cada segmento (réplica de la vista del dashboard, datos simulados)."
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.graph_objects as go
 
 sns.set_theme(style="white")
 
-np.random.seed(42)
-dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-horas = list(range(24))
+SEGMENT_COLORS = {
+    "MVPs":        "#0B3C5D",
+    "Alto Valor":  "#328CC1",
+    "Ocasionales": "#6CA6C1",
+    "En Riesgo":   "#D82822",
+    "Hibernando":  "#9AA0A6",
+}
+ORDEN = list(SEGMENT_COLORS)
+horas = np.arange(24)
+dias  = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+rng = np.random.default_rng(42)
 
-# Patrón sintético que preserva la firma real:
-# - Pico principal 10-12, secundario 15-18
-# - Lunes a viernes mucho más activos
-# - Sábado muy bajo, domingo casi cero
-matriz = np.zeros((7, 24))
-for d in range(5):  # L-V
-    for h in horas:
-        base = 0.05
-        if 9 <= h <= 12: base = 1.8 + np.random.uniform(-0.1, 0.2)
-        elif 13 <= h <= 14: base = 0.8 + np.random.uniform(-0.1, 0.2)
-        elif 15 <= h <= 18: base = 1.2 + np.random.uniform(-0.1, 0.2)
-        elif 19 <= h <= 21: base = 0.4 + np.random.uniform(-0.05, 0.1)
-        elif 7 <= h <= 8: base = 0.3
-        matriz[d, h] = base
-for h in horas:
-    matriz[5, h] = 0.2 + np.random.uniform(0, 0.1) if 10 <= h <= 14 else 0.05
-    matriz[6, h] = 0.05
+# Pesos horarios sintéticos por segmento: pico matutino en premium,
+# vespertino en En Riesgo, sin pico claro en Hibernando.
+def _campana(pico, ancho, base=0.05):
+    return base + np.exp(-0.5 * ((horas - pico) / ancho) ** 2)
 
-df_heatmap = pd.DataFrame(matriz, index=dias, columns=horas)
+perf_h = {
+    "MVPs":        _campana(11, 2.2),
+    "Alto Valor":  _campana(11, 1.8),
+    "Ocasionales": _campana(12, 3.0),
+    "En Riesgo":   _campana(16, 2.2),
+    "Hibernando":  _campana(13, 5.0, base=0.25),
+}
+# Pesos por día de la semana: L-V altos, fin de semana bajo.
+perf_d = {
+    "MVPs":        np.array([1.00, 1.00, 1.00, 1.00, 0.95, 0.25, 0.05]),
+    "Alto Valor":  np.array([1.00, 1.00, 1.00, 0.95, 0.90, 0.15, 0.04]),
+    "Ocasionales": np.array([0.90, 1.00, 1.00, 0.95, 1.00, 0.30, 0.08]),
+    "En Riesgo":   np.array([0.80, 0.90, 1.00, 1.00, 0.95, 0.35, 0.10]),
+    "Hibernando":  np.array([0.70, 0.80, 0.90, 0.85, 0.90, 0.50, 0.30]),
+}
 
-fig, ax = plt.subplots(figsize=(13, 4))
-sns.heatmap(df_heatmap, cmap="Blues", cbar_kws={'label': '% del segmento'},
-            linewidths=0.5, ax=ax, vmin=0, vmax=2.0)
-ax.set_title("MVPs — actividad por hora y día (hora local CDMX)")
-ax.set_xlabel("Hora del día")
-ax.set_ylabel("")
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.show()
+def _pct(v):
+    """Ruido leve + normalización a % (suma 100 por segmento)."""
+    v = v * (1 + rng.uniform(-0.04, 0.04, size=v.shape))
+    return v / v.sum() * 100
+
+fig = go.Figure()
+for seg in ORDEN:
+    fig.add_trace(go.Scatter(
+        x=horas, y=_pct(perf_h[seg]), mode="lines+markers", name=seg,
+        line=dict(color=SEGMENT_COLORS[seg], width=2.2), marker=dict(size=5),
+    ))
+fig.update_layout(
+    template="simple_white", height=380,
+    xaxis=dict(title="Hora del día (local CDMX)", dtick=2),
+    yaxis=dict(title="% del segmento", ticksuffix="%"),
+    margin=dict(t=20, r=20, b=50, l=60),
+)
+fig.show()
+```
+
+```{python}
+#| label: fig-lineas-dia
+#| fig-cap: "Actividad por día de la semana — % de pedidos de cada segmento (datos simulados)."
+
+fig = go.Figure()
+for seg in ORDEN:
+    fig.add_trace(go.Scatter(
+        x=dias, y=_pct(perf_d[seg]), mode="lines+markers", name=seg,
+        line=dict(color=SEGMENT_COLORS[seg], width=2.2), marker=dict(size=5),
+    ))
+fig.update_layout(
+    template="simple_white", height=380,
+    xaxis=dict(title=""),
+    yaxis=dict(title="% del segmento", ticksuffix="%"),
+    margin=dict(t=20, r=20, b=50, l=60),
+)
+fig.show()
 ```
 
 ### 3.1 Firmas observadas por segmento
@@ -204,6 +245,15 @@ Tres observaciones:
 3. **En Riesgo decae lentamente** con el tiempo. Es esperado por definición — son clientes que perdieron tracción. Pero la pendiente es un dato útil para evaluar campañas de retención.
 
 **El rumbo que nos hizo tomar**: este gráfico se convirtió en una herramienta de monitoreo. Si el equipo de retención ejecuta una campaña agresiva, esperamos ver la pendiente de En Riesgo aplanarse. Si no se aplana, la campaña no funcionó.
+
+### 4.2 El modo "Último mes"
+
+La serie mensual responde a tendencias macro, pero es ciega a la pregunta operativa "¿cómo vamos **este** mes?": el mes en curso aparece como un punto bajo porque solo lleva unos días. Por eso la vista de evolución del dashboard incorpora un toggle **"Último mes"** que cambia a granularidad diaria y superpone:
+
+- la línea diaria del **mes en curso**, y
+- la del **mismo rango del mes anterior** (si hoy es día 9, compara los días 1–9 de ambos meses),
+
+más tarjetas de variación por segmento (% arriba/abajo vs el mes anterior). Se alimenta de un agregado diario nuevo, `temp_diario.parquet` (ventana de 90 días) que el pipeline regenera en cada corrida. Así marketing distingue un mal mes real de la simple estacionalidad de inicio de mes.
 :::
 
 ::: {style="text-align: justify"}
@@ -215,6 +265,8 @@ Esto contesta preguntas concretas:
 
 - "El bundle `Familia_PK → Familia_MSF` tiene lift 134. ¿Es siempre? ¿O solo en cierta época?"
 - "Si lanzo una campaña en septiembre, ¿qué bundles están históricamente fuertes en septiembre?"
+
+En el dashboard (vista **"Bundles × mes"**) esto se visualiza como **gráficas de líneas**: cada bundle es una línea de pedidos a lo largo de los meses, con el eje X marcado cada 6 meses para que las fechas se lean horizontales. Se muestran los **5 bundles más fuertes por revenue** por defecto y un selector permite añadir u ocultar cualquiera del top 10. Antes era un heatmap, pero las líneas comunican mejor la tendencia de cada bundle.
 
 ### 5.1 Mes pico por bundle
 

@@ -89,7 +89,7 @@ El flujo del sistema propuesto se divide en tres capas principales:
 
 1. **Extracción:** Recolección desde las Bases de Datos transaccionales.
 2. **Transformación:** Proceso ETL que involucra limpieza, manejo de nulos y creación de variables (ingeniería de datos para RFM y MBA).
-3. **Carga y Consumo:** Almacenamiento de datos limpios (Parquet) y su visualización final mediante un **dashboard web interno desarrollado en FastAPI + DuckDB + Plotly**, con filtros dinámicos, segmentación por usuario y siete vistas operativas accesibles desde cualquier navegador en la intranet corporativa.
+3. **Carga y Consumo:** Almacenamiento de datos limpios (Parquet) y su visualización final mediante un **dashboard web interno desarrollado en FastAPI + DuckDB + Plotly**, con filtros dinámicos, segmentación por usuario y ocho vistas operativas accesibles desde cualquier navegador en la intranet corporativa.
 :::
 
 ::: {style="text-align: justify"}
